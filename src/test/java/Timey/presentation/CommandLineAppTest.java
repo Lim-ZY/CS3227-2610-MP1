@@ -14,7 +14,8 @@ class CommandLineAppTest {
     void displaysParsedPlanAndFarewell() {
         var outputText = new StringWriter();
         var app = new CommandLineApp(
-                new BufferedReader(new StringReader("plan /from \"COM3\" /to \"VivoCity\" /by 1830 /buf 5m\nthx\n")),
+                new BufferedReader(new StringReader(
+                        "plan /from \"COM3\" /to \"VivoCity\" /by 1830 /buf 5m\nchoose 1\nthx\n")),
                 new PrintWriter(outputText, true));
 
         app.run();
@@ -28,6 +29,8 @@ class CommandLineAppTest {
         assertTrue(output.contains("Personal buffer: 5 minutes"));
         assertTrue(output.contains("1. Fastest Transit — 43 minutes total"));
         assertTrue(output.contains("2. Direct Bus — 59 minutes total"));
+        assertTrue(output.contains("Chosen route: Fastest Transit"));
+        assertTrue(output.contains("Recommended departure: 17:42"));
         assertTrue(output.contains("Alrighty, hope you'll have a nice day ahead!"));
     }
 }

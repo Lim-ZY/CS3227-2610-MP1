@@ -10,6 +10,7 @@ import java.util.List;
 import Timey.application.CommutePlanningService;
 import Timey.command.PlanCommand;
 import Timey.command.PlanCommandParser;
+import Timey.domain.alert.DepartureRecommendation;
 import Timey.domain.transit.RouteAlternative;
 import Timey.infrastructure.transit.MockTransitPlanner;
 
@@ -22,6 +23,8 @@ public final class CommandLineApp {
     private final PrintWriter output;
     private final PlanCommandParser planCommandParser;
     private final CommutePlanningService commutePlanningService;
+    private PlanCommand pendingPlan;
+    private List<RouteAlternative> pendingAlternatives = List.of();
 
     public CommandLineApp(BufferedReader input, PrintWriter output) {
         this(input, output, new PlanCommandParser(), new CommutePlanningService(new MockTransitPlanner()));
@@ -80,6 +83,10 @@ public final class CommandLineApp {
             handlePlan(command);
             return;
         }
+        if (command.startsWith("choose")) {
+            handleChoice(command);
+            return;
+        }
         output.println("I did not understand that. Try: plan /from \"COM3\" /to \"VivoCity\" /by 1830 /buf 10m");
     }
 
@@ -94,11 +101,38 @@ public final class CommandLineApp {
             output.println("Target arrival: " + plan.arrivalTime().format(TIME_FORMAT));
             output.println("Personal buffer: " + plan.buffer().toMinutes() + " minutes");
             output.println();
-            printAlternatives(commutePlanningService.findAlternatives(plan));
+            List<RouteAlternative> alternatives = commutePlanningService.findAlternatives(plan);
+            pendingPlan = plan;
+            pendingAlternatives = alternatives;
+            printAlternatives(alternatives);
             output.println();
-            output.println("Leave it to me!");
+            output.println("Choose a route with: choose 1");
         } catch (IllegalArgumentException exception) {
             output.println("I could not create that plan: " + exception.getMessage());
+        }
+    }
+
+    private void handleChoice(String command) {
+        if (pendingPlan == null) {
+            output.println("Please create a plan before choosing a route.");
+            return;
+        }
+        String[] parts = command.split("\\s+");
+        if (parts.length != 2) {
+            output.println("Choose a route by number, for example: choose 1");
+            return;
+        }
+        try {
+            int routeNumber = Integer.parseInt(parts[1]);
+            if (routeNumber < 1 || routeNumber > pendingAlternatives.size()) {
+                output.println("Please choose a route between 1 and " + pendingAlternatives.size() + ".");
+                return;
+            }
+            RouteAlternative route = pendingAlternatives.get(routeNumber - 1);
+            DepartureRecommendation recommendation = commutePlanningService.recommendDeparture(pendingPlan, route);
+            printRecommendation(recommendation);
+        } catch (NumberFormatException exception) {
+            output.println("Choose a route by number, for example: choose 1");
         }
     }
 
@@ -120,5 +154,16 @@ public final class CommandLineApp {
 
     private String pluraliseTransfer(int transferCount) {
         return transferCount == 1 ? " transfer" : " transfers";
+    }
+
+    private void printRecommendation(DepartureRecommendation recommendation) {
+        output.println("Great choice! Here is your departure plan:");
+        output.println();
+        output.println("Chosen route: " + recommendation.routeName());
+        output.println("Total travel time: " + formatDuration(recommendation.travelDuration()));
+        output.println("Personal buffer: " + formatDuration(recommendation.buffer()));
+        output.println("Recommended departure: " + recommendation.departureTime().format(TIME_FORMAT));
+        output.println();
+        output.println("Please leave your desk by " + recommendation.departureTime().format(TIME_FORMAT) + ".");
     }
 }
