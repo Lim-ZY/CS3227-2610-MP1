@@ -37,6 +37,8 @@ public final class CommandLineApp {
                 if (command.trim().equalsIgnoreCase("thx")) {
                     return;
                 }
+                output.print("> ");
+                output.flush();
             }
         } catch (IOException exception) {
             output.println("I could not read your command. Please restart Timey and try again.");
@@ -56,6 +58,8 @@ public final class CommandLineApp {
         output.println("Hey! I'll help you to be on track today as always!");
         output.println(DIVIDER);
         output.println("Try: plan /from \"COM3\" /to \"VivoCity\" /by 1830 /buf 10m");
+        output.print("> ");
+        output.flush();
     }
 
     private void handle(String command) {

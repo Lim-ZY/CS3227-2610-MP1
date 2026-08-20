@@ -21,6 +21,7 @@ class CommandLineAppTest {
 
         String output = outputText.toString();
         assertTrue(output.contains("Hey! I'll help you to be on track today as always!"));
+        assertTrue(output.contains("> "));
         assertTrue(output.contains("From: COM3"));
         assertTrue(output.contains("To: VivoCity"));
         assertTrue(output.contains("Target arrival: 18:30"));

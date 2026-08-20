@@ -29,3 +29,8 @@ dependencies {
 tasks.named('test') {
     useJUnitPlatform()
 }
+
+// Keep the interactive CLI connected to the terminal when launched with `gradle run`.
+tasks.named('run') {
+    standardInput = System.in
+}
