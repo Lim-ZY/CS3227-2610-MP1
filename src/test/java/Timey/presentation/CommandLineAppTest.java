@@ -26,6 +26,8 @@ class CommandLineAppTest {
         assertTrue(output.contains("To: VivoCity"));
         assertTrue(output.contains("Target arrival: 18:30"));
         assertTrue(output.contains("Personal buffer: 5 minutes"));
+        assertTrue(output.contains("1. Fastest Transit — 43 minutes total"));
+        assertTrue(output.contains("2. Direct Bus — 59 minutes total"));
         assertTrue(output.contains("Alrighty, hope you'll have a nice day ahead!"));
     }
 }

@@ -3,10 +3,15 @@ package Timey.presentation;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.time.Duration;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 
+import Timey.application.CommutePlanningService;
 import Timey.command.PlanCommand;
 import Timey.command.PlanCommandParser;
+import Timey.domain.transit.RouteAlternative;
+import Timey.infrastructure.transit.MockTransitPlanner;
 
 /** Interactive command-line presentation for Timey. */
 public final class CommandLineApp {
@@ -16,15 +21,18 @@ public final class CommandLineApp {
     private final BufferedReader input;
     private final PrintWriter output;
     private final PlanCommandParser planCommandParser;
+    private final CommutePlanningService commutePlanningService;
 
     public CommandLineApp(BufferedReader input, PrintWriter output) {
-        this(input, output, new PlanCommandParser());
+        this(input, output, new PlanCommandParser(), new CommutePlanningService(new MockTransitPlanner()));
     }
 
-    CommandLineApp(BufferedReader input, PrintWriter output, PlanCommandParser planCommandParser) {
+    CommandLineApp(BufferedReader input, PrintWriter output, PlanCommandParser planCommandParser,
+            CommutePlanningService commutePlanningService) {
         this.input = input;
         this.output = output;
         this.planCommandParser = planCommandParser;
+        this.commutePlanningService = commutePlanningService;
     }
 
     /** Runs until the user says thanks or standard input closes. */
@@ -86,9 +94,31 @@ public final class CommandLineApp {
             output.println("Target arrival: " + plan.arrivalTime().format(TIME_FORMAT));
             output.println("Personal buffer: " + plan.buffer().toMinutes() + " minutes");
             output.println();
+            printAlternatives(commutePlanningService.findAlternatives(plan));
+            output.println();
             output.println("Leave it to me!");
         } catch (IllegalArgumentException exception) {
             output.println("I could not create that plan: " + exception.getMessage());
         }
+    }
+
+    private void printAlternatives(List<RouteAlternative> alternatives) {
+        output.println("Here are your deterministic route alternatives:");
+        for (int index = 0; index < alternatives.size(); index++) {
+            RouteAlternative route = alternatives.get(index);
+            output.println((index + 1) + ". " + route.name() + " — "
+                    + formatDuration(route.totalDuration()) + " total "
+                    + "(walk " + formatDuration(route.walkingDuration())
+                    + ", transit " + formatDuration(route.transitDuration())
+                    + ", " + route.transferCount() + pluraliseTransfer(route.transferCount()) + ")");
+        }
+    }
+
+    private String formatDuration(Duration duration) {
+        return duration.toMinutes() + " minutes";
+    }
+
+    private String pluraliseTransfer(int transferCount) {
+        return transferCount == 1 ? " transfer" : " transfers";
     }
 }
