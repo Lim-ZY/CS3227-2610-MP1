@@ -44,10 +44,14 @@ public final class CommandLineApp {
         try {
             String command;
             while ((command = input.readLine()) != null) {
+                output.println(DIVIDER);
+                output.flush();
                 handle(command.trim());
                 if (command.trim().equalsIgnoreCase("thx")) {
                     return;
                 }
+                output.println(DIVIDER);
+                output.flush();
                 output.print("> ");
                 output.flush();
             }
@@ -75,7 +79,6 @@ public final class CommandLineApp {
 
     private void handle(String command) {
         if (command.equalsIgnoreCase("thx")) {
-            output.println(DIVIDER);
             output.println("Alrighty, hope you'll have a nice day ahead!");
             return;
         }
@@ -93,7 +96,6 @@ public final class CommandLineApp {
     private void handlePlan(String command) {
         try {
             PlanCommand plan = planCommandParser.parse(command);
-            output.println(DIVIDER);
             output.println("Got it! I have noted down your plan as follows:");
             output.println();
             output.println("From: " + plan.origin());
