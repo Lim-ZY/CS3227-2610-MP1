@@ -1,0 +1,10 @@
+.gradle/
+build/
+out/
+*.class
+*.iml
+.idea/
+.vscode/
+config/application.properties
+data/*.json
+!data/.gitkeep
