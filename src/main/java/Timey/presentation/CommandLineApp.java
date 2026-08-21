@@ -11,13 +11,12 @@ import java.util.List;
 
 import Timey.application.CommutePlanningService;
 import Timey.application.DepartureReminderService;
-import Timey.application.LiveRailPlanningService;
+import Timey.application.Planner;
 import Timey.command.CommandParser;
 import Timey.command.PlanCommand;
 import Timey.command.PlanCommandParser;
 import Timey.domain.alert.DepartureRecommendation;
 import Timey.domain.alert.ScheduledDepartureReminder;
-import Timey.domain.location.LocationResolution;
 import Timey.domain.transit.LiveRouteLookup;
 import Timey.domain.transit.RouteAlternative;
 import Timey.infrastructure.http.HttpResult;
@@ -35,9 +34,7 @@ public final class CommandLineApp {
     private final Ui ui;
     private final CommandParser commandParser;
     private final CommutePlanningService commutePlanningService;
-    private final LocationResolver locationResolver;
-    private final RailTransitPlanner railTransitPlanner;
-    private final LiveRailPlanningService liveRailPlanningService;
+    private final Planner planner;
     private final DepartureReminderService departureReminderService;
     private final Clock clock;
     private PlanCommand pendingPlan;
@@ -69,9 +66,7 @@ public final class CommandLineApp {
         this.ui = new Ui(input, output);
         this.commandParser = new CommandParser(planCommandParser);
         this.commutePlanningService = commutePlanningService;
-        this.locationResolver = locationResolver;
-        this.railTransitPlanner = railTransitPlanner;
-        this.liveRailPlanningService = new LiveRailPlanningService(railTransitPlanner, clock);
+        this.planner = new Planner(commutePlanningService, locationResolver, railTransitPlanner, clock);
         this.departureReminderService = new DepartureReminderService(reminderScheduler, clock);
         this.clock = clock;
     }
@@ -146,31 +141,10 @@ public final class CommandLineApp {
     }
 
     private List<RouteAlternative> findAlternatives(PlanCommand plan) {
-        LocationResolution origin = locationResolver.resolve(plan.origin());
-        LocationResolution destination = locationResolver.resolve(plan.destination());
-        if (origin.isFound() && destination.isFound()) {
-            ui.println("OneMap resolved your locations:");
-            ui.println("- From: " + origin.location().orElseThrow().address());
-            ui.println("- To: " + destination.location().orElseThrow().address());
-            var liveRouteLookup = liveRailPlanningService.findAlignedRoutes(plan,
-                    origin.location().orElseThrow(), destination.location().orElseThrow());
-            if (liveRouteLookup.isAvailable() && !liveRouteLookup.routes().isEmpty()) {
-                ui.println("Live rail routes were aligned with your target arrival time.");
-                ui.println();
-                return liveRouteLookup.routes();
-            }
-            if (liveRouteLookup.isAvailable()) {
-                ui.println("OneMap returned no live rail routes; using deterministic routes.");
-            } else {
-                ui.println(liveRouteLookup.unavailableReason().orElseThrow()
-                        + " Using deterministic routes.");
-            }
-        } else {
-            String reason = origin.isFound() ? destination.reason() : origin.reason();
-            ui.println("Using deterministic routes: " + reason);
-        }
+        var result = planner.findAlternatives(plan);
+        result.messages().forEach(ui::println);
         ui.println();
-        return commutePlanningService.findAlternatives(plan);
+        return result.alternatives();
     }
 
     private void handleChoice(Integer routeNumber) {
