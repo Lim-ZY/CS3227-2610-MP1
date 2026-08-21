@@ -42,10 +42,10 @@ public final class JdkHttpRequester implements HttpRequester {
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
             return new HttpResult(response.statusCode(), response.body());
         } catch (IOException exception) {
-            throw new IllegalStateException("Could not reach the location service.", exception);
+            throw new IllegalStateException("Could not reach the external service.", exception);
         } catch (InterruptedException exception) {
             Thread.currentThread().interrupt();
-            throw new IllegalStateException("Location lookup was interrupted.", exception);
+            throw new IllegalStateException("External request was interrupted.", exception);
         }
     }
 }

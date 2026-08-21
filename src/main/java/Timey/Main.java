@@ -13,6 +13,7 @@ import Timey.application.CommutePlanningService;
 import Timey.command.PlanCommandParser;
 import Timey.config.ApplicationConfiguration;
 import Timey.infrastructure.http.JdkHttpRequester;
+import Timey.infrastructure.http.RetryingHttpRequester;
 import Timey.infrastructure.location.OneMapLocationResolver;
 import Timey.infrastructure.transit.MockTransitPlanner;
 import Timey.infrastructure.transit.OneMapRailTransitPlanner;
@@ -28,8 +29,10 @@ public final class Main {
         var input = new BufferedReader(new InputStreamReader(System.in, StandardCharsets.UTF_8));
         var output = new PrintWriter(System.out, true);
         var configuration = ApplicationConfiguration.loadDefault();
-        var locationResolver = new OneMapLocationResolver(new JdkHttpRequester(), configuration.oneMapAccessToken());
-        var railTransitPlanner = new OneMapRailTransitPlanner(new JdkHttpRequester(ROUTING_REQUEST_TIMEOUT),
+        var locationResolver = new OneMapLocationResolver(new RetryingHttpRequester(new JdkHttpRequester()),
+                configuration.oneMapAccessToken());
+        var railTransitPlanner = new OneMapRailTransitPlanner(
+                new RetryingHttpRequester(new JdkHttpRequester(ROUTING_REQUEST_TIMEOUT)),
                 configuration.oneMapAccessToken());
         var planner = new CommutePlanningService(new MockTransitPlanner());
         new CommandLineApp(input, output, new PlanCommandParser(), planner, locationResolver,
