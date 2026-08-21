@@ -9,6 +9,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 import Timey.application.CommutePlanningService;
+import Timey.application.DepartureReminderService;
 import Timey.application.LiveRailPlanningService;
 import Timey.command.PlanCommand;
 import Timey.command.PlanCommandParser;
@@ -21,11 +22,13 @@ import Timey.infrastructure.location.OneMapLocationResolver;
 import Timey.infrastructure.transit.MockTransitPlanner;
 import Timey.ports.LocationResolver;
 import Timey.ports.RailTransitPlanner;
+import Timey.ports.ReminderScheduler;
 
 /** Interactive command-line presentation for Timey. */
 public final class CommandLineApp {
     private static final String DIVIDER = "_______________________________________________________";
     private static final DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern("HH:mm");
+    private static final DateTimeFormatter REMINDER_TIME_FORMAT = DateTimeFormatter.ofPattern("uuuu-MM-dd HH:mm");
 
     private final BufferedReader input;
     private final PrintWriter output;
@@ -34,6 +37,7 @@ public final class CommandLineApp {
     private final LocationResolver locationResolver;
     private final RailTransitPlanner railTransitPlanner;
     private final LiveRailPlanningService liveRailPlanningService;
+    private final DepartureReminderService departureReminderService;
     private final Clock clock;
     private PlanCommand pendingPlan;
     private List<RouteAlternative> pendingAlternatives = List.of();
@@ -48,12 +52,19 @@ public final class CommandLineApp {
             CommutePlanningService commutePlanningService, LocationResolver locationResolver) {
         this(input, output, planCommandParser, commutePlanningService, locationResolver,
                 (origin, destination, date, time) -> LiveRouteLookup.available(List.of()),
-                Clock.systemDefaultZone());
+                Clock.systemDefaultZone(), (triggerAt, action) -> { });
     }
 
     public CommandLineApp(BufferedReader input, PrintWriter output, PlanCommandParser planCommandParser,
             CommutePlanningService commutePlanningService, LocationResolver locationResolver,
             RailTransitPlanner railTransitPlanner, Clock clock) {
+        this(input, output, planCommandParser, commutePlanningService, locationResolver, railTransitPlanner, clock,
+                (triggerAt, action) -> { });
+    }
+
+    public CommandLineApp(BufferedReader input, PrintWriter output, PlanCommandParser planCommandParser,
+            CommutePlanningService commutePlanningService, LocationResolver locationResolver,
+            RailTransitPlanner railTransitPlanner, Clock clock, ReminderScheduler reminderScheduler) {
         this.input = input;
         this.output = output;
         this.planCommandParser = planCommandParser;
@@ -61,6 +72,7 @@ public final class CommandLineApp {
         this.locationResolver = locationResolver;
         this.railTransitPlanner = railTransitPlanner;
         this.liveRailPlanningService = new LiveRailPlanningService(railTransitPlanner, clock);
+        this.departureReminderService = new DepartureReminderService(reminderScheduler, clock);
         this.clock = clock;
     }
 
@@ -187,9 +199,21 @@ public final class CommandLineApp {
             RouteAlternative route = pendingAlternatives.get(routeNumber - 1);
             DepartureRecommendation recommendation = commutePlanningService.recommendDeparture(pendingPlan, route);
             printRecommendation(recommendation);
+            scheduleReminder(recommendation);
         } catch (NumberFormatException exception) {
             output.println("Choose a route by number, for example: choose 1");
         }
+    }
+
+    private void scheduleReminder(DepartureRecommendation recommendation) {
+        var reminder = departureReminderService.schedule(recommendation, () -> {
+            output.println();
+            output.println("Timey reminder: Please leave your desk now.");
+            output.print("> ");
+            output.flush();
+        });
+        output.println("Departure reminder automatically set for "
+                + REMINDER_TIME_FORMAT.format(reminder.triggerAt().atZone(clock.getZone())) + ".");
     }
 
     private void printAlternatives(List<RouteAlternative> alternatives) {

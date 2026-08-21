@@ -15,6 +15,7 @@ import Timey.config.ApplicationConfiguration;
 import Timey.infrastructure.http.JdkHttpRequester;
 import Timey.infrastructure.http.RetryingHttpRequester;
 import Timey.infrastructure.location.OneMapLocationResolver;
+import Timey.infrastructure.notification.ScheduledExecutorReminderScheduler;
 import Timey.infrastructure.transit.MockTransitPlanner;
 import Timey.infrastructure.transit.OneMapRailTransitPlanner;
 
@@ -36,6 +37,6 @@ public final class Main {
                 configuration.oneMapAccessToken());
         var planner = new CommutePlanningService(new MockTransitPlanner());
         new CommandLineApp(input, output, new PlanCommandParser(), planner, locationResolver,
-                railTransitPlanner, Clock.system(ZoneId.of("Asia/Singapore"))).run();
+                railTransitPlanner, Clock.system(ZoneId.of("Asia/Singapore")), new ScheduledExecutorReminderScheduler()).run();
     }
 }

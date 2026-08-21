@@ -11,7 +11,7 @@ import Timey.domain.transit.RouteAlternative;
 
 class MockTransitPlannerTest {
     @Test
-    void returnsTwoStableRouteAlternatives() {
+    void findRoutes_supportedLocations_returnsStableAlternatives() {
         var planner = new MockTransitPlanner();
 
         List<RouteAlternative> routes = planner.findRoutes("COM3", "VivoCity");

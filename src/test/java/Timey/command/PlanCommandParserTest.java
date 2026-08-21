@@ -12,7 +12,7 @@ class PlanCommandParserTest {
     private final PlanCommandParser parser = new PlanCommandParser();
 
     @Test
-    void parsesCompletePlanCommand() {
+    void parse_completeCommand_planCreated() {
         PlanCommand result = parser.parse("plan /from \"COM3\" /to \"VivoCity\" /by 1830 /buf 10m");
 
         assertEquals("COM3", result.origin());
@@ -22,21 +22,21 @@ class PlanCommandParserTest {
     }
 
     @Test
-    void usesDefaultBufferWhenItIsOmitted() {
+    void parse_bufferOmitted_defaultBufferUsed() {
         PlanCommand result = parser.parse("plan /from \"COM3\" /to \"VivoCity\" /by 1830");
 
         assertEquals(Duration.ofMinutes(10), result.buffer());
     }
 
     @Test
-    void acceptsTheZeroBufferBoundary() {
+    void parse_zeroBuffer_zeroBufferAccepted() {
         PlanCommand result = parser.parse("plan /from \"COM3\" /to \"VivoCity\" /by 1830 /buf 0m");
 
         assertEquals(Duration.ZERO, result.buffer());
     }
 
     @Test
-    void rejectsInvalidArrivalTime() {
+    void parse_invalidArrivalTime_validationErrorThrown() {
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
                 () -> parser.parse("plan /from \"COM3\" /to \"VivoCity\" /by 2960"));
 
@@ -44,7 +44,7 @@ class PlanCommandParserTest {
     }
 
     @Test
-    void rejectsMalformedArrivalAndBufferValues() {
+    void parse_malformedArrivalOrBuffer_validationErrorThrown() {
         assertEquals("Arrival time must use 24-hour HHmm format, for example 1830.", assertThrows(IllegalArgumentException.class,
                 () -> parser.parse("plan /from \"COM3\" /to \"VivoCity\" /by 18:30")).getMessage());
         assertEquals("Buffer must be a whole number of minutes, for example 10m.", assertThrows(IllegalArgumentException.class,
@@ -54,7 +54,7 @@ class PlanCommandParserTest {
     }
 
     @Test
-    void rejectsMissingDestination() {
+    void parse_destinationMissing_validationErrorThrown() {
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
                 () -> parser.parse("plan /from \"COM3\" /by 1830"));
 
@@ -62,7 +62,7 @@ class PlanCommandParserTest {
     }
 
     @Test
-    void rejectsDuplicateOptionsAndUnterminatedQuotedLocations() {
+    void parse_duplicateOptionOrUnterminatedLocation_validationErrorThrown() {
         assertEquals("Option /from was provided more than once.", assertThrows(IllegalArgumentException.class,
                 () -> parser.parse("plan /from \"COM3\" /from \"Home\" /to \"VivoCity\" /by 1830")).getMessage());
         assertEquals("Could not understand part of the plan command.", assertThrows(IllegalArgumentException.class,
@@ -70,7 +70,7 @@ class PlanCommandParserTest {
     }
 
     @Test
-    void rejectsOversizedBuffersAsAValidationError() {
+    void parse_oversizedBuffer_validationErrorThrown() {
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
                 () -> parser.parse("plan /from \"COM3\" /to \"VivoCity\" /by 1830 /buf 999999999999999999999999999m"));
 

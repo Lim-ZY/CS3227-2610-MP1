@@ -27,7 +27,7 @@ class LiveRailPlanningServiceTest {
             ZoneId.of("Asia/Singapore"));
 
     @Test
-    void refreshesRoutesAtTheCalculatedLeaveByTime() {
+    void findAlignedRoutes_availableProbe_refreshesAtCalculatedLeaveByTime() {
         List<String> requestedTimes = new ArrayList<>();
         RailTransitPlanner planner = (origin, destination, date, time) -> {
             requestedTimes.add(date + " " + time);
@@ -44,7 +44,7 @@ class LiveRailPlanningServiceTest {
     }
 
     @Test
-    void usesTomorrowWhenTheTargetTimeHasAlreadyPassedToday() {
+    void findAlignedRoutes_targetTimePassed_usesTomorrow() {
         List<LocalDate> requestedDates = new ArrayList<>();
         RailTransitPlanner planner = (origin, destination, date, time) -> {
             requestedDates.add(date);
@@ -59,7 +59,7 @@ class LiveRailPlanningServiceTest {
     }
 
     @Test
-    void usesTomorrowWhenTheTargetTimeIsExactlyNow() {
+    void findAlignedRoutes_targetTimeEqualsNow_usesTomorrow() {
         List<LocalDate> requestedDates = new ArrayList<>();
         RailTransitPlanner planner = (origin, destination, date, time) -> {
             requestedDates.add(date);
@@ -74,7 +74,7 @@ class LiveRailPlanningServiceTest {
     }
 
     @Test
-    void stopsAfterTheProbeWhenNoRouteIsAvailable() {
+    void findAlignedRoutes_probeReturnsNoRoutes_stopsAfterProbe() {
         List<LocalTime> requestedTimes = new ArrayList<>();
         RailTransitPlanner planner = (origin, destination, date, time) -> {
             requestedTimes.add(time);
@@ -91,7 +91,7 @@ class LiveRailPlanningServiceTest {
     }
 
     @Test
-    void refreshesOnThePreviousDateWhenTheCalculatedDepartureCrossesMidnight() {
+    void findAlignedRoutes_departureCrossesMidnight_refreshesOnPreviousDate() {
         List<String> requestedTimes = new ArrayList<>();
         RailTransitPlanner planner = (origin, destination, date, time) -> {
             requestedTimes.add(date + " " + time);

@@ -58,7 +58,57 @@ class OneMapRailTransitPlannerTest {
     }
 
     @Test
-    void findRoutes_incompleteItineraryFallsBackWithoutExposingAnException() {
+    void findRoutes_nonSuccessResponse_returnsProviderFailureReason() {
+        var planner = new OneMapRailTransitPlanner((uri, authorization) -> new HttpResult(503, "{}"),
+                Optional.of("access-token"));
+
+        var lookup = planner.findRoutes(COM3, VIVOCITY, LocalDate.of(2026, 8, 21), LocalTime.NOON);
+
+        assertTrue(!lookup.isAvailable());
+        assertEquals("OneMap routing failed (HTTP 503).", lookup.unavailableReason().orElseThrow());
+    }
+
+    @Test
+    void findRoutes_requestFails_returnsTemporaryUnavailableReason() {
+        var planner = new OneMapRailTransitPlanner((uri, authorization) -> {
+            throw new IllegalStateException("Connection timed out");
+        }, Optional.of("access-token"));
+
+        var lookup = planner.findRoutes(COM3, VIVOCITY, LocalDate.of(2026, 8, 21), LocalTime.NOON);
+
+        assertTrue(!lookup.isAvailable());
+        assertEquals("OneMap routing timed out or is temporarily unavailable.",
+                lookup.unavailableReason().orElseThrow());
+    }
+
+    @Test
+    void findRoutes_malformedJson_returnsUnreadableResponseReason() {
+        var planner = new OneMapRailTransitPlanner((uri, authorization) -> new HttpResult(200, "not-json"),
+                Optional.of("access-token"));
+
+        var lookup = planner.findRoutes(COM3, VIVOCITY, LocalDate.of(2026, 8, 21), LocalTime.NOON);
+
+        assertTrue(!lookup.isAvailable());
+        assertEquals("OneMap routing returned an unreadable response.", lookup.unavailableReason().orElseThrow());
+    }
+
+    @Test
+    void findRoutes_railLegUsesRouteField_mapsItemisedRailStep() {
+        var planner = new OneMapRailTransitPlanner((uri, authorization) -> new HttpResult(200, """
+                {"plan":{"itineraries":[{"walkTime":0,"transitTime":1800,"transfers":0,
+                "legs":[{"mode":"SUBWAY","duration":1800,"route":"Circle Line",
+                "from":{"name":"Kent Ridge MRT"},"to":{"name":"HarbourFront MRT"}}]}]}}"""),
+                Optional.of("access-token"));
+
+        var lookup = planner.findRoutes(COM3, VIVOCITY, LocalDate.of(2026, 8, 21), LocalTime.NOON);
+
+        assertTrue(lookup.isAvailable());
+        assertEquals("Take Circle Line from Kent Ridge MRT to HarbourFront MRT",
+                lookup.routes().getFirst().steps().getFirst().description());
+    }
+
+    @Test
+    void findRoutes_incompleteItinerary_returnsFallbackWithoutException() {
         var planner = new OneMapRailTransitPlanner((uri, authorization) -> new HttpResult(200,
                 "{\"plan\":{\"itineraries\":[{\"walkTime\":600,\"transfers\":0}]}}"), Optional.of("access-token"));
 

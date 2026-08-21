@@ -15,7 +15,7 @@ import Timey.ports.TransitPlanner;
 
 class CommutePlanningServiceTest {
     @Test
-    void delegatesRouteLookupUsingPlanLocations() {
+    void findAlternatives_validPlan_delegatesPlanLocations() {
         RouteAlternative expectedRoute = new RouteAlternative(
                 "Test route", Duration.ofMinutes(1), Duration.ofMinutes(2), 0);
         TransitPlanner transitPlanner = (origin, destination) -> {
@@ -30,7 +30,7 @@ class CommutePlanningServiceTest {
     }
 
     @Test
-    void calculatesDepartureForTheSelectedRoute() {
+    void recommendDeparture_selectedRoute_returnsDepartureRecommendation() {
         var service = new CommutePlanningService((origin, destination) -> List.of());
         var plan = new PlanCommand("COM3", "VivoCity", LocalTime.of(18, 30), Duration.ofMinutes(10));
         var route = new RouteAlternative("Fastest Transit", Duration.ofMinutes(8), Duration.ofMinutes(35), 1);

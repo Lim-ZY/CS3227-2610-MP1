@@ -14,7 +14,7 @@ class DepartureCalculatorTest {
     private final DepartureCalculator calculator = new DepartureCalculator();
 
     @Test
-    void subtractsTravelTimeAndBufferFromArrivalTime() {
+    void calculate_travelTimeAndBuffer_returnsDepartureTime() {
         PlanCommand plan = new PlanCommand("COM3", "VivoCity", LocalTime.of(18, 30), Duration.ofMinutes(10));
         RouteAlternative route = new RouteAlternative(
                 "Fastest Transit", Duration.ofMinutes(8), Duration.ofMinutes(35), 1);
@@ -27,7 +27,7 @@ class DepartureCalculatorTest {
     }
 
     @Test
-    void wrapsToPreviousDayWhenRequired() {
+    void calculate_departureBeforeMidnight_returnsPreviousDayTime() {
         PlanCommand plan = new PlanCommand("COM3", "VivoCity", LocalTime.of(0, 30), Duration.ofMinutes(10));
         RouteAlternative route = new RouteAlternative(
                 "Late route", Duration.ofMinutes(15), Duration.ofMinutes(20), 0);

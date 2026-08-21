@@ -15,7 +15,16 @@ class RetryingHttpRequesterTest {
     private static final URI URI = java.net.URI.create("https://example.test/routes");
 
     @Test
-    void retriesRateLimitsAndServerErrorsBeforeReturningASuccess() {
+    void constructor_negativeRetryLimit_validationErrorThrown() {
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> new RetryingHttpRequester((uri, authorization) -> new HttpResult(200, "ok"), -1,
+                        duration -> { }));
+
+        assertEquals("Maximum retries must not be negative.", exception.getMessage());
+    }
+
+    @Test
+    void get_transientHttpFailures_thenSuccessRetriesAndReturnsSuccess() {
         var calls = new AtomicInteger();
         List<Duration> delays = new ArrayList<>();
         HttpRequester requester = (uri, authorization) -> switch (calls.getAndIncrement()) {
@@ -33,7 +42,7 @@ class RetryingHttpRequesterTest {
     }
 
     @Test
-    void doesNotRetryPermanentClientErrors() {
+    void get_permanentClientError_returnsWithoutRetrying() {
         var calls = new AtomicInteger();
         var retryingRequester = new RetryingHttpRequester((uri, authorization) -> {
             calls.incrementAndGet();
@@ -49,7 +58,7 @@ class RetryingHttpRequesterTest {
     }
 
     @Test
-    void retriesConnectionFailuresOnlyUpToTheConfiguredLimit() {
+    void get_connectionFailure_retriesOnlyToConfiguredLimit() {
         var calls = new AtomicInteger();
         var retryingRequester = new RetryingHttpRequester((uri, authorization) -> {
             calls.incrementAndGet();
@@ -61,7 +70,7 @@ class RetryingHttpRequesterTest {
     }
 
     @Test
-    void stopsAfterTheRetryLimitAndReturnsTheLastServerResponse() {
+    void get_persistentServerError_returnsFinalServerResponse() {
         var calls = new AtomicInteger();
         var retryingRequester = new RetryingHttpRequester((uri, authorization) -> {
             calls.incrementAndGet();

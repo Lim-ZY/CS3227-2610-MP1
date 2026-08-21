@@ -12,7 +12,7 @@ import Timey.infrastructure.http.HttpResult;
 
 class OneMapLocationResolverTest {
     @Test
-    void returnsTheFirstLocationFromASuccessfulOneMapResponse() {
+    void resolve_successfulOneMapResponse_returnsFirstLocation() {
         var resolver = new OneMapLocationResolver((uri, authorization) -> {
             assertTrue(uri.toString().contains("searchVal=VivoCity"));
             assertEquals("access-token", authorization);
@@ -29,7 +29,7 @@ class OneMapLocationResolverTest {
     }
 
     @Test
-    void avoidsNetworkAccessWhenNoTokenIsConfigured() {
+    void resolve_tokenMissing_doesNotAccessNetwork() {
         var resolver = new OneMapLocationResolver((uri, authorization) -> {
             throw new AssertionError("No request should be made without a token.");
         }, Optional.empty());
@@ -41,7 +41,30 @@ class OneMapLocationResolverTest {
     }
 
     @Test
-    void turnsProviderFailuresIntoAnActionableFallbackReason() {
+    void resolve_blankQuery_doesNotAccessNetwork() {
+        var resolver = new OneMapLocationResolver((uri, authorization) -> {
+            throw new AssertionError("No request should be made for a blank query.");
+        }, Optional.of("access-token"));
+
+        var result = resolver.resolve("  ");
+
+        assertFalse(result.isFound());
+        assertEquals("A location is required for online lookup.", result.reason());
+    }
+
+    @Test
+    void resolve_incompleteProviderResponse_returnsNotFoundReason() {
+        var resolver = new OneMapLocationResolver((uri, authorization) -> new HttpResult(200,
+                "{\"results\":[{\"SEARCHVAL\":\"COM3\"}]}"), Optional.of("access-token"));
+
+        var result = resolver.resolve("COM3");
+
+        assertFalse(result.isFound());
+        assertEquals("OneMap could not find \"COM3\".", result.reason());
+    }
+
+    @Test
+    void resolve_providerFailure_returnsFallbackReason() {
         var resolver = new OneMapLocationResolver((uri, authorization) -> new HttpResult(429, "{}"),
                 Optional.of("access-token"));
 
@@ -49,5 +72,17 @@ class OneMapLocationResolverTest {
 
         assertFalse(result.isFound());
         assertEquals("OneMap lookup is temporarily unavailable (HTTP 429).", result.reason());
+    }
+
+    @Test
+    void resolve_requestFailure_returnsTemporaryUnavailableReason() {
+        var resolver = new OneMapLocationResolver((uri, authorization) -> {
+            throw new IllegalStateException("Connection timed out");
+        }, Optional.of("access-token"));
+
+        var result = resolver.resolve("COM3");
+
+        assertFalse(result.isFound());
+        assertEquals("OneMap lookup is temporarily unavailable.", result.reason());
     }
 }

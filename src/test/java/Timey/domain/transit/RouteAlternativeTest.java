@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test;
 
 class RouteAlternativeTest {
     @Test
-    void calculatesTotalDurationFromWalkingAndTransitLegs() {
+    void totalDuration_walkingAndTransitLegs_returnsCombinedDuration() {
         RouteAlternative route = new RouteAlternative(
                 "Fastest Transit", Duration.ofMinutes(8), Duration.ofMinutes(35), 1);
 
@@ -17,7 +17,7 @@ class RouteAlternativeTest {
     }
 
     @Test
-    void retainsAnImmutableItemisedRouteBreakdown() {
+    void steps_sourceListMutated_returnsImmutableRouteBreakdown() {
         var steps = new java.util.ArrayList<>(List.of(
                 new RouteStep(RouteStepMode.WALK, "COM3", "Kent Ridge MRT", "walking", Duration.ofMinutes(6))));
         var route = new RouteAlternative("Rail route", Duration.ofMinutes(6), Duration.ofMinutes(30), 0, steps);

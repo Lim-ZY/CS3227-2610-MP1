@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test;
 
 class ApplicationConfigurationTest {
     @Test
-    void readsOneMapTokenFromALocalPropertiesFile() throws Exception {
+    void load_localTokenProperty_tokenReturned() throws Exception {
         var propertiesFile = Files.createTempFile("timey", ".properties");
         try {
             Files.writeString(propertiesFile, "onemap.access-token= local-token ");
@@ -23,7 +23,7 @@ class ApplicationConfigurationTest {
     }
 
     @Test
-    void permitsAnAbsentLocalPropertiesFile() {
+    void load_propertiesFileAbsent_configurationReturned() {
         assertDoesNotThrow(() -> ApplicationConfiguration.load(java.nio.file.Path.of("build", "missing.properties")));
     }
 }
