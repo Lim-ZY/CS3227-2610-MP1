@@ -84,7 +84,7 @@ class CommandLineAppTest {
 
         app.run();
 
-        assertTrue(outputText.toString().contains("Live rail routes were requested using the current Singapore time."));
+        assertTrue(outputText.toString().contains("Live rail routes were aligned with your target arrival time."));
         assertTrue(outputText.toString().contains("1. Live rail route 1 — 36 minutes total"));
         assertTrue(outputText.toString().contains("2. Live rail route 2 — 39 minutes total"));
         assertTrue(outputText.toString().contains("- Walk from COM3 to Kent Ridge MRT (6 minutes)"));

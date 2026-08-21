@@ -9,6 +9,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 import Timey.application.CommutePlanningService;
+import Timey.application.LiveRailPlanningService;
 import Timey.command.PlanCommand;
 import Timey.command.PlanCommandParser;
 import Timey.domain.alert.DepartureRecommendation;
@@ -32,6 +33,7 @@ public final class CommandLineApp {
     private final CommutePlanningService commutePlanningService;
     private final LocationResolver locationResolver;
     private final RailTransitPlanner railTransitPlanner;
+    private final LiveRailPlanningService liveRailPlanningService;
     private final Clock clock;
     private PlanCommand pendingPlan;
     private List<RouteAlternative> pendingAlternatives = List.of();
@@ -58,6 +60,7 @@ public final class CommandLineApp {
         this.commutePlanningService = commutePlanningService;
         this.locationResolver = locationResolver;
         this.railTransitPlanner = railTransitPlanner;
+        this.liveRailPlanningService = new LiveRailPlanningService(railTransitPlanner, clock);
         this.clock = clock;
     }
 
@@ -144,11 +147,10 @@ public final class CommandLineApp {
             output.println("OneMap resolved your locations:");
             output.println("- From: " + origin.location().orElseThrow().address());
             output.println("- To: " + destination.location().orElseThrow().address());
-            var liveRouteLookup = railTransitPlanner.findRoutes(
-                    origin.location().orElseThrow(), destination.location().orElseThrow(),
-                    java.time.LocalDate.now(clock), java.time.LocalTime.now(clock));
+            var liveRouteLookup = liveRailPlanningService.findAlignedRoutes(plan,
+                    origin.location().orElseThrow(), destination.location().orElseThrow());
             if (liveRouteLookup.isAvailable() && !liveRouteLookup.routes().isEmpty()) {
-                output.println("Live rail routes were requested using the current Singapore time.");
+                output.println("Live rail routes were aligned with your target arrival time.");
                 output.println();
                 return liveRouteLookup.routes();
             }
