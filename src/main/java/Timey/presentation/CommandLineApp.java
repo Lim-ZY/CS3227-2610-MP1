@@ -53,14 +53,14 @@ public final class CommandLineApp {
             CommutePlanningService commutePlanningService, LocationResolver locationResolver) {
         this(input, output, planCommandParser, commutePlanningService, locationResolver,
                 (origin, destination, date, time) -> LiveRouteLookup.available(List.of()),
-                Clock.systemDefaultZone(), (triggerAt, action) -> { });
+                Clock.systemDefaultZone(), (triggerAt, action) -> () -> { });
     }
 
     public CommandLineApp(BufferedReader input, PrintWriter output, PlanCommandParser planCommandParser,
             CommutePlanningService commutePlanningService, LocationResolver locationResolver,
             RailTransitPlanner railTransitPlanner, Clock clock) {
         this(input, output, planCommandParser, commutePlanningService, locationResolver, railTransitPlanner, clock,
-                (triggerAt, action) -> { });
+                (triggerAt, action) -> () -> { });
     }
 
     public CommandLineApp(BufferedReader input, PrintWriter output, PlanCommandParser planCommandParser,
@@ -131,6 +131,10 @@ public final class CommandLineApp {
         }
         if (command.equalsIgnoreCase("reminders")) {
             printReminders();
+            return;
+        }
+        if (command.startsWith("cancel")) {
+            handleCancellation(command);
             return;
         }
         output.println("I did not understand that. Try: plan /from \"COM3\" /to \"VivoCity\" /by 1830 /buf 10m");
@@ -228,9 +232,28 @@ public final class CommandLineApp {
             return;
         }
         output.println("Active departure reminders:");
-        for (var reminder : reminders) {
-            output.println("- " + REMINDER_TIME_FORMAT.format(reminder.triggerAt().atZone(clock.getZone()))
+        for (int index = 0; index < reminders.size(); index++) {
+            var reminder = reminders.get(index);
+            output.println((index + 1) + ". " + REMINDER_TIME_FORMAT.format(reminder.triggerAt().atZone(clock.getZone()))
                     + " — " + reminder.message());
+        }
+    }
+
+    private void handleCancellation(String command) {
+        String[] parts = command.split("\\s+");
+        if (parts.length != 2) {
+            output.println("Cancel a reminder by number, for example: cancel 1");
+            return;
+        }
+        try {
+            int reminderNumber = Integer.parseInt(parts[1]);
+            if (departureReminderService.cancel(reminderNumber)) {
+                output.println("Cancelled departure reminder " + reminderNumber + ".");
+            } else {
+                output.println("No active departure reminder numbered " + reminderNumber + ".");
+            }
+        } catch (NumberFormatException exception) {
+            output.println("Cancel a reminder by number, for example: cancel 1");
         }
     }
 

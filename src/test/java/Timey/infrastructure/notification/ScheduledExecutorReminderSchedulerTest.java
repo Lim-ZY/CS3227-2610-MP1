@@ -37,6 +37,20 @@ class ScheduledExecutorReminderSchedulerTest {
         assertEquals(1, notifications.get());
     }
 
+    @Test
+    void schedule_cancelledBeforeTrigger_doesNotRunNotification() {
+        var clock = new MutableClock(Instant.parse("2026-08-21T09:00:00Z"), ZoneId.of("Asia/Singapore"));
+        var executor = new CapturingScheduledExecutor();
+        var scheduler = new ScheduledExecutorReminderScheduler(executor, clock);
+        var notifications = new AtomicInteger();
+
+        var reminder = scheduler.schedule(Instant.parse("2026-08-21T09:00:01Z"), notifications::incrementAndGet);
+        reminder.cancel();
+        executor.runScheduledAction();
+
+        assertEquals(0, notifications.get());
+    }
+
     private static final class MutableClock extends Clock {
         private Instant instant;
         private final ZoneId zone;

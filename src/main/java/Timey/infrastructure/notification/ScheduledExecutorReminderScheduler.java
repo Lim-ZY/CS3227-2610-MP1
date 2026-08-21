@@ -8,7 +8,11 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
+import Timey.ports.ReminderHandle;
 import Timey.ports.ReminderScheduler;
 
 /** Schedules local reminder actions on a daemon thread so the CLI can exit normally. */
@@ -26,16 +30,35 @@ public final class ScheduledExecutorReminderScheduler implements ReminderSchedul
     }
 
     @Override
-    public void schedule(Instant triggerAt, Runnable action) {
+    public ReminderHandle schedule(Instant triggerAt, Runnable action) {
         Objects.requireNonNull(triggerAt);
         Objects.requireNonNull(action);
-        Duration delay = Duration.between(Instant.now(clock), triggerAt);
-        executor.schedule(() -> runWhenDue(triggerAt, action), nonNegativeNanos(delay), TimeUnit.NANOSECONDS);
+        var cancelled = new AtomicBoolean();
+        var scheduledTask = new AtomicReference<ScheduledFuture<?>>();
+        scheduleAction(triggerAt, action, cancelled, scheduledTask);
+        return () -> {
+            cancelled.set(true);
+            var task = scheduledTask.get();
+            if (task != null) {
+                task.cancel(false);
+            }
+        };
     }
 
-    private void runWhenDue(Instant triggerAt, Runnable action) {
+    private void scheduleAction(Instant triggerAt, Runnable action, AtomicBoolean cancelled,
+            AtomicReference<ScheduledFuture<?>> scheduledTask) {
+        Duration delay = Duration.between(Instant.now(clock), triggerAt);
+        scheduledTask.set(executor.schedule(() -> runWhenDue(triggerAt, action, cancelled, scheduledTask),
+                nonNegativeNanos(delay), TimeUnit.NANOSECONDS));
+    }
+
+    private void runWhenDue(Instant triggerAt, Runnable action, AtomicBoolean cancelled,
+            AtomicReference<ScheduledFuture<?>> scheduledTask) {
+        if (cancelled.get()) {
+            return;
+        }
         if (Instant.now(clock).isBefore(triggerAt)) {
-            schedule(triggerAt, action);
+            scheduleAction(triggerAt, action, cancelled, scheduledTask);
             return;
         }
         action.run();
