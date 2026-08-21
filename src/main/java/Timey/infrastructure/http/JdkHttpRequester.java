@@ -9,21 +9,32 @@ import java.time.Duration;
 
 /** HTTP implementation using the JDK client with a bounded request timeout. */
 public final class JdkHttpRequester implements HttpRequester {
-    private static final Duration REQUEST_TIMEOUT = Duration.ofSeconds(3);
+    private static final Duration DEFAULT_REQUEST_TIMEOUT = Duration.ofSeconds(3);
     private final HttpClient client;
+    private final Duration requestTimeout;
 
     public JdkHttpRequester() {
-        this(HttpClient.newBuilder().connectTimeout(REQUEST_TIMEOUT).build());
+        this(DEFAULT_REQUEST_TIMEOUT);
+    }
+
+    /** Creates a requester with the supplied connection and request timeout. */
+    public JdkHttpRequester(Duration requestTimeout) {
+        if (requestTimeout.isZero() || requestTimeout.isNegative()) {
+            throw new IllegalArgumentException("Request timeout must be positive.");
+        }
+        this.requestTimeout = requestTimeout;
+        this.client = HttpClient.newBuilder().connectTimeout(requestTimeout).build();
     }
 
     JdkHttpRequester(HttpClient client) {
         this.client = client;
+        this.requestTimeout = DEFAULT_REQUEST_TIMEOUT;
     }
 
     @Override
     public HttpResult get(URI uri, String authorization) {
         HttpRequest request = HttpRequest.newBuilder(uri)
-                .timeout(REQUEST_TIMEOUT)
+                .timeout(requestTimeout)
                 .header("Authorization", authorization)
                 .GET()
                 .build();

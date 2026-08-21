@@ -13,6 +13,7 @@ import Timey.command.PlanCommand;
 import Timey.command.PlanCommandParser;
 import Timey.domain.alert.DepartureRecommendation;
 import Timey.domain.location.LocationResolution;
+import Timey.domain.transit.LiveRouteLookup;
 import Timey.domain.transit.RouteAlternative;
 import Timey.infrastructure.http.HttpResult;
 import Timey.infrastructure.location.OneMapLocationResolver;
@@ -37,13 +38,15 @@ public final class CommandLineApp {
 
     public CommandLineApp(BufferedReader input, PrintWriter output) {
         this(input, output, new PlanCommandParser(), new CommutePlanningService(new MockTransitPlanner()),
-                new OneMapLocationResolver((uri, authorization) -> new HttpResult(503, ""), java.util.Optional.empty()));
+                new OneMapLocationResolver((uri, authorization) -> new HttpResult(503, ""),
+                        java.util.Optional.empty()));
     }
 
     public CommandLineApp(BufferedReader input, PrintWriter output, PlanCommandParser planCommandParser,
             CommutePlanningService commutePlanningService, LocationResolver locationResolver) {
         this(input, output, planCommandParser, commutePlanningService, locationResolver,
-                (origin, destination, date, time) -> List.of(), Clock.systemDefaultZone());
+                (origin, destination, date, time) -> LiveRouteLookup.available(List.of()),
+                Clock.systemDefaultZone());
     }
 
     public CommandLineApp(BufferedReader input, PrintWriter output, PlanCommandParser planCommandParser,
@@ -141,16 +144,23 @@ public final class CommandLineApp {
             output.println("OneMap resolved your locations:");
             output.println("- From: " + origin.location().orElseThrow().address());
             output.println("- To: " + destination.location().orElseThrow().address());
-            List<RouteAlternative> liveRoutes = railTransitPlanner.findRoutes(origin.location().orElseThrow(),
-                    destination.location().orElseThrow(), java.time.LocalDate.now(clock), java.time.LocalTime.now(clock));
-            if (!liveRoutes.isEmpty()) {
+            var liveRouteLookup = railTransitPlanner.findRoutes(
+                    origin.location().orElseThrow(), destination.location().orElseThrow(),
+                    java.time.LocalDate.now(clock), java.time.LocalTime.now(clock));
+            if (liveRouteLookup.isAvailable() && !liveRouteLookup.routes().isEmpty()) {
                 output.println("Live rail routes were requested using the current Singapore time.");
                 output.println();
-                return liveRoutes;
+                return liveRouteLookup.routes();
             }
-            output.println("Live rail routes are unavailable; using deterministic routes.");
+            if (liveRouteLookup.isAvailable()) {
+                output.println("OneMap returned no live rail routes; using deterministic routes.");
+            } else {
+                output.println(liveRouteLookup.unavailableReason().orElseThrow()
+                        + " Using deterministic routes.");
+            }
         } else {
-            output.println("Using deterministic routes: " + (origin.isFound() ? destination.reason() : origin.reason()));
+            String reason = origin.isFound() ? destination.reason() : origin.reason();
+            output.println("Using deterministic routes: " + reason);
         }
         output.println();
         return commutePlanningService.findAlternatives(plan);

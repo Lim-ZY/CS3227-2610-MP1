@@ -17,7 +17,7 @@ class OneMapRailTransitPlannerTest {
     private static final ResolvedLocation VIVOCITY = new ResolvedLocation("VivoCity", "VivoCity", 1.264, 103.822);
 
     @Test
-    void requestsRailPublicTransportAndMapsReturnedItineraries() {
+    void findRoutes_validItineraries_mapsEveryItinerary() {
         var planner = new OneMapRailTransitPlanner((uri, authorization) -> {
             assertTrue(uri.toString().contains("routeType=pt&mode=rail"));
             assertTrue(uri.toString().contains("numItineraries=3"));
@@ -27,20 +27,27 @@ class OneMapRailTransitPlannerTest {
                     {"duration":2700,"walkTime":900,"transitTime":1800,"transfers":0}]}}""");
         }, Optional.of("access-token"));
 
-        var routes = planner.findRoutes(COM3, VIVOCITY, LocalDate.of(2026, 8, 21), LocalTime.of(9, 30));
+        var lookup = planner.findRoutes(COM3, VIVOCITY, LocalDate.of(2026, 8, 21), LocalTime.of(9, 30));
+        var routes = lookup.routes();
 
+        assertTrue(lookup.isAvailable());
         assertEquals(2, routes.size());
         assertEquals("Live rail route 1", routes.getFirst().name());
         assertEquals(40, routes.getFirst().totalDuration().toMinutes());
         assertEquals(1, routes.getFirst().transferCount());
+        assertEquals("Live rail route 2", routes.get(1).name());
+        assertEquals(45, routes.get(1).totalDuration().toMinutes());
     }
 
     @Test
-    void returnsNoRoutesWithoutAToken() {
+    void findRoutes_missingToken_returnsConfigurationReason() {
         var planner = new OneMapRailTransitPlanner((uri, authorization) -> {
             throw new AssertionError("No request should be made without a token.");
         }, Optional.empty());
 
-        assertTrue(planner.findRoutes(COM3, VIVOCITY, LocalDate.now(), LocalTime.NOON).isEmpty());
+        var lookup = planner.findRoutes(COM3, VIVOCITY, LocalDate.now(), LocalTime.NOON);
+
+        assertTrue(!lookup.isAvailable());
+        assertEquals("OneMap routing is not configured.", lookup.unavailableReason().orElseThrow());
     }
 }

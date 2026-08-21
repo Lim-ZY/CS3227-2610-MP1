@@ -8,10 +8,13 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import Timey.domain.location.ResolvedLocation;
+import Timey.domain.transit.LiveRouteLookup;
 import Timey.domain.transit.RouteAlternative;
 import Timey.infrastructure.http.HttpRequester;
 import Timey.ports.RailTransitPlanner;
@@ -21,10 +24,7 @@ public final class OneMapRailTransitPlanner implements RailTransitPlanner {
     private static final String ROUTING_ENDPOINT = "https://www.onemap.gov.sg/api/public/routingsvc/route";
     private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("MM-dd-uuuu");
     private static final DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern("HH:mm:ss");
-    private static final Pattern DURATION = Pattern.compile("\\\"duration\\\"\\s*:\\s*(\\d+)");
-    private static final Pattern WALK_TIME = Pattern.compile("\\\"walkTime\\\"\\s*:\\s*(\\d+)");
-    private static final Pattern TRANSIT_TIME = Pattern.compile("\\\"transitTime\\\"\\s*:\\s*(\\d+)");
-    private static final Pattern TRANSFERS = Pattern.compile("\\\"transfers\\\"\\s*:\\s*(\\d+)");
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     private final HttpRequester httpRequester;
     private final Optional<String> accessToken;
@@ -35,17 +35,20 @@ public final class OneMapRailTransitPlanner implements RailTransitPlanner {
     }
 
     @Override
-    public List<RouteAlternative> findRoutes(ResolvedLocation origin, ResolvedLocation destination,
+    public LiveRouteLookup findRoutes(ResolvedLocation origin, ResolvedLocation destination,
             LocalDate departureDate, LocalTime departureTime) {
         if (accessToken.isEmpty()) {
-            return List.of();
+            return LiveRouteLookup.unavailable("OneMap routing is not configured.");
         }
         try {
             var response = httpRequester.get(routeUri(origin, destination, departureDate, departureTime),
                     accessToken.orElseThrow());
-            return response.statusCode() == 200 ? parseItineraries(response.body()) : List.of();
+            if (response.statusCode() != 200) {
+                return LiveRouteLookup.unavailable("OneMap routing failed (HTTP " + response.statusCode() + ").");
+            }
+            return parseItineraries(response.body());
         } catch (IllegalStateException exception) {
-            return List.of();
+            return LiveRouteLookup.unavailable("OneMap routing timed out or is temporarily unavailable.");
         }
     }
 
@@ -58,48 +61,44 @@ public final class OneMapRailTransitPlanner implements RailTransitPlanner {
                 + "&time=" + TIME_FORMAT.format(departureTime) + "&numItineraries=3");
     }
 
-    private List<RouteAlternative> parseItineraries(String body) {
-        List<RouteAlternative> routes = new ArrayList<>();
-        for (String itinerary : itineraryObjects(body)) {
-            Optional<Long> duration = number(DURATION, itinerary);
-            Optional<Long> walkTime = number(WALK_TIME, itinerary);
-            Optional<Long> transitTime = number(TRANSIT_TIME, itinerary);
-            Optional<Long> transfers = number(TRANSFERS, itinerary);
-            if (duration.isPresent() && walkTime.isPresent() && transitTime.isPresent() && transfers.isPresent()) {
-                routes.add(new RouteAlternative("Live rail route " + (routes.size() + 1),
-                        Duration.ofSeconds(walkTime.orElseThrow()), Duration.ofSeconds(transitTime.orElseThrow()),
-                        Math.toIntExact(transfers.orElseThrow())));
+    /** Parses every itinerary in OneMap's response instead of relying on partial text matching. */
+    private LiveRouteLookup parseItineraries(String body) {
+        try {
+            JsonNode itineraries = OBJECT_MAPPER.readTree(body).path("plan").path("itineraries");
+            if (!itineraries.isArray()) {
+                return LiveRouteLookup.unavailable("OneMap routing returned an invalid response.");
             }
-        }
-        return routes;
-    }
 
-    private List<String> itineraryObjects(String body) {
-        int arrayStart = body.indexOf("\"itineraries\"");
-        if (arrayStart < 0) {
-            return List.of();
-        }
-        List<String> objects = new ArrayList<>();
-        int depth = 0;
-        int objectStart = -1;
-        for (int index = body.indexOf('[', arrayStart); index >= 0 && index < body.length(); index++) {
-            char character = body.charAt(index);
-            if (character == '{') {
-                if (depth++ == 0) {
-                    objectStart = index;
+            List<RouteAlternative> routes = new ArrayList<>();
+            for (JsonNode itinerary : itineraries) {
+                Optional<RouteAlternative> route = routeAlternative(itinerary, routes.size() + 1);
+                if (route.isEmpty()) {
+                    return LiveRouteLookup.unavailable("OneMap routing returned an incomplete itinerary.");
                 }
-            } else if (character == '}' && --depth == 0 && objectStart >= 0) {
-                objects.add(body.substring(objectStart, index + 1));
-                objectStart = -1;
-            } else if (character == ']' && depth == 0) {
-                return objects;
+                routes.add(route.orElseThrow());
             }
+            return LiveRouteLookup.available(routes);
+        } catch (JsonProcessingException exception) {
+            return LiveRouteLookup.unavailable("OneMap routing returned an unreadable response.");
         }
-        return List.of();
     }
 
-    private Optional<Long> number(Pattern pattern, String text) {
-        Matcher matcher = pattern.matcher(text);
-        return matcher.find() ? Optional.of(Long.parseLong(matcher.group(1))) : Optional.empty();
+    /** Maps a complete OneMap itinerary to the route model used by the command-line application. */
+    private Optional<RouteAlternative> routeAlternative(JsonNode itinerary, int routeNumber) {
+        Optional<Long> walkTime = number(itinerary, "walkTime");
+        Optional<Long> transitTime = number(itinerary, "transitTime");
+        Optional<Long> transfers = number(itinerary, "transfers");
+        if (walkTime.isEmpty() || transitTime.isEmpty() || transfers.isEmpty()) {
+            return Optional.empty();
+        }
+        return Optional.of(new RouteAlternative("Live rail route " + routeNumber,
+                Duration.ofSeconds(walkTime.orElseThrow()), Duration.ofSeconds(transitTime.orElseThrow()),
+                Math.toIntExact(transfers.orElseThrow())));
+    }
+
+    /** Returns an integral itinerary field, if it is present and representable as a long. */
+    private Optional<Long> number(JsonNode itinerary, String fieldName) {
+        JsonNode value = itinerary.get(fieldName);
+        return value != null && value.canConvertToLong() ? Optional.of(value.longValue()) : Optional.empty();
     }
 }
