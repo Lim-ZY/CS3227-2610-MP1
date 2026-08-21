@@ -1,6 +1,7 @@
 package Timey.presentation;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.BufferedReader;
@@ -212,6 +213,29 @@ class CommandLineAppTest {
         app.run();
 
         assertTrue(outputText.toString().contains("Cancelled departure reminder 1."));
+        assertTrue(outputText.toString().contains("You have no active departure reminders."));
+    }
+
+    @Test
+    void run_departureTimePassed_displaysLeaveNowMessageWithoutSchedulingReminder() {
+        var outputText = new StringWriter();
+        var scheduledAt = new AtomicReference<java.time.Instant>();
+        ReminderScheduler scheduler = (triggerAt, action) -> {
+            scheduledAt.set(triggerAt);
+            return () -> { };
+        };
+        var clock = Clock.fixed(Instant.parse("2026-08-21T10:00:00Z"), ZoneId.of("Asia/Singapore"));
+        var resolver = (Timey.ports.LocationResolver) query -> LocationResolution.unavailable("Offline");
+        var app = new CommandLineApp(new BufferedReader(new StringReader(
+                "plan /from \"COM3\" /to \"VivoCity\" /by 1830\nchoose 1\nreminders\nthx\n")),
+                new PrintWriter(outputText, true), new PlanCommandParser(),
+                new CommutePlanningService(new MockTransitPlanner()), resolver,
+                (origin, destination, date, time) -> LiveRouteLookup.available(List.of()), clock, scheduler);
+
+        app.run();
+
+        assertNull(scheduledAt.get());
+        assertTrue(outputText.toString().contains("You have to leave now to stay on time! Good luck!"));
         assertTrue(outputText.toString().contains("You have no active departure reminders."));
     }
 }

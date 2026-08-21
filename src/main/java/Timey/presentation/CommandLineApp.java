@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.time.Duration;
 import java.time.Clock;
+import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
@@ -208,6 +209,10 @@ public final class CommandLineApp {
             RouteAlternative route = pendingAlternatives.get(routeNumber - 1);
             DepartureRecommendation recommendation = commutePlanningService.recommendDeparture(pendingPlan, route);
             printRecommendation(recommendation);
+            if (recommendation.departureTime().isBefore(LocalTime.now(clock))) {
+                output.println("You have to leave now to stay on time! Good luck!");
+                return;
+            }
             scheduleReminder(recommendation);
         } catch (NumberFormatException exception) {
             output.println("Choose a route by number, for example: choose 1");
