@@ -56,4 +56,15 @@ class OneMapRailTransitPlannerTest {
         assertTrue(!lookup.isAvailable());
         assertEquals("OneMap routing is not configured.", lookup.unavailableReason().orElseThrow());
     }
+
+    @Test
+    void findRoutes_incompleteItineraryFallsBackWithoutExposingAnException() {
+        var planner = new OneMapRailTransitPlanner((uri, authorization) -> new HttpResult(200,
+                "{\"plan\":{\"itineraries\":[{\"walkTime\":600,\"transfers\":0}]}}"), Optional.of("access-token"));
+
+        var lookup = planner.findRoutes(COM3, VIVOCITY, LocalDate.of(2026, 8, 21), LocalTime.NOON);
+
+        assertTrue(!lookup.isAvailable());
+        assertEquals("OneMap routing returned an incomplete itinerary.", lookup.unavailableReason().orElseThrow());
+    }
 }

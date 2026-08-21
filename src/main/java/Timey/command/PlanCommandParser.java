@@ -80,6 +80,10 @@ public final class PlanCommandParser {
         if (!matcher.matches()) {
             throw new IllegalArgumentException("Buffer must be a whole number of minutes, for example 10m.");
         }
-        return Duration.ofMinutes(Long.parseLong(matcher.group(1)));
+        try {
+            return Duration.ofMinutes(Long.parseLong(matcher.group(1)));
+        } catch (NumberFormatException | ArithmeticException exception) {
+            throw new IllegalArgumentException("Buffer is too large.");
+        }
     }
 }

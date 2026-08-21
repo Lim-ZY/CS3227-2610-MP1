@@ -59,4 +59,18 @@ class RetryingHttpRequesterTest {
         assertThrows(IllegalStateException.class, () -> retryingRequester.get(URI, "token"));
         assertEquals(3, calls.get());
     }
+
+    @Test
+    void stopsAfterTheRetryLimitAndReturnsTheLastServerResponse() {
+        var calls = new AtomicInteger();
+        var retryingRequester = new RetryingHttpRequester((uri, authorization) -> {
+            calls.incrementAndGet();
+            return new HttpResult(503, "unavailable");
+        }, 2, duration -> { });
+
+        var result = retryingRequester.get(URI, "token");
+
+        assertEquals(503, result.statusCode());
+        assertEquals(3, calls.get());
+    }
 }

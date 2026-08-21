@@ -59,6 +59,21 @@ class LiveRailPlanningServiceTest {
     }
 
     @Test
+    void usesTomorrowWhenTheTargetTimeIsExactlyNow() {
+        List<LocalDate> requestedDates = new ArrayList<>();
+        RailTransitPlanner planner = (origin, destination, date, time) -> {
+            requestedDates.add(date);
+            return LiveRouteLookup.unavailable("No route");
+        };
+        var service = new LiveRailPlanningService(planner, SINGAPORE_MORNING);
+        var plan = new PlanCommand("COM3", "VivoCity", LocalTime.of(10, 0), Duration.ofMinutes(10));
+
+        service.findAlignedRoutes(plan, ORIGIN, DESTINATION);
+
+        assertEquals(List.of(LocalDate.of(2026, 8, 22)), requestedDates);
+    }
+
+    @Test
     void stopsAfterTheProbeWhenNoRouteIsAvailable() {
         List<LocalTime> requestedTimes = new ArrayList<>();
         RailTransitPlanner planner = (origin, destination, date, time) -> {
@@ -73,5 +88,22 @@ class LiveRailPlanningServiceTest {
         assertTrue(result.isAvailable());
         assertTrue(result.routes().isEmpty());
         assertEquals(List.of(LocalTime.of(18, 30)), requestedTimes);
+    }
+
+    @Test
+    void refreshesOnThePreviousDateWhenTheCalculatedDepartureCrossesMidnight() {
+        List<String> requestedTimes = new ArrayList<>();
+        RailTransitPlanner planner = (origin, destination, date, time) -> {
+            requestedTimes.add(date + " " + time);
+            return LiveRouteLookup.available(List.of(new RouteAlternative("Rail", Duration.ofMinutes(20),
+                    Duration.ofMinutes(40), 0)));
+        };
+        var nearMidnight = Clock.fixed(Instant.parse("2026-08-20T15:00:00Z"), ZoneId.of("Asia/Singapore"));
+        var service = new LiveRailPlanningService(planner, nearMidnight);
+        var plan = new PlanCommand("COM3", "VivoCity", LocalTime.of(0, 10), Duration.ofMinutes(10));
+
+        service.findAlignedRoutes(plan, ORIGIN, DESTINATION);
+
+        assertEquals(List.of("2026-08-21 00:10", "2026-08-20 23:00"), requestedTimes);
     }
 }

@@ -51,6 +51,47 @@ class CommandLineAppTest {
     }
 
     @Test
+    void preservesAValidPlanAfterAnInvalidReplacementCommand() {
+        var outputText = new StringWriter();
+        var app = new CommandLineApp(new BufferedReader(new StringReader(
+                "plan /from \"COM3\" /to \"VivoCity\" /by 1830\n"
+                        + "plan /from \"COM3\" /to \"VivoCity\" /by 18x0\nchoose 2\nthx\n")),
+                new PrintWriter(outputText, true));
+
+        app.run();
+
+        assertTrue(outputText.toString().contains("I could not create that plan:"));
+        assertTrue(outputText.toString().contains("Chosen route: Direct Bus"));
+    }
+
+    @Test
+    void rejectsInvalidRouteSelectionsWithoutDiscardingThePendingPlan() {
+        var outputText = new StringWriter();
+        var app = new CommandLineApp(new BufferedReader(new StringReader(
+                "plan /from \"COM3\" /to \"VivoCity\" /by 1830\nchoose 0\nchoose one\nchoose 1\nthx\n")),
+                new PrintWriter(outputText, true));
+
+        app.run();
+
+        String output = outputText.toString();
+        assertTrue(output.contains("Please choose a route between 1 and 2."));
+        assertTrue(output.contains("Choose a route by number, for example: choose 1"));
+        assertTrue(output.contains("Chosen route: Fastest Transit"));
+    }
+
+    @Test
+    void preservesAPlanWhenAnEmptyCommandIsEntered() {
+        var outputText = new StringWriter();
+        var app = new CommandLineApp(new BufferedReader(new StringReader(
+                "plan /from \"COM3\" /to \"VivoCity\" /by 1830\n\nchoose 1\nthx\n")), new PrintWriter(outputText, true));
+
+        app.run();
+
+        assertTrue(outputText.toString().contains("I did not understand that."));
+        assertTrue(outputText.toString().contains("Chosen route: Fastest Transit"));
+    }
+
+    @Test
     void showsResolvedLocationsBeforeOfferingOfflineRoutes() {
         var outputText = new StringWriter();
         var resolver = (Timey.ports.LocationResolver) query -> LocationResolution.found(
@@ -64,6 +105,22 @@ class CommandLineAppTest {
         assertTrue(outputText.toString().contains("OneMap resolved your locations:"));
         assertTrue(outputText.toString().contains("From: COM3 address"));
         assertTrue(outputText.toString().contains("To: VivoCity address"));
+    }
+
+    @Test
+    void fallsBackWhenOnlyOneLocationResolves() {
+        var outputText = new StringWriter();
+        var resolver = (Timey.ports.LocationResolver) query -> query.equals("COM3")
+                ? LocationResolution.found(new ResolvedLocation(query, "COM3 address", 1.3, 103.8))
+                : LocationResolution.unavailable("OneMap could not find \"VivoCity\".");
+        var app = new CommandLineApp(new BufferedReader(new StringReader(
+                "plan /from \"COM3\" /to \"VivoCity\" /by 1830\nthx\n")), new PrintWriter(outputText, true),
+                new PlanCommandParser(), new CommutePlanningService(new MockTransitPlanner()), resolver);
+
+        app.run();
+
+        assertTrue(outputText.toString().contains("Using deterministic routes: OneMap could not find \"VivoCity\"."));
+        assertTrue(outputText.toString().contains("1. Fastest Transit"));
     }
 
     @Test
