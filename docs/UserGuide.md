@@ -12,5 +12,6 @@ choose 1
 Choosing a route automatically schedules a console notification at its
 recommended leave-by time. If that time has already passed today, Timey
 schedules it for tomorrow instead. Reminders remain active while Timey is
-running; listing, cancellation, and virtual-event reminders will be added in
-later iterations.
+running. Use `reminders` to view active reminders. Entries whose trigger time
+has already passed are discarded automatically. Cancellation and virtual-event
+reminders will be added in later iterations.

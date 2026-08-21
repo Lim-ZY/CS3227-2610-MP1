@@ -159,7 +159,7 @@ class CommandLineAppTest {
         var clock = Clock.fixed(Instant.parse("2026-08-21T01:30:00Z"), ZoneId.of("Asia/Singapore"));
         var resolver = (Timey.ports.LocationResolver) query -> LocationResolution.unavailable("Offline");
         var app = new CommandLineApp(new BufferedReader(new StringReader(
-                "plan /from \"COM3\" /to \"VivoCity\" /by 1830\nchoose 1\nthx\n")),
+                "plan /from \"COM3\" /to \"VivoCity\" /by 1830\nchoose 1\nreminders\nthx\n")),
                 new PrintWriter(outputText, true), new PlanCommandParser(),
                 new CommutePlanningService(new MockTransitPlanner()), resolver,
                 (origin, destination, date, time) -> LiveRouteLookup.available(List.of()), clock, scheduler);
@@ -168,6 +168,8 @@ class CommandLineAppTest {
 
         assertEquals(Instant.parse("2026-08-21T09:37:00Z"), scheduledAt.get());
         assertTrue(outputText.toString().contains("Departure reminder automatically set for 2026-08-21 17:37."));
+        assertTrue(outputText.toString().contains("Active departure reminders:"));
+        assertTrue(outputText.toString().contains("2026-08-21 17:37 — Timey reminder: Please leave your desk now."));
     }
 
     @Test
@@ -179,5 +181,16 @@ class CommandLineAppTest {
         app.run();
 
         assertTrue(outputText.toString().contains("I did not understand that."));
+    }
+
+    @Test
+    void run_noScheduledReminders_displaysEmptyReminderMessage() {
+        var outputText = new StringWriter();
+        var app = new CommandLineApp(new BufferedReader(new StringReader("reminders\nthx\n")),
+                new PrintWriter(outputText, true));
+
+        app.run();
+
+        assertTrue(outputText.toString().contains("You have no active departure reminders."));
     }
 }

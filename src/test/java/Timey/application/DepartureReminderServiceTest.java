@@ -45,12 +45,54 @@ class DepartureReminderServiceTest {
         assertEquals(Instant.parse("2026-08-22T09:30:00Z"), reminder.triggerAt());
     }
 
+    @Test
+    void scheduledReminders_triggerTimePassed_discardsReminder() {
+        var clock = new MutableClock(Instant.parse("2026-08-21T08:00:00Z"), SINGAPORE);
+        var service = new DepartureReminderService(new CapturingReminderScheduler(), clock);
+        var recommendation = new DepartureRecommendation("Rail", LocalTime.of(17, 30), Duration.ofMinutes(43),
+                Duration.ofMinutes(10));
+
+        service.schedule(recommendation, () -> { });
+        clock.setInstant(Instant.parse("2026-08-21T09:30:01Z"));
+
+        assertEquals(java.util.List.of(), service.scheduledReminders());
+    }
+
     private static final class CapturingReminderScheduler implements ReminderScheduler {
         private final AtomicReference<Instant> triggerAt = new AtomicReference<>();
 
         @Override
         public void schedule(Instant triggerAt, Runnable action) {
             this.triggerAt.set(triggerAt);
+        }
+    }
+
+    private static final class MutableClock extends Clock {
+        private Instant instant;
+        private final ZoneId zone;
+
+        private MutableClock(Instant instant, ZoneId zone) {
+            this.instant = instant;
+            this.zone = zone;
+        }
+
+        @Override
+        public ZoneId getZone() {
+            return zone;
+        }
+
+        @Override
+        public Clock withZone(ZoneId zone) {
+            return new MutableClock(instant, zone);
+        }
+
+        @Override
+        public Instant instant() {
+            return instant;
+        }
+
+        private void setInstant(Instant instant) {
+            this.instant = instant;
         }
     }
 }

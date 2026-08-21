@@ -14,6 +14,7 @@ import Timey.application.LiveRailPlanningService;
 import Timey.command.PlanCommand;
 import Timey.command.PlanCommandParser;
 import Timey.domain.alert.DepartureRecommendation;
+import Timey.domain.alert.ScheduledDepartureReminder;
 import Timey.domain.location.LocationResolution;
 import Timey.domain.transit.LiveRouteLookup;
 import Timey.domain.transit.RouteAlternative;
@@ -128,6 +129,10 @@ public final class CommandLineApp {
             handleChoice(command);
             return;
         }
+        if (command.equalsIgnoreCase("reminders")) {
+            printReminders();
+            return;
+        }
         output.println("I did not understand that. Try: plan /from \"COM3\" /to \"VivoCity\" /by 1830 /buf 10m");
     }
 
@@ -214,6 +219,19 @@ public final class CommandLineApp {
         });
         output.println("Departure reminder automatically set for "
                 + REMINDER_TIME_FORMAT.format(reminder.triggerAt().atZone(clock.getZone())) + ".");
+    }
+
+    private void printReminders() {
+        List<ScheduledDepartureReminder> reminders = departureReminderService.scheduledReminders();
+        if (reminders.isEmpty()) {
+            output.println("You have no active departure reminders.");
+            return;
+        }
+        output.println("Active departure reminders:");
+        for (var reminder : reminders) {
+            output.println("- " + REMINDER_TIME_FORMAT.format(reminder.triggerAt().atZone(clock.getZone()))
+                    + " — " + reminder.message());
+        }
     }
 
     private void printAlternatives(List<RouteAlternative> alternatives) {
