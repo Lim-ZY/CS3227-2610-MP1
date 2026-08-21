@@ -1,14 +1,11 @@
 package Timey;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
-import java.nio.charset.StandardCharsets;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.ZoneId;
 
 import Timey.presentation.CommandLineApp;
+import Timey.presentation.Ui;
 import Timey.application.CommutePlanningService;
 import Timey.command.PlanCommandParser;
 import Timey.config.ApplicationConfiguration;
@@ -27,8 +24,7 @@ public final class Main {
     }
 
     public static void main(String[] args) {
-        var input = new BufferedReader(new InputStreamReader(System.in, StandardCharsets.UTF_8));
-        var output = new PrintWriter(System.out, true);
+        var ui = new Ui();
         var configuration = ApplicationConfiguration.loadDefault();
         var locationResolver = new OneMapLocationResolver(new RetryingHttpRequester(new JdkHttpRequester()),
                 configuration.oneMapAccessToken());
@@ -36,7 +32,7 @@ public final class Main {
                 new RetryingHttpRequester(new JdkHttpRequester(ROUTING_REQUEST_TIMEOUT)),
                 configuration.oneMapAccessToken());
         var planner = new CommutePlanningService(new MockTransitPlanner());
-        new CommandLineApp(input, output, new PlanCommandParser(), planner, locationResolver,
+        new CommandLineApp(ui, new PlanCommandParser(), planner, locationResolver,
                 railTransitPlanner, Clock.system(ZoneId.of("Asia/Singapore")), new ScheduledExecutorReminderScheduler()).run();
     }
 }

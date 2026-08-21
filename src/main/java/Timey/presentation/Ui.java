@@ -1,8 +1,10 @@
 package Timey.presentation;
 
 import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.nio.charset.StandardCharsets;
 
 /** Handles all console input and output for the Timey command-line interface. */
 public final class Ui {
@@ -10,6 +12,11 @@ public final class Ui {
 
     private final BufferedReader input;
     private final PrintWriter output;
+
+    /** Creates a UI connected to the standard console streams. */
+    public Ui() {
+        this(new BufferedReader(new InputStreamReader(System.in, StandardCharsets.UTF_8)), new PrintWriter(System.out, true));
+    }
 
     public Ui(BufferedReader input, PrintWriter output) {
         this.input = input;

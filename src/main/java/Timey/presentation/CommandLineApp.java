@@ -48,7 +48,7 @@ public final class CommandLineApp {
 
     public CommandLineApp(BufferedReader input, PrintWriter output, PlanCommandParser planCommandParser,
             CommutePlanningService commutePlanningService, LocationResolver locationResolver) {
-        this(input, output, planCommandParser, commutePlanningService, locationResolver,
+        this(new Ui(input, output), planCommandParser, commutePlanningService, locationResolver,
                 (origin, destination, date, time) -> LiveRouteLookup.available(List.of()),
                 Clock.systemDefaultZone(), (triggerAt, action) -> () -> { });
     }
@@ -56,14 +56,21 @@ public final class CommandLineApp {
     public CommandLineApp(BufferedReader input, PrintWriter output, PlanCommandParser planCommandParser,
             CommutePlanningService commutePlanningService, LocationResolver locationResolver,
             RailTransitPlanner railTransitPlanner, Clock clock) {
-        this(input, output, planCommandParser, commutePlanningService, locationResolver, railTransitPlanner, clock,
+        this(new Ui(input, output), planCommandParser, commutePlanningService, locationResolver, railTransitPlanner, clock,
                 (triggerAt, action) -> () -> { });
     }
 
     public CommandLineApp(BufferedReader input, PrintWriter output, PlanCommandParser planCommandParser,
             CommutePlanningService commutePlanningService, LocationResolver locationResolver,
             RailTransitPlanner railTransitPlanner, Clock clock, ReminderScheduler reminderScheduler) {
-        this.ui = new Ui(input, output);
+        this(new Ui(input, output), planCommandParser, commutePlanningService, locationResolver, railTransitPlanner, clock,
+                reminderScheduler);
+    }
+
+    public CommandLineApp(Ui ui, PlanCommandParser planCommandParser,
+            CommutePlanningService commutePlanningService, LocationResolver locationResolver,
+            RailTransitPlanner railTransitPlanner, Clock clock, ReminderScheduler reminderScheduler) {
+        this.ui = ui;
         this.commandParser = new CommandParser(planCommandParser);
         this.commutePlanningService = commutePlanningService;
         this.planner = new Planner(commutePlanningService, locationResolver, railTransitPlanner, clock);
