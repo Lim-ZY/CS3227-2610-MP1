@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.time.Duration;
+import java.time.Clock;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
@@ -11,8 +12,13 @@ import Timey.application.CommutePlanningService;
 import Timey.command.PlanCommand;
 import Timey.command.PlanCommandParser;
 import Timey.domain.alert.DepartureRecommendation;
+import Timey.domain.location.LocationResolution;
 import Timey.domain.transit.RouteAlternative;
+import Timey.infrastructure.http.HttpResult;
+import Timey.infrastructure.location.OneMapLocationResolver;
 import Timey.infrastructure.transit.MockTransitPlanner;
+import Timey.ports.LocationResolver;
+import Timey.ports.RailTransitPlanner;
 
 /** Interactive command-line presentation for Timey. */
 public final class CommandLineApp {
@@ -23,19 +29,33 @@ public final class CommandLineApp {
     private final PrintWriter output;
     private final PlanCommandParser planCommandParser;
     private final CommutePlanningService commutePlanningService;
+    private final LocationResolver locationResolver;
+    private final RailTransitPlanner railTransitPlanner;
+    private final Clock clock;
     private PlanCommand pendingPlan;
     private List<RouteAlternative> pendingAlternatives = List.of();
 
     public CommandLineApp(BufferedReader input, PrintWriter output) {
-        this(input, output, new PlanCommandParser(), new CommutePlanningService(new MockTransitPlanner()));
+        this(input, output, new PlanCommandParser(), new CommutePlanningService(new MockTransitPlanner()),
+                new OneMapLocationResolver((uri, authorization) -> new HttpResult(503, ""), java.util.Optional.empty()));
     }
 
-    CommandLineApp(BufferedReader input, PrintWriter output, PlanCommandParser planCommandParser,
-            CommutePlanningService commutePlanningService) {
+    public CommandLineApp(BufferedReader input, PrintWriter output, PlanCommandParser planCommandParser,
+            CommutePlanningService commutePlanningService, LocationResolver locationResolver) {
+        this(input, output, planCommandParser, commutePlanningService, locationResolver,
+                (origin, destination, date, time) -> List.of(), Clock.systemDefaultZone());
+    }
+
+    public CommandLineApp(BufferedReader input, PrintWriter output, PlanCommandParser planCommandParser,
+            CommutePlanningService commutePlanningService, LocationResolver locationResolver,
+            RailTransitPlanner railTransitPlanner, Clock clock) {
         this.input = input;
         this.output = output;
         this.planCommandParser = planCommandParser;
         this.commutePlanningService = commutePlanningService;
+        this.locationResolver = locationResolver;
+        this.railTransitPlanner = railTransitPlanner;
+        this.clock = clock;
     }
 
     /** Runs until the user says thanks or standard input closes. */
@@ -103,7 +123,7 @@ public final class CommandLineApp {
             output.println("Target arrival: " + plan.arrivalTime().format(TIME_FORMAT));
             output.println("Personal buffer: " + plan.buffer().toMinutes() + " minutes");
             output.println();
-            List<RouteAlternative> alternatives = commutePlanningService.findAlternatives(plan);
+            List<RouteAlternative> alternatives = findAlternatives(plan);
             pendingPlan = plan;
             pendingAlternatives = alternatives;
             printAlternatives(alternatives);
@@ -112,6 +132,28 @@ public final class CommandLineApp {
         } catch (IllegalArgumentException exception) {
             output.println("I could not create that plan: " + exception.getMessage());
         }
+    }
+
+    private List<RouteAlternative> findAlternatives(PlanCommand plan) {
+        LocationResolution origin = locationResolver.resolve(plan.origin());
+        LocationResolution destination = locationResolver.resolve(plan.destination());
+        if (origin.isFound() && destination.isFound()) {
+            output.println("OneMap resolved your locations:");
+            output.println("- From: " + origin.location().orElseThrow().address());
+            output.println("- To: " + destination.location().orElseThrow().address());
+            List<RouteAlternative> liveRoutes = railTransitPlanner.findRoutes(origin.location().orElseThrow(),
+                    destination.location().orElseThrow(), java.time.LocalDate.now(clock), java.time.LocalTime.now(clock));
+            if (!liveRoutes.isEmpty()) {
+                output.println("Live rail routes were requested using the current Singapore time.");
+                output.println();
+                return liveRoutes;
+            }
+            output.println("Live rail routes are unavailable; using deterministic routes.");
+        } else {
+            output.println("Using deterministic routes: " + (origin.isFound() ? destination.reason() : origin.reason()));
+        }
+        output.println();
+        return commutePlanningService.findAlternatives(plan);
     }
 
     private void handleChoice(String command) {
@@ -139,7 +181,7 @@ public final class CommandLineApp {
     }
 
     private void printAlternatives(List<RouteAlternative> alternatives) {
-        output.println("Here are your deterministic route alternatives:");
+        output.println("Here are your route alternatives:");
         for (int index = 0; index < alternatives.size(); index++) {
             RouteAlternative route = alternatives.get(index);
             output.println((index + 1) + ". " + route.name() + " — "
