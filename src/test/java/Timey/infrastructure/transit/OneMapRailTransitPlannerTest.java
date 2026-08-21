@@ -23,7 +23,10 @@ class OneMapRailTransitPlannerTest {
             assertTrue(uri.toString().contains("numItineraries=3"));
             assertEquals("access-token", authorization);
             return new HttpResult(200, """
-                    {"plan":{"itineraries":[{"duration":2400,"walkTime":600,"transitTime":1800,"transfers":1},
+                    {"plan":{"itineraries":[{"duration":2400,"walkTime":600,"transitTime":1800,"transfers":1,
+                    "legs":[{"mode":"WALK","duration":300,"from":{"name":"COM3"},"to":{"name":"Kent Ridge MRT"}},
+                    {"mode":"SUBWAY","duration":1800,"routeShortName":"Circle Line","from":{"name":"Kent Ridge MRT"},"to":{"name":"HarbourFront MRT"}},
+                    {"mode":"WALK","duration":300,"from":{"name":"HarbourFront MRT"},"to":{"name":"VivoCity"}}]},
                     {"duration":2700,"walkTime":900,"transitTime":1800,"transfers":0}]}}""");
         }, Optional.of("access-token"));
 
@@ -35,6 +38,9 @@ class OneMapRailTransitPlannerTest {
         assertEquals("Live rail route 1", routes.getFirst().name());
         assertEquals(40, routes.getFirst().totalDuration().toMinutes());
         assertEquals(1, routes.getFirst().transferCount());
+        assertEquals(3, routes.getFirst().steps().size());
+        assertEquals("Take Circle Line from Kent Ridge MRT to HarbourFront MRT",
+                routes.getFirst().steps().get(1).description());
         assertEquals("Live rail route 2", routes.get(1).name());
         assertEquals(45, routes.get(1).totalDuration().toMinutes());
     }

@@ -199,6 +199,9 @@ public final class CommandLineApp {
                     + "(walk " + formatDuration(route.walkingDuration())
                     + ", transit " + formatDuration(route.transitDuration())
                     + ", " + route.transferCount() + pluraliseTransfer(route.transferCount()) + ")");
+            for (var step : route.steps()) {
+                output.println("   - " + step.description() + " (" + formatDuration(step.duration()) + ")");
+            }
         }
     }
 

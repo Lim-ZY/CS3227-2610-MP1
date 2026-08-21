@@ -16,6 +16,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import Timey.domain.location.ResolvedLocation;
 import Timey.domain.transit.LiveRouteLookup;
 import Timey.domain.transit.RouteAlternative;
+import Timey.domain.transit.RouteStep;
+import Timey.domain.transit.RouteStepMode;
 import Timey.infrastructure.http.HttpRequester;
 import Timey.ports.RailTransitPlanner;
 
@@ -93,7 +95,47 @@ public final class OneMapRailTransitPlanner implements RailTransitPlanner {
         }
         return Optional.of(new RouteAlternative("Live rail route " + routeNumber,
                 Duration.ofSeconds(walkTime.orElseThrow()), Duration.ofSeconds(transitTime.orElseThrow()),
-                Math.toIntExact(transfers.orElseThrow())));
+                Math.toIntExact(transfers.orElseThrow()), routeSteps(itinerary.path("legs"))));
+    }
+
+    /** Extracts displayable walk and rail legs while tolerating missing optional leg data. */
+    private List<RouteStep> routeSteps(JsonNode legs) {
+        if (!legs.isArray()) {
+            return List.of();
+        }
+        List<RouteStep> steps = new ArrayList<>();
+        for (JsonNode leg : legs) {
+            routeStep(leg).ifPresent(steps::add);
+        }
+        return steps;
+    }
+
+    private Optional<RouteStep> routeStep(JsonNode leg) {
+        Optional<Long> duration = number(leg, "duration");
+        String from = leg.path("from").path("name").asText("");
+        String to = leg.path("to").path("name").asText("");
+        String mode = leg.path("mode").asText("");
+        if (duration.isEmpty() || from.isBlank() || to.isBlank()) {
+            return Optional.empty();
+        }
+        if ("WALK".equalsIgnoreCase(mode)) {
+            return Optional.of(new RouteStep(RouteStepMode.WALK, from, to, "walking",
+                    Duration.ofSeconds(duration.orElseThrow())));
+        }
+        String service = firstNonBlank(leg.path("routeShortName").asText(""), leg.path("route").asText(""),
+                leg.path("routeLongName").asText(""));
+        return service.isBlank() ? Optional.empty()
+                : Optional.of(new RouteStep(RouteStepMode.RAIL, from, to, service,
+                        Duration.ofSeconds(duration.orElseThrow())));
+    }
+
+    private String firstNonBlank(String... values) {
+        for (String value : values) {
+            if (!value.isBlank()) {
+                return value;
+            }
+        }
+        return "";
     }
 
     /** Returns an integral itinerary field, if it is present and representable as a long. */
