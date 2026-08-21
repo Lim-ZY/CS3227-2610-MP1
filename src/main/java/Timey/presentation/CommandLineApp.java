@@ -12,6 +12,7 @@ import java.util.List;
 import Timey.application.CommutePlanningService;
 import Timey.application.DepartureReminderService;
 import Timey.application.LiveRailPlanningService;
+import Timey.command.CommandParser;
 import Timey.command.PlanCommand;
 import Timey.command.PlanCommandParser;
 import Timey.domain.alert.DepartureRecommendation;
@@ -32,7 +33,7 @@ public final class CommandLineApp {
     private static final DateTimeFormatter REMINDER_TIME_FORMAT = DateTimeFormatter.ofPattern("uuuu-MM-dd HH:mm");
 
     private final Ui ui;
-    private final PlanCommandParser planCommandParser;
+    private final CommandParser commandParser;
     private final CommutePlanningService commutePlanningService;
     private final LocationResolver locationResolver;
     private final RailTransitPlanner railTransitPlanner;
@@ -66,7 +67,7 @@ public final class CommandLineApp {
             CommutePlanningService commutePlanningService, LocationResolver locationResolver,
             RailTransitPlanner railTransitPlanner, Clock clock, ReminderScheduler reminderScheduler) {
         this.ui = new Ui(input, output);
-        this.planCommandParser = planCommandParser;
+        this.commandParser = new CommandParser(planCommandParser);
         this.commutePlanningService = commutePlanningService;
         this.locationResolver = locationResolver;
         this.railTransitPlanner = railTransitPlanner;
@@ -82,8 +83,7 @@ public final class CommandLineApp {
             String command;
             while ((command = ui.readCommand()) != null) {
                 ui.printDivider();
-                handle(command.trim());
-                if (command.trim().equalsIgnoreCase("thx")) {
+                if (handle(command)) {
                     return;
                 }
                 ui.printDivider();
@@ -94,49 +94,55 @@ public final class CommandLineApp {
         }
     }
 
-    private void handle(String command) {
-        if (command.equalsIgnoreCase("thx")) {
-            ui.println("Alrighty, hope you'll have a nice day ahead!");
-            return;
-        }
-        if (command.startsWith("plan")) {
-            handlePlan(command);
-            return;
-        }
-        if (command.startsWith("choose")) {
-            handleChoice(command);
-            return;
-        }
-        if (command.equalsIgnoreCase("reminders")) {
-            printReminders();
-            return;
-        }
-        if (command.startsWith("cancel")) {
-            handleCancellation(command);
-            return;
-        }
-        ui.println("I did not understand that. Try: plan /from \"COM3\" /to \"VivoCity\" /by 1830 /buf 10m");
-    }
-
-    private void handlePlan(String command) {
+    private boolean handle(String input) {
         try {
-            PlanCommand plan = planCommandParser.parse(command);
-            ui.println("Got it! I have noted down your plan as follows:");
-            ui.println();
-            ui.println("From: " + plan.origin());
-            ui.println("To: " + plan.destination());
-            ui.println("Target arrival: " + plan.arrivalTime().format(TIME_FORMAT));
-            ui.println("Personal buffer: " + plan.buffer().toMinutes() + " minutes");
-            ui.println();
-            List<RouteAlternative> alternatives = findAlternatives(plan);
-            pendingPlan = plan;
-            pendingAlternatives = alternatives;
-            printAlternatives(alternatives);
-            ui.println();
-            ui.println("Choose a route with: choose 1");
+            CommandParser.Command command = commandParser.parse(input);
+            return switch (command.type()) {
+            case THANKS -> {
+                ui.println("Alrighty, hope you'll have a nice day ahead!");
+                yield true;
+            }
+            case PLAN -> {
+                handlePlan(command.plan());
+                yield false;
+            }
+            case CHOOSE -> {
+                handleChoice(command.number());
+                yield false;
+            }
+            case REMINDERS -> {
+                printReminders();
+                yield false;
+            }
+            case CANCEL -> {
+                handleCancellation(command.number());
+                yield false;
+            }
+            case UNKNOWN -> {
+                ui.println("I did not understand that. Try: plan /from \"COM3\" /to \"VivoCity\" /by 1830 /buf 10m");
+                yield false;
+            }
+            };
         } catch (IllegalArgumentException exception) {
             ui.println("I could not create that plan: " + exception.getMessage());
+            return false;
         }
+    }
+
+    private void handlePlan(PlanCommand plan) {
+        ui.println("Got it! I have noted down your plan as follows:");
+        ui.println();
+        ui.println("From: " + plan.origin());
+        ui.println("To: " + plan.destination());
+        ui.println("Target arrival: " + plan.arrivalTime().format(TIME_FORMAT));
+        ui.println("Personal buffer: " + plan.buffer().toMinutes() + " minutes");
+        ui.println();
+        List<RouteAlternative> alternatives = findAlternatives(plan);
+        pendingPlan = plan;
+        pendingAlternatives = alternatives;
+        printAlternatives(alternatives);
+        ui.println();
+        ui.println("Choose a route with: choose 1");
     }
 
     private List<RouteAlternative> findAlternatives(PlanCommand plan) {
@@ -167,33 +173,27 @@ public final class CommandLineApp {
         return commutePlanningService.findAlternatives(plan);
     }
 
-    private void handleChoice(String command) {
+    private void handleChoice(Integer routeNumber) {
         if (pendingPlan == null) {
             ui.println("Please create a plan before choosing a route.");
             return;
         }
-        String[] parts = command.split("\\s+");
-        if (parts.length != 2) {
+        if (routeNumber == null) {
             ui.println("Choose a route by number, for example: choose 1");
             return;
         }
-        try {
-            int routeNumber = Integer.parseInt(parts[1]);
-            if (routeNumber < 1 || routeNumber > pendingAlternatives.size()) {
-                ui.println("Please choose a route between 1 and " + pendingAlternatives.size() + ".");
-                return;
-            }
-            RouteAlternative route = pendingAlternatives.get(routeNumber - 1);
-            DepartureRecommendation recommendation = commutePlanningService.recommendDeparture(pendingPlan, route);
-            printRecommendation(recommendation);
-            if (recommendation.departureTime().isBefore(LocalTime.now(clock))) {
-                ui.println("You have to leave now to stay on time! Good luck!");
-                return;
-            }
-            scheduleReminder(recommendation);
-        } catch (NumberFormatException exception) {
-            ui.println("Choose a route by number, for example: choose 1");
+        if (routeNumber < 1 || routeNumber > pendingAlternatives.size()) {
+            ui.println("Please choose a route between 1 and " + pendingAlternatives.size() + ".");
+            return;
         }
+        RouteAlternative route = pendingAlternatives.get(routeNumber - 1);
+        DepartureRecommendation recommendation = commutePlanningService.recommendDeparture(pendingPlan, route);
+        printRecommendation(recommendation);
+        if (recommendation.departureTime().isBefore(LocalTime.now(clock))) {
+            ui.println("You have to leave now to stay on time! Good luck!");
+            return;
+        }
+        scheduleReminder(recommendation);
     }
 
     private void scheduleReminder(DepartureRecommendation recommendation) {
@@ -220,21 +220,15 @@ public final class CommandLineApp {
         }
     }
 
-    private void handleCancellation(String command) {
-        String[] parts = command.split("\\s+");
-        if (parts.length != 2) {
+    private void handleCancellation(Integer reminderNumber) {
+        if (reminderNumber == null) {
             ui.println("Cancel a reminder by number, for example: cancel 1");
             return;
         }
-        try {
-            int reminderNumber = Integer.parseInt(parts[1]);
-            if (departureReminderService.cancel(reminderNumber)) {
-                ui.println("Cancelled departure reminder " + reminderNumber + ".");
-            } else {
-                ui.println("No active departure reminder numbered " + reminderNumber + ".");
-            }
-        } catch (NumberFormatException exception) {
-            ui.println("Cancel a reminder by number, for example: cancel 1");
+        if (departureReminderService.cancel(reminderNumber)) {
+            ui.println("Cancelled departure reminder " + reminderNumber + ".");
+        } else {
+            ui.println("No active departure reminder numbered " + reminderNumber + ".");
         }
     }
 
