@@ -76,12 +76,14 @@ public final class TimeyDashboardApp extends Application {
         Card reminders = card("REMINDER STATUS", "No active reminders", "Timey will automatically schedule a departure reminder after you choose a route.");
         HBox lowerCards = new HBox(18, commute.container(), reminders.container());
         lowerCards.getChildren().forEach(card -> HBox.setHgrow(card, javafx.scene.layout.Priority.ALWAYS));
+        VBox alternatives = createAlternativesPanel();
 
         Label commandHeading = new Label("COMMAND OUTPUT");
         commandHeading.getStyleClass().add("card-label");
-        VBox content = new VBox(18, heading, introduction, nextEvent.container(), lowerCards, commandHeading, commandOutput);
+        VBox content = new VBox(18, heading, introduction, nextEvent.container(), lowerCards, alternatives,
+                commandHeading, commandOutput);
         content.setPadding(new Insets(40, 56, 32, 56));
-        return new DashboardContent(content, nextEvent, commute, reminders);
+        return new DashboardContent(content, nextEvent, commute, reminders, alternatives);
     }
 
     private Card card(String label, String title, String message) {
@@ -106,6 +108,16 @@ public final class TimeyDashboardApp extends Application {
         commandOutput.setPrefRowCount(8);
         commandOutput.getStyleClass().add("command-output");
         return commandOutput;
+    }
+
+    private VBox createAlternativesPanel() {
+        Label heading = new Label("ROUTE ALTERNATIVES");
+        heading.getStyleClass().add("card-label");
+        Label guidance = new Label("Plan a commute to compare routes. Select one from the command bar with choose <number>.");
+        guidance.getStyleClass().add("muted");
+        VBox alternatives = new VBox(12, heading, guidance);
+        alternatives.getStyleClass().add("card");
+        return alternatives;
     }
 
     private HBox createCommandBar(CommandLineApp commandLineApp, StringWriter output, TextArea commandOutput,
@@ -166,11 +178,47 @@ public final class TimeyDashboardApp extends Application {
                 ? "Timey will automatically schedule a departure reminder after you choose a route."
                 : "Next reminder: " + state.reminders().getFirst().triggerAt().atZone(java.time.ZoneId.systemDefault())
                         .format(DateTimeFormatter.ofPattern("uuuu-MM-dd HH:mm")));
+        refreshAlternatives(dashboard.alternatives(), state);
+    }
+
+    private void refreshAlternatives(VBox alternatives, DashboardState state) {
+        alternatives.getChildren().setAll();
+        Label heading = new Label("ROUTE ALTERNATIVES");
+        heading.getStyleClass().add("card-label");
+        alternatives.getChildren().add(heading);
+        if (state.alternatives().isEmpty()) {
+            Label guidance = new Label("Plan a commute to compare routes. Select one from the command bar with choose <number>.");
+            guidance.getStyleClass().add("muted");
+            alternatives.getChildren().add(guidance);
+            return;
+        }
+        for (int index = 0; index < state.alternatives().size(); index++) {
+            var route = state.alternatives().get(index);
+            boolean selected = state.recommendation().map(recommendation -> recommendation.routeName().equals(route.name()))
+                    .orElse(false);
+            alternatives.getChildren().add(routeAlternative(index + 1, route, selected));
+        }
+        Label guidance = new Label("Select a route from the command bar, for example: choose 1");
+        guidance.getStyleClass().add("route-guidance");
+        alternatives.getChildren().add(guidance);
+    }
+
+    private VBox routeAlternative(int routeNumber, Timey.domain.transit.RouteAlternative route, boolean selected) {
+        Label name = new Label(routeNumber + ". " + route.name() + " · " + route.totalDuration().toMinutes() + " min"
+                + (selected ? "  SELECTED" : ""));
+        name.getStyleClass().add(selected ? "route-name-selected" : "route-name");
+        Label details = new Label("Walk " + route.walkingDuration().toMinutes() + " min · Rail "
+                + route.transitDuration().toMinutes() + " min · " + route.transferCount()
+                + (route.transferCount() == 1 ? " transfer" : " transfers"));
+        details.getStyleClass().add("muted");
+        VBox alternative = new VBox(5, name, details);
+        alternative.getStyleClass().add(selected ? "route-alternative-selected" : "route-alternative");
+        return alternative;
     }
 
     private record Card(VBox container, Label title, Label message) {
     }
 
-    private record DashboardContent(VBox content, Card nextEvent, Card commute, Card reminders) {
+    private record DashboardContent(VBox content, Card nextEvent, Card commute, Card reminders, VBox alternatives) {
     }
 }

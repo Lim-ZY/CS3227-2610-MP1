@@ -74,3 +74,32 @@
     -fx-border-radius: 12;
     -fx-border-color: #24324e;
 }
+
+.route-alternative, .route-alternative-selected {
+    -fx-padding: 13 15 13 15;
+    -fx-background-radius: 10;
+    -fx-border-radius: 10;
+    -fx-border-color: #e5e8f0;
+    -fx-background-color: #fbfcff;
+}
+
+.route-alternative-selected {
+    -fx-background-color: #eef0ff;
+    -fx-border-color: #7683ff;
+}
+
+.route-name, .route-name-selected {
+    -fx-font-size: 15px;
+    -fx-font-weight: 700;
+    -fx-text-fill: #27344d;
+}
+
+.route-name-selected {
+    -fx-text-fill: #4452d9;
+}
+
+.route-guidance {
+    -fx-text-fill: #5362e8;
+    -fx-font-size: 13px;
+    -fx-font-weight: 700;
+}
