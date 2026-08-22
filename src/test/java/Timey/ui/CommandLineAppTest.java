@@ -35,11 +35,14 @@ class CommandLineAppTest {
         var outputText = new StringWriter();
         var app = new CommandLineApp(new BufferedReader(new StringReader("")), new PrintWriter(outputText, true));
 
-        boolean planEndedSession = app.executeCommand("plan /from \"COM3\" /to \"VivoCity\" /by 1830");
-        boolean chooseEndedSession = app.executeCommand("choose 1");
+        var planResult = app.executeCommand("plan /from \"COM3\" /to \"VivoCity\" /by 1830");
+        var chooseResult = app.executeCommand("choose 1");
 
-        assertTrue(!planEndedSession);
-        assertTrue(!chooseEndedSession);
+        assertTrue(!planResult.sessionEnded());
+        assertTrue(!chooseResult.sessionEnded());
+        assertEquals("COM3", planResult.dashboardState().plan().orElseThrow().origin());
+        assertEquals(2, planResult.dashboardState().alternatives().size());
+        assertEquals("Fastest Transit", chooseResult.dashboardState().recommendation().orElseThrow().routeName());
         assertTrue(outputText.toString().contains("1. Fastest Transit"));
         assertTrue(outputText.toString().contains("Chosen route: Fastest Transit"));
     }

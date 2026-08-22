@@ -8,6 +8,7 @@ import java.time.Clock;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Optional;
 
 import Timey.reminder.DepartureReminderService;
 import Timey.planner.CommutePlanningService;
@@ -39,6 +40,8 @@ public final class CommandLineApp {
     private final Clock clock;
     private PlanCommand pendingPlan;
     private List<RouteAlternative> pendingAlternatives = List.of();
+    private List<String> planningMessages = List.of();
+    private DepartureRecommendation selectedRecommendation;
 
     public CommandLineApp(BufferedReader input, PrintWriter output) {
         this(input, output, new PlanCommandParser(), new CommutePlanningService(new MockTransitPlanner()),
@@ -85,7 +88,7 @@ public final class CommandLineApp {
             String command;
             while ((command = ui.readCommand()) != null) {
                 ui.printDivider();
-                if (executeCommand(command)) {
+                if (executeCommand(command).sessionEnded()) {
                     return;
                 }
                 ui.printDivider();
@@ -97,10 +100,11 @@ public final class CommandLineApp {
     }
 
     /** Executes one command while retaining the same command state as the terminal session. */
-    public boolean executeCommand(String input) {
+    public CommandExecutionResult executeCommand(String input) {
+        boolean sessionEnded;
         try {
             CommandParser.Command command = commandParser.parse(input);
-            return switch (command.type()) {
+            sessionEnded = switch (command.type()) {
             case THANKS -> {
                 ui.println("Alrighty, hope you'll have a nice day ahead!");
                 yield true;
@@ -128,8 +132,15 @@ public final class CommandLineApp {
             };
         } catch (IllegalArgumentException exception) {
             ui.println("I could not create that plan: " + exception.getMessage());
-            return false;
+            sessionEnded = false;
         }
+        return new CommandExecutionResult(sessionEnded, dashboardState());
+    }
+
+    /** Returns current session data for a dashboard without invoking any planner or API itself. */
+    public DashboardState dashboardState() {
+        return new DashboardState(Optional.ofNullable(pendingPlan), pendingAlternatives, planningMessages,
+                Optional.ofNullable(selectedRecommendation), departureReminderService.scheduledReminders());
     }
 
     private void handlePlan(PlanCommand plan) {
@@ -140,19 +151,21 @@ public final class CommandLineApp {
         ui.println("Target arrival: " + plan.arrivalTime().format(TIME_FORMAT));
         ui.println("Personal buffer: " + plan.buffer().toMinutes() + " minutes");
         ui.println();
-        List<RouteAlternative> alternatives = findAlternatives(plan);
+        Planner.PlanningResult result = findAlternatives(plan);
         pendingPlan = plan;
-        pendingAlternatives = alternatives;
-        printAlternatives(alternatives);
+        pendingAlternatives = result.alternatives();
+        planningMessages = result.messages();
+        selectedRecommendation = null;
+        printAlternatives(pendingAlternatives);
         ui.println();
         ui.println("Choose a route with: choose 1");
     }
 
-    private List<RouteAlternative> findAlternatives(PlanCommand plan) {
+    private Planner.PlanningResult findAlternatives(PlanCommand plan) {
         var result = planner.findAlternatives(plan);
         result.messages().forEach(ui::println);
         ui.println();
-        return result.alternatives();
+        return result;
     }
 
     private void handleChoice(Integer routeNumber) {
@@ -170,6 +183,7 @@ public final class CommandLineApp {
         }
         RouteAlternative route = pendingAlternatives.get(routeNumber - 1);
         DepartureRecommendation recommendation = commutePlanningService.recommendDeparture(pendingPlan, route);
+        selectedRecommendation = recommendation;
         printRecommendation(recommendation);
         if (recommendation.departureTime().isBefore(LocalTime.now(clock))) {
             ui.println("You have to leave now to stay on time! Good luck!");
