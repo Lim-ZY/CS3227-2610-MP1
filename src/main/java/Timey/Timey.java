@@ -7,7 +7,7 @@ import java.time.ZoneId;
 import Timey.ui.CommandLineApp;
 import Timey.ui.Ui;
 import Timey.application.CommutePlanningService;
-import Timey.command.PlanCommandParser;
+import Timey.parser.PlanCommandParser;
 import Timey.config.ApplicationConfiguration;
 import Timey.infrastructure.http.JdkHttpRequester;
 import Timey.infrastructure.http.RetryingHttpRequester;

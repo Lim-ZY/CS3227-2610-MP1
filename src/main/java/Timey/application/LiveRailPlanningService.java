@@ -5,7 +5,7 @@ import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.util.Objects;
 
-import Timey.command.PlanCommand;
+import Timey.parser.PlanCommand;
 import Timey.domain.alert.DepartureCalculator;
 import Timey.domain.location.ResolvedLocation;
 import Timey.domain.transit.LiveRouteLookup;

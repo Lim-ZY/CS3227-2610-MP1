@@ -3,7 +3,7 @@ package Timey.application;
 import java.util.List;
 import java.util.Objects;
 
-import Timey.command.PlanCommand;
+import Timey.parser.PlanCommand;
 import Timey.domain.alert.DepartureCalculator;
 import Timey.domain.alert.DepartureRecommendation;
 import Timey.domain.transit.RouteAlternative;

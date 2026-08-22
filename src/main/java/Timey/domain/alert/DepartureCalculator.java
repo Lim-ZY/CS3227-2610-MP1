@@ -1,6 +1,6 @@
 package Timey.domain.alert;
 
-import Timey.command.PlanCommand;
+import Timey.parser.PlanCommand;
 import Timey.domain.transit.RouteAlternative;
 
 /** Calculates a leave-by time from an arrival target, route, and personal buffer. */

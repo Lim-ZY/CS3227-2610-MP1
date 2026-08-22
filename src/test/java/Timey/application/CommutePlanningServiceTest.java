@@ -8,7 +8,7 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
-import Timey.command.PlanCommand;
+import Timey.parser.PlanCommand;
 import Timey.domain.alert.DepartureRecommendation;
 import Timey.domain.transit.RouteAlternative;
 import Timey.ports.TransitPlanner;

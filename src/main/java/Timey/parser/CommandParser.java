@@ -1,4 +1,4 @@
-package Timey.command;
+package Timey.parser;
 
 /** Parses a complete user command into the action requested by the user. */
 public final class CommandParser {

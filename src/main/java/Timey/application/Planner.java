@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-import Timey.command.PlanCommand;
+import Timey.parser.PlanCommand;
 import Timey.domain.location.LocationResolution;
 import Timey.domain.transit.RouteAlternative;
 import Timey.ports.LocationResolver;

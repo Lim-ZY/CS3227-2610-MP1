@@ -14,7 +14,7 @@ package "ui" {
   class Ui
 }
 
-package "command" {
+package "parser" {
   class CommandParser
   class PlanCommandParser
   class PlanCommand <<record>>

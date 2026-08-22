@@ -1,4 +1,4 @@
-package Timey.command;
+package Timey.parser;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;

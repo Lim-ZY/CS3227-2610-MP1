@@ -1,4 +1,4 @@
-package Timey.command;
+package Timey.parser;
 
 import java.time.Duration;
 import java.time.LocalTime;
