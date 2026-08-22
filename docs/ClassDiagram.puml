@@ -171,7 +171,5 @@ JdkHttpRequester --> HttpResult : creates
 
 note bottom
   Scope: production types under src/main/java/Timey.
-  Empty placeholder packages (application.dto, domain.event, domain.time,
-  infrastructure.calendar, and infrastructure.weather) have no classes yet.
 end note
 @enduml
