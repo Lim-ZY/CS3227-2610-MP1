@@ -13,12 +13,14 @@
     -fx-font-size: 24px;
     -fx-font-weight: 800;
     -fx-text-fill: #182237;
+    -fx-background-color: transparent;
+    -fx-padding: 0;
 }
 
-.preferences-button {
-    -fx-background-color: transparent;
-    -fx-text-fill: #667085;
-    -fx-font-size: 13px;
+.brand .label {
+    -fx-font-size: 24px;
+    -fx-font-weight: 800;
+    -fx-text-fill: #182237;
 }
 
 .page-heading {

@@ -14,8 +14,10 @@ import javafx.application.Application;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
-import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.Menu;
+import javafx.scene.control.MenuButton;
+import javafx.scene.control.MenuItem;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TextArea;
 import javafx.scene.layout.BorderPane;
@@ -33,14 +35,15 @@ public final class TimeyDashboardApp extends Application {
     public void start(Stage stage) {
         BorderPane root = new BorderPane();
         root.getStyleClass().add("dashboard");
-        root.setTop(createHeader());
+        Header header = createHeader();
+        root.setTop(header.container());
         StringWriter output = new StringWriter();
         CommandLineApp commandLineApp = ApplicationFactory.createCommandLineApp(
                 new Ui(new BufferedReader(new StringReader("")), new PrintWriter(output, true)));
         TextArea commandOutput = createCommandOutput();
         DashboardContent dashboard = createDashboard(commandOutput);
         root.setCenter(dashboard.content());
-        root.setBottom(createCommandBar(commandLineApp, output, commandOutput, dashboard));
+        root.setBottom(createCommandBar(commandLineApp, output, commandOutput, dashboard, header));
 
         Scene scene = new Scene(root, 1120, 760);
         scene.getStylesheets().add(getClass().getResource("/Timey/ui/dashboard/dashboard.css").toExternalForm());
@@ -51,18 +54,28 @@ public final class TimeyDashboardApp extends Application {
         stage.show();
     }
 
-    private HBox createHeader() {
-        Label timey = new Label("Timey");
+    private Header createHeader() {
+        MenuButton timey = new MenuButton("Timey");
         timey.getStyleClass().add("brand");
-        Button preferences = new Button("Preferences ▾");
-        preferences.getStyleClass().add("preferences-button");
+        MenuItem savedLocationStatus = new MenuItem("No saved locations yet");
+        Menu savedLocations = new Menu("Saved locations");
+        savedLocations.getItems().add(savedLocationStatus);
+        MenuItem recentLocations = new MenuItem("No recent plan");
+        Menu recent = new Menu("Recent locations");
+        recent.getItems().add(recentLocations);
+        MenuItem personalBuffer = new MenuItem("Set per plan");
+        MenuItem timeZone = new MenuItem("Asia/Singapore");
+        Menu preferences = new Menu("Preferences");
+        preferences.getItems().addAll(new Menu("Personal buffer", null, personalBuffer),
+                new Menu("Time zone", null, timeZone));
+        timey.getItems().addAll(savedLocations, recent, preferences);
 
         Region spacer = new Region();
         HBox.setHgrow(spacer, javafx.scene.layout.Priority.ALWAYS);
-        HBox header = new HBox(16, timey, preferences, spacer, new Label("Dashboard"));
+        HBox header = new HBox(16, timey, spacer, new Label("Dashboard"));
         header.setAlignment(Pos.CENTER_LEFT);
         header.getStyleClass().add("header");
-        return header;
+        return new Header(header, recentLocations, personalBuffer);
     }
 
     private DashboardContent createDashboard(TextArea commandOutput) {
@@ -121,12 +134,12 @@ public final class TimeyDashboardApp extends Application {
     }
 
     private HBox createCommandBar(CommandLineApp commandLineApp, StringWriter output, TextArea commandOutput,
-            DashboardContent dashboard) {
+            DashboardContent dashboard, Header header) {
         Label prompt = new Label(">");
         prompt.getStyleClass().add("command-prompt");
         TextField command = new TextField();
         command.setPromptText("Enter a Timey command, for example: plan /from \"COM3\" /to \"VivoCity\" /by 1830");
-        command.setOnAction(event -> executeCommand(commandLineApp, output, commandOutput, command, dashboard));
+        command.setOnAction(event -> executeCommand(commandLineApp, output, commandOutput, command, dashboard, header));
         HBox.setHgrow(command, javafx.scene.layout.Priority.ALWAYS);
         HBox commandBar = new HBox(12, prompt, command);
         commandBar.setAlignment(Pos.CENTER_LEFT);
@@ -136,7 +149,7 @@ public final class TimeyDashboardApp extends Application {
     }
 
     private void executeCommand(CommandLineApp commandLineApp, StringWriter output, TextArea commandOutput,
-            TextField command, DashboardContent dashboard) {
+            TextField command, DashboardContent dashboard, Header header) {
         String input = command.getText();
         if (input.isBlank()) {
             return;
@@ -144,7 +157,7 @@ public final class TimeyDashboardApp extends Application {
         int outputStart = output.getBuffer().length();
         CommandExecutionResult result = commandLineApp.executeCommand(input);
         commandOutput.appendText("\n> " + input + "\n" + output.getBuffer().substring(outputStart));
-        refreshDashboard(dashboard, result.dashboardState());
+        refreshDashboard(dashboard, header, result.dashboardState());
         command.clear();
         if (result.sessionEnded()) {
             command.setDisable(true);
@@ -152,7 +165,7 @@ public final class TimeyDashboardApp extends Application {
         }
     }
 
-    private void refreshDashboard(DashboardContent dashboard, DashboardState state) {
+    private void refreshDashboard(DashboardContent dashboard, Header header, DashboardState state) {
         state.plan().ifPresentOrElse(plan -> {
             dashboard.nextEvent().title().setText("Physical · " + plan.origin() + " → " + plan.destination());
             dashboard.nextEvent().message().setText("Arrive by " + TIME_FORMAT.format(plan.arrivalTime())
@@ -179,6 +192,8 @@ public final class TimeyDashboardApp extends Application {
                 : "Next reminder: " + state.reminders().getFirst().triggerAt().atZone(java.time.ZoneId.systemDefault())
                         .format(DateTimeFormatter.ofPattern("uuuu-MM-dd HH:mm")));
         refreshAlternatives(dashboard.alternatives(), state);
+        header.recentLocations().setText(DashboardMenuSummary.recentLocations(state));
+        header.personalBuffer().setText(DashboardMenuSummary.personalBuffer(state));
     }
 
     private void refreshAlternatives(VBox alternatives, DashboardState state) {
@@ -220,5 +235,8 @@ public final class TimeyDashboardApp extends Application {
     }
 
     private record DashboardContent(VBox content, Card nextEvent, Card commute, Card reminders, VBox alternatives) {
+    }
+
+    private record Header(HBox container, MenuItem recentLocations, MenuItem personalBuffer) {
     }
 }
