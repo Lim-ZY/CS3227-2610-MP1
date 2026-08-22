@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.PrintWriter;
 import java.io.StringReader;
 import java.io.StringWriter;
+import java.time.Clock;
 
 import Timey.ApplicationFactory;
 import Timey.config.UserPreferences;
@@ -27,6 +28,8 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
 
 import java.time.format.DateTimeFormatter;
 
@@ -37,7 +40,8 @@ public final class TimeyDashboardApp extends Application {
     public void start(Stage stage) {
         BorderPane root = new BorderPane();
         root.getStyleClass().add("dashboard");
-        Header header = createHeader(ApplicationFactory.loadUserPreferences());
+        UserPreferences preferences = ApplicationFactory.loadUserPreferences();
+        Header header = createHeader(preferences);
         root.setTop(header.container());
         StringWriter output = new StringWriter();
         CommandLineApp commandLineApp = ApplicationFactory.createCommandLineApp(
@@ -54,6 +58,8 @@ public final class TimeyDashboardApp extends Application {
         stage.setMinHeight(600);
         stage.setScene(scene);
         stage.show();
+        Timeline clockTimer = startClock(header.clock(), preferences.timeZone());
+        stage.setOnHidden(event -> clockTimer.stop());
     }
 
     private Header createHeader(UserPreferences preferences) {
@@ -77,10 +83,22 @@ public final class TimeyDashboardApp extends Application {
 
         Region spacer = new Region();
         HBox.setHgrow(spacer, javafx.scene.layout.Priority.ALWAYS);
-        HBox header = new HBox(16, timey, spacer, new Label("Dashboard"));
+        Label clock = new Label();
+        clock.getStyleClass().add("dashboard-clock");
+        HBox header = new HBox(16, timey, spacer, clock);
         header.setAlignment(Pos.CENTER_LEFT);
         header.getStyleClass().add("header");
-        return new Header(header, recentLocations, personalBuffer, preferences);
+        return new Header(header, recentLocations, personalBuffer, preferences, clock);
+    }
+
+    private Timeline startClock(Label clockLabel, java.time.ZoneId timeZone) {
+        Clock clock = Clock.system(timeZone);
+        Timeline timeline = new Timeline(new KeyFrame(javafx.util.Duration.ZERO,
+                event -> clockLabel.setText(DashboardClockText.now(clock))),
+                new KeyFrame(javafx.util.Duration.seconds(1)));
+        timeline.setCycleCount(Timeline.INDEFINITE);
+        timeline.play();
+        return timeline;
     }
 
     private DashboardContent createDashboard(TextArea commandOutput) {
@@ -288,7 +306,8 @@ public final class TimeyDashboardApp extends Application {
     private record DashboardContent(VBox content, Card nextEvent, Card commute, Card reminders, VBox alternatives) {
     }
 
-    private record Header(HBox container, MenuItem recentLocations, MenuItem personalBuffer, UserPreferences preferences) {
+    private record Header(HBox container, MenuItem recentLocations, MenuItem personalBuffer, UserPreferences preferences,
+            Label clock) {
     }
 
     private record DashboardCommandResponse(CommandExecutionResult result, String output) {
