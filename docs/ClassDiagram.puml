@@ -9,7 +9,7 @@ package "Timey" {
   class Timey <<composition root>>
 }
 
-package "presentation" {
+package "ui" {
   class CommandLineApp
   class Ui
 }

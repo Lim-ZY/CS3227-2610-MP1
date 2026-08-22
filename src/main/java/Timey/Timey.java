@@ -4,8 +4,8 @@ import java.time.Clock;
 import java.time.Duration;
 import java.time.ZoneId;
 
-import Timey.presentation.CommandLineApp;
-import Timey.presentation.Ui;
+import Timey.ui.CommandLineApp;
+import Timey.ui.Ui;
 import Timey.application.CommutePlanningService;
 import Timey.command.PlanCommandParser;
 import Timey.config.ApplicationConfiguration;

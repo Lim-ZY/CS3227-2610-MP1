@@ -1,4 +1,4 @@
-package Timey.presentation;
+package Timey.ui;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
