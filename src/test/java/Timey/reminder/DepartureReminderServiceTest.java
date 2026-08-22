@@ -1,4 +1,4 @@
-package Timey.application;
+package Timey.reminder;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 

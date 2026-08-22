@@ -1,4 +1,4 @@
-package Timey.application;
+package Timey.reminder;
 
 import java.time.Clock;
 import java.time.Instant;

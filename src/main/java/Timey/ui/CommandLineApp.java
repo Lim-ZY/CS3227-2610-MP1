@@ -9,7 +9,7 @@ import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
-import Timey.application.DepartureReminderService;
+import Timey.reminder.DepartureReminderService;
 import Timey.planner.CommutePlanningService;
 import Timey.planner.Planner;
 import Timey.parser.CommandParser;

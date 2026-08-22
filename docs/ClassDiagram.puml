@@ -29,7 +29,7 @@ package "planner" {
   class LiveRailPlanningService
 }
 
-package "application" {
+package "reminder" {
   class DepartureReminderService
 }
 
