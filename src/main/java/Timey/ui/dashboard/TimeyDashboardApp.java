@@ -11,6 +11,7 @@ import Timey.ui.CommandExecutionResult;
 import Timey.ui.DashboardState;
 import Timey.ui.Ui;
 import javafx.application.Application;
+import javafx.concurrent.Task;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -154,15 +155,39 @@ public final class TimeyDashboardApp extends Application {
         if (input.isBlank()) {
             return;
         }
-        int outputStart = output.getBuffer().length();
-        CommandExecutionResult result = commandLineApp.executeCommand(input);
-        commandOutput.appendText("\n> " + input + "\n" + output.getBuffer().substring(outputStart));
-        refreshDashboard(dashboard, header, result.dashboardState());
         command.clear();
-        if (result.sessionEnded()) {
-            command.setDisable(true);
-            command.setPromptText("This command session has ended");
-        }
+        command.setDisable(true);
+        command.setPromptText("Updating your commute…");
+        showLoading(dashboard);
+        Task<DashboardCommandResponse> task = new Task<>() {
+            @Override
+            protected DashboardCommandResponse call() {
+                int outputStart = output.getBuffer().length();
+                CommandExecutionResult result = commandLineApp.executeCommand(input);
+                return new DashboardCommandResponse(result, output.getBuffer().substring(outputStart));
+            }
+        };
+        task.setOnSucceeded(event -> {
+            DashboardCommandResponse response = task.getValue();
+            commandOutput.appendText("\n> " + input + "\n" + response.output());
+            refreshDashboard(dashboard, header, response.result().dashboardState());
+            if (response.result().sessionEnded()) {
+                command.setPromptText("This command session has ended");
+            } else {
+                command.setDisable(false);
+                command.setPromptText("Enter a Timey command, for example: choose 1");
+            }
+        });
+        task.setOnFailed(event -> {
+            Throwable failure = task.getException();
+            commandOutput.appendText("\n> " + input + "\nI could not complete that command. Please try again.");
+            showFailure(dashboard, failure);
+            command.setDisable(false);
+            command.setPromptText("Enter a Timey command, for example: plan /from \"COM3\" /to \"VivoCity\" /by 1830");
+        });
+        Thread worker = new Thread(task, "timey-dashboard-command");
+        worker.setDaemon(true);
+        worker.start();
     }
 
     private void refreshDashboard(DashboardContent dashboard, Header header, DashboardState state) {
@@ -179,11 +204,9 @@ public final class TimeyDashboardApp extends Application {
             dashboard.commute().message().setText(recommendation.routeName() + " · "
                     + recommendation.travelDuration().toMinutes() + " minute commute");
         }, () -> {
-            dashboard.commute().title().setText(state.alternatives().isEmpty() ? "Waiting for a plan"
-                    : state.alternatives().size() + " route alternatives ready");
-            dashboard.commute().message().setText(state.planningMessages().isEmpty()
-                    ? "Live rail alternatives are requested only after you plan a commute."
-                    : String.join(" ", state.planningMessages()));
+            DashboardCommuteStatus status = DashboardCommuteStatus.from(state);
+            dashboard.commute().title().setText(status.title());
+            dashboard.commute().message().setText(status.message());
         });
         dashboard.reminders().title().setText(state.reminders().isEmpty() ? "No active reminders"
                 : state.reminders().size() + " active departure reminder");
@@ -196,15 +219,27 @@ public final class TimeyDashboardApp extends Application {
         header.personalBuffer().setText(DashboardMenuSummary.personalBuffer(state));
     }
 
+    private void showLoading(DashboardContent dashboard) {
+        dashboard.commute().title().setText("Updating commute…");
+        dashboard.commute().message().setText("Looking up locations and live rail alternatives. Please wait.");
+        dashboard.alternatives().getChildren().setAll(routePanelLabel("ROUTE ALTERNATIVES"),
+                routePanelMessage("Loading route alternatives…"));
+    }
+
+    private void showFailure(DashboardContent dashboard, Throwable failure) {
+        dashboard.commute().title().setText("Could not update commute");
+        dashboard.commute().message().setText("Your previous plan is unchanged. "
+                + (failure.getMessage() == null ? "Please try again." : failure.getMessage()));
+        dashboard.alternatives().getChildren().setAll(routePanelLabel("ROUTE ALTERNATIVES"),
+                routePanelMessage("Route lookup failed. Try the command again."));
+    }
+
     private void refreshAlternatives(VBox alternatives, DashboardState state) {
         alternatives.getChildren().setAll();
-        Label heading = new Label("ROUTE ALTERNATIVES");
-        heading.getStyleClass().add("card-label");
-        alternatives.getChildren().add(heading);
+        alternatives.getChildren().add(routePanelLabel("ROUTE ALTERNATIVES"));
         if (state.alternatives().isEmpty()) {
-            Label guidance = new Label("Plan a commute to compare routes. Select one from the command bar with choose <number>.");
-            guidance.getStyleClass().add("muted");
-            alternatives.getChildren().add(guidance);
+            alternatives.getChildren().add(routePanelMessage(
+                    "Plan a commute to compare routes. Select one from the command bar with choose <number>."));
             return;
         }
         for (int index = 0; index < state.alternatives().size(); index++) {
@@ -231,6 +266,18 @@ public final class TimeyDashboardApp extends Application {
         return alternative;
     }
 
+    private Label routePanelLabel(String text) {
+        Label label = new Label(text);
+        label.getStyleClass().add("card-label");
+        return label;
+    }
+
+    private Label routePanelMessage(String text) {
+        Label label = new Label(text);
+        label.getStyleClass().add("muted");
+        return label;
+    }
+
     private record Card(VBox container, Label title, Label message) {
     }
 
@@ -238,5 +285,8 @@ public final class TimeyDashboardApp extends Application {
     }
 
     private record Header(HBox container, MenuItem recentLocations, MenuItem personalBuffer) {
+    }
+
+    private record DashboardCommandResponse(CommandExecutionResult result, String output) {
     }
 }
