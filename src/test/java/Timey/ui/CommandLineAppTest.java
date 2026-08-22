@@ -31,6 +31,20 @@ import Timey.ports.ReminderScheduler;
 
 class CommandLineAppTest {
     @Test
+    void executeCommand_planThenChoose_preservesCommandStateOutsideTerminalLoop() {
+        var outputText = new StringWriter();
+        var app = new CommandLineApp(new BufferedReader(new StringReader("")), new PrintWriter(outputText, true));
+
+        boolean planEndedSession = app.executeCommand("plan /from \"COM3\" /to \"VivoCity\" /by 1830");
+        boolean chooseEndedSession = app.executeCommand("choose 1");
+
+        assertTrue(!planEndedSession);
+        assertTrue(!chooseEndedSession);
+        assertTrue(outputText.toString().contains("1. Fastest Transit"));
+        assertTrue(outputText.toString().contains("Chosen route: Fastest Transit"));
+    }
+
+    @Test
     void run_validPlanAndRouteChoice_displaysPlanAndFarewell() {
         var outputText = new StringWriter();
         var app = new CommandLineApp(

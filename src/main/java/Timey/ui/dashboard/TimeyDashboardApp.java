@@ -1,5 +1,13 @@
 package Timey.ui.dashboard;
 
+import java.io.BufferedReader;
+import java.io.PrintWriter;
+import java.io.StringReader;
+import java.io.StringWriter;
+
+import Timey.ApplicationFactory;
+import Timey.ui.CommandLineApp;
+import Timey.ui.Ui;
 import javafx.application.Application;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -7,6 +15,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
+import javafx.scene.control.TextArea;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
@@ -20,8 +29,12 @@ public final class TimeyDashboardApp extends Application {
         BorderPane root = new BorderPane();
         root.getStyleClass().add("dashboard");
         root.setTop(createHeader());
-        root.setCenter(createEmptyDashboard());
-        root.setBottom(createCommandBar());
+        StringWriter output = new StringWriter();
+        CommandLineApp commandLineApp = ApplicationFactory.createCommandLineApp(
+                new Ui(new BufferedReader(new StringReader("")), new PrintWriter(output, true)));
+        TextArea commandOutput = createCommandOutput();
+        root.setCenter(createDashboard(commandOutput));
+        root.setBottom(createCommandBar(commandLineApp, output, commandOutput));
 
         Scene scene = new Scene(root, 1120, 760);
         scene.getStylesheets().add(getClass().getResource("/Timey/ui/dashboard/dashboard.css").toExternalForm());
@@ -46,7 +59,7 @@ public final class TimeyDashboardApp extends Application {
         return header;
     }
 
-    private VBox createEmptyDashboard() {
+    private VBox createDashboard(TextArea commandOutput) {
         Label heading = new Label("Your day, on track.");
         heading.getStyleClass().add("page-heading");
         Label introduction = new Label("Plan a commute in the command bar to see your next event and departure plan here.");
@@ -58,7 +71,9 @@ public final class TimeyDashboardApp extends Application {
         HBox lowerCards = new HBox(18, commute, reminders);
         lowerCards.getChildren().forEach(card -> HBox.setHgrow(card, javafx.scene.layout.Priority.ALWAYS));
 
-        VBox content = new VBox(18, heading, introduction, nextEvent, lowerCards);
+        Label commandHeading = new Label("COMMAND OUTPUT");
+        commandHeading.getStyleClass().add("card-label");
+        VBox content = new VBox(18, heading, introduction, nextEvent, lowerCards, commandHeading, commandOutput);
         content.setPadding(new Insets(40, 56, 32, 56));
         return content;
     }
@@ -77,17 +92,43 @@ public final class TimeyDashboardApp extends Application {
         return card;
     }
 
-    private HBox createCommandBar() {
+    private TextArea createCommandOutput() {
+        TextArea commandOutput = new TextArea("Use the command bar below, for example:\n"
+                + "plan /from \"COM3\" /to \"VivoCity\" /by 1830 /buf 10m");
+        commandOutput.setEditable(false);
+        commandOutput.setWrapText(true);
+        commandOutput.setPrefRowCount(8);
+        commandOutput.getStyleClass().add("command-output");
+        return commandOutput;
+    }
+
+    private HBox createCommandBar(CommandLineApp commandLineApp, StringWriter output, TextArea commandOutput) {
         Label prompt = new Label(">");
         prompt.getStyleClass().add("command-prompt");
         TextField command = new TextField();
-        command.setPromptText("Embedded command panel will be connected in the next iteration");
-        command.setDisable(true);
+        command.setPromptText("Enter a Timey command, for example: plan /from \"COM3\" /to \"VivoCity\" /by 1830");
+        command.setOnAction(event -> executeCommand(commandLineApp, output, commandOutput, command));
         HBox.setHgrow(command, javafx.scene.layout.Priority.ALWAYS);
         HBox commandBar = new HBox(12, prompt, command);
         commandBar.setAlignment(Pos.CENTER_LEFT);
         commandBar.setPadding(new Insets(18, 56, 24, 56));
         commandBar.getStyleClass().add("command-bar");
         return commandBar;
+    }
+
+    private void executeCommand(CommandLineApp commandLineApp, StringWriter output, TextArea commandOutput,
+            TextField command) {
+        String input = command.getText();
+        if (input.isBlank()) {
+            return;
+        }
+        int outputStart = output.getBuffer().length();
+        boolean sessionEnded = commandLineApp.executeCommand(input);
+        commandOutput.appendText("\n> " + input + "\n" + output.getBuffer().substring(outputStart));
+        command.clear();
+        if (sessionEnded) {
+            command.setDisable(true);
+            command.setPromptText("This command session has ended");
+        }
     }
 }

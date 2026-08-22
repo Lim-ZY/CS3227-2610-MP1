@@ -85,7 +85,7 @@ public final class CommandLineApp {
             String command;
             while ((command = ui.readCommand()) != null) {
                 ui.printDivider();
-                if (handle(command)) {
+                if (executeCommand(command)) {
                     return;
                 }
                 ui.printDivider();
@@ -96,7 +96,8 @@ public final class CommandLineApp {
         }
     }
 
-    private boolean handle(String input) {
+    /** Executes one command while retaining the same command state as the terminal session. */
+    public boolean executeCommand(String input) {
         try {
             CommandParser.Command command = commandParser.parse(input);
             return switch (command.type()) {

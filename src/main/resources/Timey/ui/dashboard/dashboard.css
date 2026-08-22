@@ -62,3 +62,15 @@
     -fx-font-size: 18px;
     -fx-font-weight: 800;
 }
+
+.command-output {
+    -fx-font-family: "JetBrains Mono", "Consolas", monospace;
+    -fx-font-size: 13px;
+    -fx-control-inner-background: #182237;
+    -fx-text-fill: #e6e9f2;
+    -fx-highlight-fill: #5362e8;
+    -fx-highlight-text-fill: white;
+    -fx-background-radius: 12;
+    -fx-border-radius: 12;
+    -fx-border-color: #24324e;
+}
