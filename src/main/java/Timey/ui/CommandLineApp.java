@@ -9,9 +9,9 @@ import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
-import Timey.application.CommutePlanningService;
 import Timey.application.DepartureReminderService;
-import Timey.application.Planner;
+import Timey.planner.CommutePlanningService;
+import Timey.planner.Planner;
 import Timey.parser.CommandParser;
 import Timey.parser.PlanCommand;
 import Timey.parser.PlanCommandParser;

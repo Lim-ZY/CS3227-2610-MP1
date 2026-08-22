@@ -1,4 +1,4 @@
-package Timey.application;
+package Timey.planner;
 
 import java.util.List;
 import java.util.Objects;

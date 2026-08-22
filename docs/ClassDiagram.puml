@@ -22,11 +22,14 @@ package "parser" {
   enum "CommandParser.Type" as CommandType
 }
 
-package "application" {
+package "planner" {
   class Planner
   class "Planner.PlanningResult" as PlanningResult <<record>>
   class CommutePlanningService
   class LiveRailPlanningService
+}
+
+package "application" {
   class DepartureReminderService
 }
 

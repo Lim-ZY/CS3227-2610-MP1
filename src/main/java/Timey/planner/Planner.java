@@ -1,4 +1,4 @@
-package Timey.application;
+package Timey.planner;
 
 import java.time.Clock;
 import java.util.ArrayList;
