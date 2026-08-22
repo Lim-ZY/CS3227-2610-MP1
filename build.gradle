@@ -1,6 +1,7 @@
 plugins {
     id 'java'
     id 'application'
+    id 'org.openjfx.javafxplugin' version '0.1.0'
 }
 
 group = 'Timey'
@@ -17,7 +18,12 @@ java {
 }
 
 application {
-    mainClass = 'Timey.Main'
+    mainClass = 'Timey.Timey'
+}
+
+javafx {
+    version = '25.0.1'
+    modules = ['javafx.controls']
 }
 
 dependencies {
@@ -34,4 +40,11 @@ tasks.named('test') {
 // Keep the interactive CLI connected to the terminal when launched with `gradle run`.
 tasks.named('run') {
     standardInput = System.in
+}
+
+tasks.register('runDashboard', JavaExec) {
+    group = 'application'
+    description = 'Launches the Timey JavaFX dashboard.'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'Timey.ui.dashboard.DashboardLauncher'
 }

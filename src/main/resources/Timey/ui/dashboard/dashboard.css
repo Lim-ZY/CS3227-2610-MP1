@@ -1,0 +1,64 @@
+.root {
+    -fx-font-family: "Inter", "Segoe UI", sans-serif;
+    -fx-background-color: #f7f8fc;
+}
+
+.header {
+    -fx-padding: 20 56 18 56;
+    -fx-background-color: white;
+    -fx-border-color: transparent transparent #e8eaf1 transparent;
+}
+
+.brand {
+    -fx-font-size: 24px;
+    -fx-font-weight: 800;
+    -fx-text-fill: #182237;
+}
+
+.preferences-button {
+    -fx-background-color: transparent;
+    -fx-text-fill: #667085;
+    -fx-font-size: 13px;
+}
+
+.page-heading {
+    -fx-font-size: 30px;
+    -fx-font-weight: 800;
+    -fx-text-fill: #182237;
+}
+
+.muted {
+    -fx-text-fill: #667085;
+    -fx-font-size: 14px;
+}
+
+.card {
+    -fx-background-color: white;
+    -fx-background-radius: 14;
+    -fx-border-color: #e5e8f0;
+    -fx-border-radius: 14;
+    -fx-padding: 22;
+}
+
+.card-label {
+    -fx-text-fill: #7683ff;
+    -fx-font-size: 11px;
+    -fx-font-weight: 800;
+}
+
+.card-title {
+    -fx-font-size: 19px;
+    -fx-font-weight: 700;
+    -fx-text-fill: #27344d;
+}
+
+.command-bar {
+    -fx-background-color: white;
+    -fx-border-color: #e8eaf1 transparent transparent transparent;
+}
+
+.command-prompt {
+    -fx-text-fill: #5362e8;
+    -fx-font-size: 18px;
+    -fx-font-weight: 800;
+}
