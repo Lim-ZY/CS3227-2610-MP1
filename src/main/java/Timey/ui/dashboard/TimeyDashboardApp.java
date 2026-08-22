@@ -6,6 +6,7 @@ import java.io.StringReader;
 import java.io.StringWriter;
 
 import Timey.ApplicationFactory;
+import Timey.config.UserPreferences;
 import Timey.ui.CommandLineApp;
 import Timey.ui.CommandExecutionResult;
 import Timey.ui.DashboardState;
@@ -36,7 +37,7 @@ public final class TimeyDashboardApp extends Application {
     public void start(Stage stage) {
         BorderPane root = new BorderPane();
         root.getStyleClass().add("dashboard");
-        Header header = createHeader();
+        Header header = createHeader(ApplicationFactory.loadUserPreferences());
         root.setTop(header.container());
         StringWriter output = new StringWriter();
         CommandLineApp commandLineApp = ApplicationFactory.createCommandLineApp(
@@ -55,28 +56,31 @@ public final class TimeyDashboardApp extends Application {
         stage.show();
     }
 
-    private Header createHeader() {
+    private Header createHeader(UserPreferences preferences) {
         MenuButton timey = new MenuButton("Timey");
         timey.getStyleClass().add("brand");
-        MenuItem savedLocationStatus = new MenuItem("No saved locations yet");
         Menu savedLocations = new Menu("Saved locations");
-        savedLocations.getItems().add(savedLocationStatus);
+        if (preferences.savedLocations().isEmpty()) {
+            savedLocations.getItems().add(new MenuItem("No saved locations yet"));
+        } else {
+            preferences.savedLocations().forEach(location -> savedLocations.getItems().add(new MenuItem(location)));
+        }
         MenuItem recentLocations = new MenuItem("No recent plan");
         Menu recent = new Menu("Recent locations");
         recent.getItems().add(recentLocations);
         MenuItem personalBuffer = new MenuItem("Set per plan");
-        MenuItem timeZone = new MenuItem("Asia/Singapore");
-        Menu preferences = new Menu("Preferences");
-        preferences.getItems().addAll(new Menu("Personal buffer", null, personalBuffer),
+        MenuItem timeZone = new MenuItem(preferences.timeZone().getId());
+        Menu preferenceMenu = new Menu("Preferences");
+        preferenceMenu.getItems().addAll(new Menu("Personal buffer", null, personalBuffer),
                 new Menu("Time zone", null, timeZone));
-        timey.getItems().addAll(savedLocations, recent, preferences);
+        timey.getItems().addAll(savedLocations, recent, preferenceMenu);
 
         Region spacer = new Region();
         HBox.setHgrow(spacer, javafx.scene.layout.Priority.ALWAYS);
         HBox header = new HBox(16, timey, spacer, new Label("Dashboard"));
         header.setAlignment(Pos.CENTER_LEFT);
         header.getStyleClass().add("header");
-        return new Header(header, recentLocations, personalBuffer);
+        return new Header(header, recentLocations, personalBuffer, preferences);
     }
 
     private DashboardContent createDashboard(TextArea commandOutput) {
@@ -216,7 +220,7 @@ public final class TimeyDashboardApp extends Application {
                         .format(DateTimeFormatter.ofPattern("uuuu-MM-dd HH:mm")));
         refreshAlternatives(dashboard.alternatives(), state);
         header.recentLocations().setText(DashboardMenuSummary.recentLocations(state));
-        header.personalBuffer().setText(DashboardMenuSummary.personalBuffer(state));
+        header.personalBuffer().setText(DashboardMenuSummary.personalBuffer(state, header.preferences()));
     }
 
     private void showLoading(DashboardContent dashboard) {
@@ -284,7 +288,7 @@ public final class TimeyDashboardApp extends Application {
     private record DashboardContent(VBox content, Card nextEvent, Card commute, Card reminders, VBox alternatives) {
     }
 
-    private record Header(HBox container, MenuItem recentLocations, MenuItem personalBuffer) {
+    private record Header(HBox container, MenuItem recentLocations, MenuItem personalBuffer, UserPreferences preferences) {
     }
 
     private record DashboardCommandResponse(CommandExecutionResult result, String output) {

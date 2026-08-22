@@ -29,6 +29,14 @@ class PlanCommandParserTest {
     }
 
     @Test
+    void parse_bufferOmitted_configuredDefaultBufferUsed() {
+        PlanCommand result = new PlanCommandParser(Duration.ofMinutes(15))
+                .parse("plan /from \"COM3\" /to \"VivoCity\" /by 1830");
+
+        assertEquals(Duration.ofMinutes(15), result.buffer());
+    }
+
+    @Test
     void parse_zeroBuffer_zeroBufferAccepted() {
         PlanCommand result = parser.parse("plan /from \"COM3\" /to \"VivoCity\" /by 1830 /buf 0m");
 

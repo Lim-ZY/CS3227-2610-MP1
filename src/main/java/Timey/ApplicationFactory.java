@@ -5,6 +5,7 @@ import java.time.Duration;
 import java.time.ZoneId;
 
 import Timey.config.ApplicationConfiguration;
+import Timey.config.UserPreferences;
 import Timey.infrastructure.http.JdkHttpRequester;
 import Timey.infrastructure.http.RetryingHttpRequester;
 import Timey.infrastructure.location.OneMapLocationResolver;
@@ -25,13 +26,20 @@ public final class ApplicationFactory {
 
     public static CommandLineApp createCommandLineApp(Ui ui) {
         var configuration = ApplicationConfiguration.loadDefault();
+        var preferences = configuration.userPreferences();
         var locationResolver = new OneMapLocationResolver(new RetryingHttpRequester(new JdkHttpRequester()),
                 configuration.oneMapAccessToken());
         var railTransitPlanner = new OneMapRailTransitPlanner(
                 new RetryingHttpRequester(new JdkHttpRequester(ROUTING_REQUEST_TIMEOUT)),
                 configuration.oneMapAccessToken());
-        return new CommandLineApp(ui, new PlanCommandParser(), new CommutePlanningService(new MockTransitPlanner()),
-                locationResolver, railTransitPlanner, Clock.system(ZoneId.of("Asia/Singapore")),
+        return new CommandLineApp(ui, new PlanCommandParser(preferences.defaultDepartureBuffer()),
+                new CommutePlanningService(new MockTransitPlanner()), locationResolver, railTransitPlanner,
+                Clock.system(preferences.timeZone()),
                 new ScheduledExecutorReminderScheduler());
+    }
+
+    /** Loads the local preferences displayed by the JavaFX dashboard. */
+    public static UserPreferences loadUserPreferences() {
+        return ApplicationConfiguration.loadDefault().userPreferences();
     }
 }

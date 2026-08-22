@@ -10,6 +10,7 @@ import java.util.Optional;
 import org.junit.jupiter.api.Test;
 
 import Timey.parser.PlanCommand;
+import Timey.config.UserPreferences;
 import Timey.ui.DashboardState;
 
 class DashboardMenuSummaryTest {
@@ -20,7 +21,7 @@ class DashboardMenuSummaryTest {
                 List.of(), List.of(), Optional.empty(), List.of());
 
         assertEquals("COM3 → VivoCity", DashboardMenuSummary.recentLocations(state));
-        assertEquals("10 minutes (current plan)", DashboardMenuSummary.personalBuffer(state));
+        assertEquals("10 minutes (current plan)", DashboardMenuSummary.personalBuffer(state, preferences()));
     }
 
     @Test
@@ -28,6 +29,10 @@ class DashboardMenuSummaryTest {
         DashboardState state = new DashboardState(Optional.empty(), List.of(), List.of(), Optional.empty(), List.of());
 
         assertEquals("No recent plan", DashboardMenuSummary.recentLocations(state));
-        assertEquals("Set per plan", DashboardMenuSummary.personalBuffer(state));
+        assertEquals("12 minutes (default)", DashboardMenuSummary.personalBuffer(state, preferences()));
+    }
+
+    private UserPreferences preferences() {
+        return new UserPreferences(java.time.ZoneId.of("Asia/Singapore"), Duration.ofMinutes(12), List.of());
     }
 }

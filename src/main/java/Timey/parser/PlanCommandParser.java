@@ -14,6 +14,19 @@ public final class PlanCommandParser {
     private static final Duration DEFAULT_BUFFER = Duration.ofMinutes(10);
     private static final DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern("HHmm");
     private static final Pattern OPTION = Pattern.compile("/(from|to|by|buf)\\s+(?:\\\"([^\\\"]+)\\\"|(\\S+))");
+    private final Duration defaultBuffer;
+
+    public PlanCommandParser() {
+        this(DEFAULT_BUFFER);
+    }
+
+    /** Creates a parser with the persisted buffer used when /buf is omitted. */
+    public PlanCommandParser(Duration defaultBuffer) {
+        if (defaultBuffer == null || defaultBuffer.isNegative()) {
+            throw new IllegalArgumentException("Default buffer must not be negative.");
+        }
+        this.defaultBuffer = defaultBuffer;
+    }
 
     /**
      * Parses a plan request in the form {@code plan /from "COM3" /to "VivoCity" /by 1830 /buf 10m}.
@@ -48,7 +61,7 @@ public final class PlanCommandParser {
         String origin = requiredOption(options, "from");
         String destination = requiredOption(options, "to");
         LocalTime arrivalTime = parseTime(requiredOption(options, "by"));
-        Duration buffer = options.containsKey("buf") ? parseBuffer(options.get("buf")) : DEFAULT_BUFFER;
+        Duration buffer = options.containsKey("buf") ? parseBuffer(options.get("buf")) : defaultBuffer;
         return new PlanCommand(origin, destination, arrivalTime, buffer);
     }
 
