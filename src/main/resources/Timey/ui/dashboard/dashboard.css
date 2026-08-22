@@ -59,6 +59,78 @@
     -fx-text-fill: #e8edf4;
 }
 
+.next-event-card {
+    -fx-background-color: linear-gradient(to bottom right, #1a344c, #192a3d);
+    -fx-border-color: #3e79a5;
+    -fx-padding: 19;
+}
+
+.event-type {
+    -fx-background-color: #28597d;
+    -fx-background-radius: 12;
+    -fx-padding: 4 9 4 9;
+    -fx-text-fill: #bce4ff;
+    -fx-font-size: 12px;
+    -fx-font-weight: 800;
+}
+
+.next-event-title {
+    -fx-font-size: 25px;
+    -fx-font-weight: 700;
+    -fx-text-fill: #edf1f5;
+}
+
+.location-pin, .time-dot {
+    -fx-text-fill: #83cfff;
+    -fx-font-size: 20px;
+}
+
+.location-label {
+    -fx-text-fill: #bdc9d7;
+    -fx-font-size: 13px;
+}
+
+.journey-line {
+    -fx-background-color: #69bdf3;
+    -fx-pref-height: 2;
+    -fx-min-width: 52;
+}
+
+.departure-countdown {
+    -fx-text-fill: #86cfff;
+    -fx-font-size: 21px;
+    -fx-font-weight: 500;
+}
+
+.departure-caption {
+    -fx-text-fill: #bac7d5;
+    -fx-font-size: 12px;
+    -fx-text-alignment: right;
+}
+
+.event-time-line {
+    -fx-background-color: #42759a;
+    -fx-pref-width: 2;
+    -fx-pref-height: 15;
+    -fx-translate-x: 8;
+}
+
+.event-time {
+    -fx-text-fill: #e8edf4;
+    -fx-font-size: 15px;
+    -fx-font-weight: 800;
+}
+
+.reminder-dot {
+    -fx-text-fill: #36c780;
+    -fx-font-size: 14px;
+}
+
+.reminder-text {
+    -fx-text-fill: #d5dde6;
+    -fx-font-size: 14px;
+}
+
 .command-bar {
     -fx-background-color: #0f1926;
     -fx-border-color: #31455d transparent transparent transparent;
