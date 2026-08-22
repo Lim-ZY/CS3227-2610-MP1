@@ -17,10 +17,10 @@ import Timey.infrastructure.transit.MockTransitPlanner;
 import Timey.infrastructure.transit.OneMapRailTransitPlanner;
 
 /** Entry point for the Timey application. */
-public final class Main {
+public final class Timey {
     private static final Duration ROUTING_REQUEST_TIMEOUT = Duration.ofSeconds(12);
 
-    private Main() {
+    private Timey() {
     }
 
     public static void main(String[] args) {

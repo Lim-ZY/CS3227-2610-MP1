@@ -1,0 +1,174 @@
+@startuml TimeyClassDiagram
+title Timey production class diagram
+
+skinparam packageStyle rectangle
+skinparam classAttributeIconSize 0
+hide empty members
+
+package "Timey" {
+  class Timey <<composition root>>
+}
+
+package "presentation" {
+  class CommandLineApp
+  class Ui
+}
+
+package "command" {
+  class CommandParser
+  class PlanCommandParser
+  class PlanCommand <<record>>
+  class "CommandParser.Command" as ParsedCommand <<record>>
+  enum "CommandParser.Type" as CommandType
+}
+
+package "application" {
+  class Planner
+  class "Planner.PlanningResult" as PlanningResult <<record>>
+  class CommutePlanningService
+  class LiveRailPlanningService
+  class DepartureReminderService
+}
+
+package "domain.alert" {
+  class DepartureCalculator
+  class DepartureRecommendation <<record>>
+  class ScheduledDepartureReminder <<record>>
+}
+
+package "domain.location" {
+  class LocationResolution <<record>>
+  class ResolvedLocation <<record>>
+}
+
+package "domain.transit" {
+  class RouteAlternative <<record>>
+  class RouteStep <<record>>
+  enum RouteStepMode
+  class LiveRouteLookup <<record>>
+}
+
+package "ports" {
+  interface LocationResolver
+  interface TransitPlanner
+  interface RailTransitPlanner
+  interface ReminderScheduler
+  interface ReminderHandle
+}
+
+package "infrastructure.http" {
+  interface HttpRequester
+  class HttpResult <<record>>
+  class JdkHttpRequester
+  class RetryingHttpRequester
+  interface RetryDelay
+}
+
+package "infrastructure.location" {
+  class OneMapLocationResolver
+}
+
+package "infrastructure.transit" {
+  class MockTransitPlanner
+  class OneMapRailTransitPlanner
+}
+
+package "infrastructure.notification" {
+  class ScheduledExecutorReminderScheduler
+}
+
+package "config" {
+  class ApplicationConfiguration
+}
+
+' Application composition and presentation flow
+Timey *--> Ui
+Timey *--> CommandLineApp
+Timey *--> ApplicationConfiguration
+Timey *--> CommutePlanningService
+Timey *--> PlanCommandParser
+Timey *--> JdkHttpRequester
+Timey *--> RetryingHttpRequester
+Timey *--> OneMapLocationResolver
+Timey *--> OneMapRailTransitPlanner
+Timey *--> MockTransitPlanner
+Timey *--> ScheduledExecutorReminderScheduler
+
+CommandLineApp --> Ui
+CommandLineApp *--> CommandParser
+CommandLineApp *--> Planner
+CommandLineApp *--> DepartureReminderService
+CommandLineApp --> CommutePlanningService : recommends departure
+CommandLineApp --> PlanCommand
+CommandLineApp --> RouteAlternative
+CommandLineApp --> DepartureRecommendation
+CommandLineApp --> ScheduledDepartureReminder
+
+' Command interpretation
+CommandParser *--> PlanCommandParser
+CommandParser --> ParsedCommand : creates
+ParsedCommand --> CommandType
+ParsedCommand --> PlanCommand : optional plan
+PlanCommandParser --> PlanCommand : creates
+
+' Application services
+Planner --> CommutePlanningService
+Planner --> LocationResolver
+Planner *--> LiveRailPlanningService
+Planner --> PlanCommand
+Planner --> PlanningResult : creates
+PlanningResult --> RouteAlternative
+LiveRailPlanningService --> RailTransitPlanner
+LiveRailPlanningService *--> DepartureCalculator
+LiveRailPlanningService --> PlanCommand
+LiveRailPlanningService --> ResolvedLocation
+LiveRailPlanningService --> LiveRouteLookup
+CommutePlanningService --> TransitPlanner
+CommutePlanningService *--> DepartureCalculator
+CommutePlanningService --> PlanCommand
+CommutePlanningService --> RouteAlternative
+CommutePlanningService --> DepartureRecommendation
+DepartureReminderService --> ReminderScheduler
+DepartureReminderService --> ReminderHandle
+DepartureReminderService --> DepartureRecommendation
+DepartureReminderService --> ScheduledDepartureReminder
+
+' Domain value relationships and business calculation
+DepartureCalculator --> PlanCommand
+DepartureCalculator --> RouteAlternative
+DepartureCalculator --> DepartureRecommendation : creates
+LocationResolution --> ResolvedLocation : optional location
+LiveRouteLookup --> RouteAlternative
+RouteAlternative *--> "0..*" RouteStep
+RouteStep --> RouteStepMode
+
+' Ports and their infrastructure adapters
+OneMapLocationResolver ..|> LocationResolver
+MockTransitPlanner ..|> TransitPlanner
+OneMapRailTransitPlanner ..|> RailTransitPlanner
+ScheduledExecutorReminderScheduler ..|> ReminderScheduler
+JdkHttpRequester ..|> HttpRequester
+RetryingHttpRequester ..|> HttpRequester
+
+OneMapLocationResolver --> HttpRequester
+OneMapLocationResolver --> LocationResolution
+OneMapLocationResolver --> ResolvedLocation : creates
+OneMapRailTransitPlanner --> HttpRequester
+OneMapRailTransitPlanner --> ResolvedLocation
+OneMapRailTransitPlanner --> LiveRouteLookup : creates
+OneMapRailTransitPlanner --> RouteAlternative : creates
+OneMapRailTransitPlanner --> RouteStep : creates
+OneMapRailTransitPlanner --> RouteStepMode
+MockTransitPlanner --> RouteAlternative
+ScheduledExecutorReminderScheduler --> ReminderHandle : creates
+HttpRequester --> HttpResult
+RetryingHttpRequester --> HttpRequester : delegates to
+RetryingHttpRequester --> RetryDelay
+JdkHttpRequester --> HttpResult : creates
+
+note bottom
+  Scope: production types under src/main/java/Timey.
+  Empty placeholder packages (application.dto, domain.event, domain.time,
+  infrastructure.calendar, and infrastructure.weather) have no classes yet.
+end note
+@enduml
