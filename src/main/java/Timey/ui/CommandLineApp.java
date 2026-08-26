@@ -11,6 +11,7 @@ import java.util.List;
 
 import Timey.reminder.DepartureReminderService;
 import Timey.command.Command;
+import Timey.command.CancelCommand;
 import Timey.command.CommandResult;
 import Timey.command.ThanksCommand;
 import Timey.command.AddCommand;
@@ -149,8 +150,9 @@ public final class CommandLineApp {
                 yield remindersCommand.isExit();
             }
             case CANCEL -> {
-                handleCancellation(command.number());
-                yield false;
+                Command cancelCommand = new CancelCommand(command.number());
+                execute(cancelCommand);
+                yield cancelCommand.isExit();
             }
             case UNKNOWN -> {
                 UnknownCommand unknownCommand = new UnknownCommand();
@@ -211,18 +213,6 @@ public final class CommandLineApp {
         });
         ui.println("Departure reminder automatically set for "
                 + REMINDER_TIME_FORMAT.format(reminder.triggerAt().atZone(clock.getZone())) + ".");
-    }
-
-    private void handleCancellation(Integer reminderNumber) {
-        if (reminderNumber == null) {
-            ui.println("Cancel a reminder by number, for example: cancel 1");
-            return;
-        }
-        if (departureReminderService.cancel(reminderNumber)) {
-            ui.println("Cancelled departure reminder " + reminderNumber + ".");
-        } else {
-            ui.println("No active departure reminder numbered " + reminderNumber + ".");
-        }
     }
 
     private void printAlternatives(List<RouteAlternative> alternatives) {

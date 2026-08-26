@@ -44,6 +44,7 @@ package "command" {
   class AddCommand
   class PlanCommand
   class RemindersCommand
+  class CancelCommand
   class UnknownCommand
 }
 
@@ -130,10 +131,12 @@ AddCommand --|> Command
 PlanCommand --|> Command
 UnknownCommand --|> Command
 RemindersCommand --|> Command
+CancelCommand --|> Command
 Command --> TimeyModel
 Command --> CommandResult : creates
 AddCommand --> TimeyModel
 RemindersCommand --> TimeyModel
+CancelCommand --> TimeyModel
 TimeyModel --> FixedCommuteStore
 TimeyModel --> FixedCommute : creates
 TimeyModel --> DepartureReminderService

@@ -103,6 +103,11 @@ public final class TimeyModel {
         return departureReminderService.scheduledReminders();
     }
 
+    /** Cancels the requested one-based departure reminder, if it is active. */
+    public boolean cancelReminder(int reminderNumber) {
+        return departureReminderService.cancel(reminderNumber);
+    }
+
     /** Returns the clock used to present command-session times. */
     public Clock getClock() {
         return clock;
