@@ -21,7 +21,7 @@ class ParserTest {
         var command = parser.parse("add /from COM3 /to VivoCity /dur 1h30m");
 
         assertEquals(Parser.Type.ADD, command.type());
-        assertEquals(java.time.Duration.ofMinutes(90), command.addTiming().duration());
+        assertEquals(java.time.Duration.ofMinutes(90), command.addCommand().getDuration());
     }
 
     @Test

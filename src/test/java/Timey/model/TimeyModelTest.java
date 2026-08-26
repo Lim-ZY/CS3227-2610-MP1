@@ -10,12 +10,13 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 
 import Timey.domain.transit.RouteAlternative;
+import Timey.infrastructure.transit.InMemoryFixedCommuteStore;
 import Timey.parser.PlanCommand;
 
 class TimeyModelTest {
     @Test
     void replacePlan_storesIndependentPlanningState() {
-        var model = new TimeyModel();
+        var model = new TimeyModel(new InMemoryFixedCommuteStore());
         var plan = new PlanCommand("COM3", "VivoCity", LocalTime.of(18, 30), Duration.ofMinutes(5));
         var alternatives = List.of(new RouteAlternative("Bus", Duration.ofMinutes(5), Duration.ofMinutes(30), 0));
 

@@ -7,22 +7,24 @@ import java.time.Duration;
 
 import org.junit.jupiter.api.Test;
 
-class AddTimingCommandParserTest {
-    private final AddTimingCommandParser parser = new AddTimingCommandParser();
+import Timey.command.AddCommand;
+
+class AddCommandParserTest {
+    private final AddCommandParser parser = new AddCommandParser();
 
     @Test
     void parse_hoursAndMinutes_addTimingCreated() {
-        AddTimingCommand command = parser.parse("add /from \"COM3\" /to \"VivoCity\" /dur 1h30m");
+        AddCommand command = parser.parse("add /from \"COM3\" /to \"VivoCity\" /dur 1h30m");
 
-        assertEquals("COM3", command.origin());
-        assertEquals("VivoCity", command.destination());
-        assertEquals(Duration.ofMinutes(90), command.duration());
+        assertEquals("COM3", command.getOrigin());
+        assertEquals("VivoCity", command.getDestination());
+        assertEquals(Duration.ofMinutes(90), command.getDuration());
     }
 
     @Test
     void parse_hourOrMinuteDuration_addTimingCreated() {
-        assertEquals(Duration.ofHours(1), parser.parse("add /from A /to B /dur 1h").duration());
-        assertEquals(Duration.ofMinutes(30), parser.parse("add /from A /to B /dur 30m").duration());
+        assertEquals(Duration.ofHours(1), parser.parse("add /from A /to B /dur 1h").getDuration());
+        assertEquals(Duration.ofMinutes(30), parser.parse("add /from A /to B /dur 30m").getDuration());
     }
 
     @Test

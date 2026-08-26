@@ -5,15 +5,34 @@ import java.util.Objects;
 import java.util.Optional;
 
 import Timey.domain.alert.DepartureRecommendation;
+import Timey.domain.transit.FixedCommute;
 import Timey.domain.transit.RouteAlternative;
 import Timey.parser.PlanCommand;
+import Timey.ports.FixedCommuteStore;
 
 /** Stores the mutable state of a Timey command session. */
 public final class TimeyModel {
+    private final FixedCommuteStore fixedCommuteStore;
     private PlanCommand pendingPlan;
     private List<RouteAlternative> pendingAlternatives = List.of();
     private List<String> planningMessages = List.of();
     private DepartureRecommendation selectedRecommendation;
+
+    public TimeyModel(FixedCommuteStore fixedCommuteStore) {
+        this.fixedCommuteStore = Objects.requireNonNull(fixedCommuteStore);
+    }
+
+    /** Saves a fixed commute duration for later route planning. */
+    public FixedCommute saveFixedCommute(String origin, String destination, java.time.Duration duration) {
+        FixedCommute commute = new FixedCommute(origin, destination, duration);
+        fixedCommuteStore.save(commute);
+        return commute;
+    }
+
+    /** Finds a saved fixed commute duration for the requested journey. */
+    public Optional<FixedCommute> findFixedCommute(String origin, String destination) {
+        return fixedCommuteStore.find(origin, destination);
+    }
 
     /** Replaces the current plan and clears its previous route selection. */
     public void replacePlan(PlanCommand plan, List<RouteAlternative> alternatives, List<String> messages) {

@@ -17,6 +17,7 @@ package "ui" {
 package "parser" {
   class Parser
   class PlanCommandParser
+  class AddCommandParser
   class PlanCommand <<record>>
   class "Parser.ParsedCommand" as ParsedCommand <<record>>
   enum "Parser.Type" as CommandType
@@ -41,6 +42,7 @@ package "command" {
   abstract class Command
   class CommandResult <<record>>
   class ThanksCommand
+  class AddCommand
 }
 
 package "domain.alert" {
@@ -55,6 +57,7 @@ package "domain.location" {
 }
 
 package "domain.transit" {
+  class FixedCommute <<record>>
   class RouteAlternative <<record>>
   class RouteStep <<record>>
   enum RouteStepMode
@@ -62,6 +65,7 @@ package "domain.transit" {
 }
 
 package "ports" {
+  interface FixedCommuteStore
   interface LocationResolver
   interface TransitPlanner
   interface RailTransitPlanner
@@ -122,15 +126,22 @@ TimeyModel --> PlanCommand
 TimeyModel --> RouteAlternative
 TimeyModel --> DepartureRecommendation
 ThanksCommand --|> Command
+AddCommand --|> Command
 Command --> TimeyModel
 Command --> CommandResult : creates
+AddCommand --> TimeyModel
+TimeyModel --> FixedCommuteStore
+TimeyModel --> FixedCommute : creates
 
 ' Command interpretation
 Parser *--> PlanCommandParser
+Parser *--> AddCommandParser
 Parser --> ParsedCommand : creates
 ParsedCommand --> CommandType
 ParsedCommand --> PlanCommand : optional plan
+ParsedCommand --> AddCommand : optional add command
 PlanCommandParser --> PlanCommand : creates
+AddCommandParser --> AddCommand : creates
 
 ' Application services
 Planner --> CommutePlanningService

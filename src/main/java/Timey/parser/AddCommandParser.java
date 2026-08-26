@@ -6,12 +6,14 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import Timey.command.AddCommand;
+
 /** Parses {@code add /from <source> /to <destination> /dur 1h30m} commands. */
-public final class AddTimingCommandParser {
+public final class AddCommandParser {
     private static final Pattern OPTION = Pattern.compile("/(from|to|dur)\\s+(?:\\\"([^\\\"]+)\\\"|(\\S+))");
     private static final Pattern DURATION = Pattern.compile("(?:(\\d+)h)?(?:(\\d+)m)?");
 
-    public AddTimingCommand parse(String input) {
+    public AddCommand parse(String input) {
         if (input == null || !input.startsWith("add")) {
             throw new IllegalArgumentException("Command must start with 'add'.");
         }
@@ -32,7 +34,7 @@ public final class AddTimingCommandParser {
         if (!optionsText.substring(nextExpectedIndex).isBlank()) {
             throw new IllegalArgumentException("Could not understand part of the add command.");
         }
-        return new AddTimingCommand(requiredOption(options, "from"), requiredOption(options, "to"),
+        return new AddCommand(requiredOption(options, "from"), requiredOption(options, "to"),
                 parseDuration(requiredOption(options, "dur")));
     }
 

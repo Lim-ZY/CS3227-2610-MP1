@@ -1,17 +1,19 @@
 package Timey.parser;
 
+import Timey.command.AddCommand;
+
 /** Parses a complete user command into the action requested by the user. */
 public final class Parser {
     private final PlanCommandParser planCommandParser;
-    private final AddTimingCommandParser addTimingCommandParser;
+    private final AddCommandParser addCommandParser;
 
     public Parser(PlanCommandParser planCommandParser) {
-        this(planCommandParser, new AddTimingCommandParser());
+        this(planCommandParser, new AddCommandParser());
     }
 
-    public Parser(PlanCommandParser planCommandParser, AddTimingCommandParser addTimingCommandParser) {
+    public Parser(PlanCommandParser planCommandParser, AddCommandParser addCommandParser) {
         this.planCommandParser = planCommandParser;
-        this.addTimingCommandParser = addTimingCommandParser;
+        this.addCommandParser = addCommandParser;
     }
 
     /**
@@ -30,7 +32,7 @@ public final class Parser {
             return ParsedCommand.plan(planCommandParser.parse(command));
         }
         if (command.startsWith("add")) {
-            return ParsedCommand.addTiming(addTimingCommandParser.parse(command));
+            return ParsedCommand.add(addCommandParser.parse(command));
         }
         if (command.startsWith("choose")) {
             return ParsedCommand.choose(parseNumberArgument(command));
@@ -57,7 +59,7 @@ public final class Parser {
     }
 
     /** A parsed command and any arguments required to execute it. */
-    public record ParsedCommand(Type type, PlanCommand plan, AddTimingCommand addTiming, Integer number) {
+    public record ParsedCommand(Type type, PlanCommand plan, AddCommand addCommand, Integer number) {
         public static ParsedCommand thanks() {
             return new ParsedCommand(Type.THANKS, null, null, null);
         }
@@ -66,8 +68,8 @@ public final class Parser {
             return new ParsedCommand(Type.PLAN, plan, null, null);
         }
 
-        public static ParsedCommand addTiming(AddTimingCommand addTiming) {
-            return new ParsedCommand(Type.ADD, null, addTiming, null);
+        public static ParsedCommand add(AddCommand addCommand) {
+            return new ParsedCommand(Type.ADD, null, addCommand, null);
         }
 
         public static ParsedCommand choose(Integer number) {
