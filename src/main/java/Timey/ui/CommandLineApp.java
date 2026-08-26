@@ -8,9 +8,9 @@ import java.time.Clock;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.Optional;
 
 import Timey.reminder.DepartureReminderService;
+import Timey.model.TimeyModel;
 import Timey.planner.CommutePlanningService;
 import Timey.planner.Planner;
 import Timey.parser.CommandParser;
@@ -43,10 +43,7 @@ public final class CommandLineApp {
     private final DepartureReminderService departureReminderService;
     private final Clock clock;
     private final FixedCommuteStore fixedCommuteStore;
-    private PlanCommand pendingPlan;
-    private List<RouteAlternative> pendingAlternatives = List.of();
-    private List<String> planningMessages = List.of();
-    private DepartureRecommendation selectedRecommendation;
+    private final TimeyModel model = new TimeyModel();
 
     public CommandLineApp(BufferedReader input, PrintWriter output) {
         this(input, output, new PlanCommandParser(), new CommutePlanningService(new MockTransitPlanner()),
@@ -165,8 +162,8 @@ public final class CommandLineApp {
 
     /** Returns current session data for a dashboard without invoking any planner or API itself. */
     public DashboardState dashboardState() {
-        return new DashboardState(Optional.ofNullable(pendingPlan), pendingAlternatives, planningMessages,
-                Optional.ofNullable(selectedRecommendation), departureReminderService.scheduledReminders());
+        return new DashboardState(model.pendingPlan(), model.pendingAlternatives(), model.planningMessages(),
+                model.selectedRecommendation(), departureReminderService.scheduledReminders());
     }
 
     private void handlePlan(PlanCommand plan) {
@@ -178,11 +175,9 @@ public final class CommandLineApp {
         ui.println("Personal buffer: " + plan.buffer().toMinutes() + " minutes");
         ui.println();
         Planner.PlanningResult result = findAlternatives(plan);
-        pendingPlan = plan;
-        planningMessages = result.messages();
-        pendingAlternatives = withFixedTiming(plan, result.alternatives());
-        selectedRecommendation = null;
-        printAlternatives(pendingAlternatives);
+        model.replacePlan(plan, result.alternatives(), result.messages());
+        model.replaceAlternatives(withFixedTiming(plan, model.pendingAlternatives()));
+        printAlternatives(model.pendingAlternatives());
         ui.println();
         ui.println("Choose a route with: choose 1");
     }
@@ -190,14 +185,10 @@ public final class CommandLineApp {
     private List<RouteAlternative> withFixedTiming(PlanCommand plan, List<RouteAlternative> alternatives) {
         return fixedCommuteStore.find(plan.origin(), plan.destination()).map(commute -> {
             RouteAlternative fixedRoute = new RouteAlternative("Saved timing", Duration.ZERO, commute.duration(), 0);
-            planningMessages = appendMessage(planningMessages, "Your saved fixed timing is available as route 1.");
+            model.addPlanningMessage("Your saved fixed timing is available as route 1.");
             ui.println("Your saved fixed timing is available as route 1.");
             return java.util.stream.Stream.concat(java.util.stream.Stream.of(fixedRoute), alternatives.stream()).toList();
         }).orElse(alternatives);
-    }
-
-    private List<String> appendMessage(List<String> messages, String message) {
-        return java.util.stream.Stream.concat(messages.stream(), java.util.stream.Stream.of(message)).toList();
     }
 
     private void handleAddTiming(AddTimingCommand command) {
@@ -216,7 +207,7 @@ public final class CommandLineApp {
     }
 
     private void handleChoice(Integer routeNumber) {
-        if (pendingPlan == null) {
+        if (model.pendingPlan().isEmpty()) {
             ui.println("Please create a plan before choosing a route.");
             return;
         }
@@ -224,13 +215,14 @@ public final class CommandLineApp {
             ui.println("Choose a route by number, for example: choose 1");
             return;
         }
-        if (routeNumber < 1 || routeNumber > pendingAlternatives.size()) {
-            ui.println("Please choose a route between 1 and " + pendingAlternatives.size() + ".");
+        if (routeNumber < 1 || routeNumber > model.pendingAlternatives().size()) {
+            ui.println("Please choose a route between 1 and " + model.pendingAlternatives().size() + ".");
             return;
         }
-        RouteAlternative route = pendingAlternatives.get(routeNumber - 1);
-        DepartureRecommendation recommendation = commutePlanningService.recommendDeparture(pendingPlan, route);
-        selectedRecommendation = recommendation;
+        RouteAlternative route = model.pendingAlternatives().get(routeNumber - 1);
+        DepartureRecommendation recommendation = commutePlanningService.recommendDeparture(
+                model.pendingPlan().orElseThrow(), route);
+        model.selectRecommendation(recommendation);
         printRecommendation(recommendation);
         if (recommendation.departureTime().isBefore(LocalTime.now(clock))) {
             ui.println("You have to leave now to stay on time! Good luck!");
