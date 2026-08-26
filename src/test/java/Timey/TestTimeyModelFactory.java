@@ -10,6 +10,7 @@ import Timey.model.TimeyModel;
 import Timey.planner.CommutePlanningService;
 import Timey.planner.Planner;
 import Timey.ports.FixedCommuteStore;
+import Timey.reminder.DepartureReminderService;
 
 /** Creates a fully wired model for tests that do not need a live route source. */
 public final class TestTimeyModelFactory {
@@ -20,6 +21,8 @@ public final class TestTimeyModelFactory {
         var planner = new Planner(new CommutePlanningService(new MockTransitPlanner()),
                 query -> LocationResolution.unavailable("Offline"),
                 (origin, destination, date, time) -> LiveRouteLookup.available(List.of()), Clock.systemUTC());
-        return new TimeyModel(planner, fixedCommuteStore);
+        Clock clock = Clock.systemUTC();
+        return new TimeyModel(planner, fixedCommuteStore,
+                new DepartureReminderService((triggerAt, action) -> () -> { }, clock), clock);
     }
 }

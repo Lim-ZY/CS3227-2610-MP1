@@ -1,28 +1,36 @@
 package Timey.model;
 
+import java.time.Clock;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
 import Timey.domain.alert.DepartureRecommendation;
+import Timey.domain.alert.ScheduledDepartureReminder;
 import Timey.domain.transit.FixedCommute;
 import Timey.domain.transit.RouteAlternative;
 import Timey.command.PlanCommand;
 import Timey.planner.Planner;
 import Timey.ports.FixedCommuteStore;
+import Timey.reminder.DepartureReminderService;
 
 /** Stores the mutable state of a Timey command session. */
 public final class TimeyModel {
     private final Planner planner;
     private final FixedCommuteStore fixedCommuteStore;
+    private final DepartureReminderService departureReminderService;
+    private final Clock clock;
     private PlanCommand pendingPlan;
     private List<RouteAlternative> pendingAlternatives = List.of();
     private List<String> planningMessages = List.of();
     private DepartureRecommendation selectedRecommendation;
 
-    public TimeyModel(Planner planner, FixedCommuteStore fixedCommuteStore) {
+    public TimeyModel(Planner planner, FixedCommuteStore fixedCommuteStore,
+            DepartureReminderService departureReminderService, Clock clock) {
         this.planner = Objects.requireNonNull(planner);
         this.fixedCommuteStore = Objects.requireNonNull(fixedCommuteStore);
+        this.departureReminderService = Objects.requireNonNull(departureReminderService);
+        this.clock = Objects.requireNonNull(clock);
     }
 
     /** Finds routes, adds a matching fixed timing, and records the resulting plan state. */
@@ -88,5 +96,15 @@ public final class TimeyModel {
 
     public Optional<DepartureRecommendation> getSelectedRecommendation() {
         return Optional.ofNullable(selectedRecommendation);
+    }
+
+    /** Returns the currently active departure reminders for this command session. */
+    public List<ScheduledDepartureReminder> getScheduledReminders() {
+        return departureReminderService.scheduledReminders();
+    }
+
+    /** Returns the clock used to present command-session times. */
+    public Clock getClock() {
+        return clock;
     }
 }

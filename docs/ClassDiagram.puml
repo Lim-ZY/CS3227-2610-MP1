@@ -43,6 +43,7 @@ package "command" {
   class ThanksCommand
   class AddCommand
   class PlanCommand
+  class RemindersCommand
   class UnknownCommand
 }
 
@@ -120,7 +121,6 @@ CommandLineApp *--> DepartureReminderService
 CommandLineApp --> CommutePlanningService : recommends departure
 CommandLineApp --> RouteAlternative
 CommandLineApp --> DepartureRecommendation
-CommandLineApp --> ScheduledDepartureReminder
 TimeyModel --> PlanCommand
 TimeyModel --> RouteAlternative
 TimeyModel --> DepartureRecommendation
@@ -129,11 +129,15 @@ ThanksCommand --|> Command
 AddCommand --|> Command
 PlanCommand --|> Command
 UnknownCommand --|> Command
+RemindersCommand --|> Command
 Command --> TimeyModel
 Command --> CommandResult : creates
 AddCommand --> TimeyModel
+RemindersCommand --> TimeyModel
 TimeyModel --> FixedCommuteStore
 TimeyModel --> FixedCommute : creates
+TimeyModel --> DepartureReminderService
+TimeyModel --> ScheduledDepartureReminder
 
 ' Command interpretation
 Parser *--> PlanCommandParser

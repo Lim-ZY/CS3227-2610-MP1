@@ -19,9 +19,9 @@ import Timey.model.TimeyModel;
 import Timey.planner.CommutePlanningService;
 import Timey.parser.Parser;
 import Timey.command.PlanCommand;
+import Timey.command.RemindersCommand;
 import Timey.parser.PlanCommandParser;
 import Timey.domain.alert.DepartureRecommendation;
-import Timey.domain.alert.ScheduledDepartureReminder;
 import Timey.domain.transit.LiveRouteLookup;
 import Timey.domain.transit.RouteAlternative;
 import Timey.infrastructure.http.HttpResult;
@@ -97,7 +97,7 @@ public final class CommandLineApp {
         var planner = new Timey.planner.Planner(commutePlanningService, locationResolver, railTransitPlanner, clock);
         this.departureReminderService = new DepartureReminderService(reminderScheduler, clock);
         this.clock = clock;
-        this.model = new TimeyModel(planner, fixedCommuteStore);
+        this.model = new TimeyModel(planner, fixedCommuteStore, departureReminderService, clock);
     }
 
     /** Runs until the user says thanks or standard input closes. */
@@ -144,8 +144,9 @@ public final class CommandLineApp {
                 yield false;
             }
             case REMINDERS -> {
-                printReminders();
-                yield false;
+                Command remindersCommand = new RemindersCommand();
+                execute(remindersCommand);
+                yield remindersCommand.isExit();
             }
             case CANCEL -> {
                 handleCancellation(command.number());
@@ -173,7 +174,7 @@ public final class CommandLineApp {
     /** Returns current session data for a dashboard without invoking any planner or API itself. */
     public DashboardState getDashboardState() {
         return new DashboardState(model.getPendingPlan(), model.getPendingAlternatives(), model.getPlanningMessages(),
-                model.getSelectedRecommendation(), departureReminderService.scheduledReminders());
+                model.getSelectedRecommendation(), model.getScheduledReminders());
     }
 
 
@@ -210,20 +211,6 @@ public final class CommandLineApp {
         });
         ui.println("Departure reminder automatically set for "
                 + REMINDER_TIME_FORMAT.format(reminder.triggerAt().atZone(clock.getZone())) + ".");
-    }
-
-    private void printReminders() {
-        List<ScheduledDepartureReminder> reminders = departureReminderService.scheduledReminders();
-        if (reminders.isEmpty()) {
-            ui.println("You have no active departure reminders.");
-            return;
-        }
-        ui.println("Active departure reminders:");
-        for (int index = 0; index < reminders.size(); index++) {
-            var reminder = reminders.get(index);
-            ui.println((index + 1) + ". " + REMINDER_TIME_FORMAT.format(reminder.triggerAt().atZone(clock.getZone()))
-                    + " — " + reminder.message());
-        }
     }
 
     private void handleCancellation(Integer reminderNumber) {
