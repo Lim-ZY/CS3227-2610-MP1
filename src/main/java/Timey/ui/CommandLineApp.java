@@ -16,9 +16,8 @@ import Timey.command.ThanksCommand;
 import Timey.command.AddCommand;
 import Timey.model.TimeyModel;
 import Timey.planner.CommutePlanningService;
-import Timey.planner.Planner;
 import Timey.parser.Parser;
-import Timey.parser.PlanCommand;
+import Timey.command.PlanCommand;
 import Timey.parser.PlanCommandParser;
 import Timey.domain.alert.DepartureRecommendation;
 import Timey.domain.alert.ScheduledDepartureReminder;
@@ -41,7 +40,6 @@ public final class CommandLineApp {
     private final Ui ui;
     private final Parser parser;
     private final CommutePlanningService commutePlanningService;
-    private final Planner planner;
     private final DepartureReminderService departureReminderService;
     private final Clock clock;
     private final TimeyModel model;
@@ -95,10 +93,10 @@ public final class CommandLineApp {
         this.ui = ui;
         this.parser = new Parser(planCommandParser);
         this.commutePlanningService = commutePlanningService;
-        this.planner = new Planner(commutePlanningService, locationResolver, railTransitPlanner, clock);
+        var planner = new Timey.planner.Planner(commutePlanningService, locationResolver, railTransitPlanner, clock);
         this.departureReminderService = new DepartureReminderService(reminderScheduler, clock);
         this.clock = clock;
-        this.model = new TimeyModel(fixedCommuteStore);
+        this.model = new TimeyModel(planner, fixedCommuteStore);
     }
 
     /** Runs until the user says thanks or standard input closes. */
@@ -131,8 +129,9 @@ public final class CommandLineApp {
                 yield thanksCommand.isExit();
             }
             case PLAN -> {
-                handlePlan(command.plan());
-                yield false;
+                PlanCommand planCommand = command.plan();
+                execute(planCommand);
+                yield planCommand.isExit();
             }
             case ADD -> {
                 AddCommand addCommand = command.addCommand();
@@ -175,37 +174,6 @@ public final class CommandLineApp {
                 model.getSelectedRecommendation(), departureReminderService.scheduledReminders());
     }
 
-    private void handlePlan(PlanCommand plan) {
-        ui.println("Got it! I have noted down your plan as follows:");
-        ui.println();
-        ui.println("From: " + plan.origin());
-        ui.println("To: " + plan.destination());
-        ui.println("Target arrival: " + plan.arrivalTime().format(TIME_FORMAT));
-        ui.println("Personal buffer: " + plan.buffer().toMinutes() + " minutes");
-        ui.println();
-        Planner.PlanningResult result = findAlternatives(plan);
-        model.replacePlan(plan, result.alternatives(), result.messages());
-        model.replaceAlternatives(withFixedTiming(plan, model.getPendingAlternatives()));
-        printAlternatives(model.getPendingAlternatives());
-        ui.println();
-        ui.println("Choose a route with: choose 1");
-    }
-
-    private List<RouteAlternative> withFixedTiming(PlanCommand plan, List<RouteAlternative> alternatives) {
-        return model.findFixedCommute(plan.origin(), plan.destination()).map(commute -> {
-            RouteAlternative fixedRoute = new RouteAlternative("Saved timing", Duration.ZERO, commute.duration(), 0);
-            model.addPlanningMessage("Your saved fixed timing is available as route 1.");
-            ui.println("Your saved fixed timing is available as route 1.");
-            return java.util.stream.Stream.concat(java.util.stream.Stream.of(fixedRoute), alternatives.stream()).toList();
-        }).orElse(alternatives);
-    }
-
-    private Planner.PlanningResult findAlternatives(PlanCommand plan) {
-        var result = planner.findAlternatives(plan);
-        result.messages().forEach(ui::println);
-        ui.println();
-        return result;
-    }
 
     private void handleChoice(Integer routeNumber) {
         if (model.getPendingPlan().isEmpty()) {

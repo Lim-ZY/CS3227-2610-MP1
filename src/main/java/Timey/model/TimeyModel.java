@@ -7,19 +7,35 @@ import java.util.Optional;
 import Timey.domain.alert.DepartureRecommendation;
 import Timey.domain.transit.FixedCommute;
 import Timey.domain.transit.RouteAlternative;
-import Timey.parser.PlanCommand;
+import Timey.command.PlanCommand;
+import Timey.planner.Planner;
 import Timey.ports.FixedCommuteStore;
 
 /** Stores the mutable state of a Timey command session. */
 public final class TimeyModel {
+    private final Planner planner;
     private final FixedCommuteStore fixedCommuteStore;
     private PlanCommand pendingPlan;
     private List<RouteAlternative> pendingAlternatives = List.of();
     private List<String> planningMessages = List.of();
     private DepartureRecommendation selectedRecommendation;
 
-    public TimeyModel(FixedCommuteStore fixedCommuteStore) {
+    public TimeyModel(Planner planner, FixedCommuteStore fixedCommuteStore) {
+        this.planner = Objects.requireNonNull(planner);
         this.fixedCommuteStore = Objects.requireNonNull(fixedCommuteStore);
+    }
+
+    /** Finds routes, adds a matching fixed timing, and records the resulting plan state. */
+    public void plan(PlanCommand plan) {
+        Planner.PlanningResult result = planner.findAlternatives(plan);
+        replacePlan(plan, result.alternatives(), result.messages());
+        findFixedCommute(plan.getOrigin(), plan.getDestination()).ifPresent(commute -> {
+            RouteAlternative fixedRoute = new RouteAlternative("Saved timing", java.time.Duration.ZERO,
+                    commute.duration(), 0);
+            replaceAlternatives(java.util.stream.Stream.concat(java.util.stream.Stream.of(fixedRoute),
+                    getPendingAlternatives().stream()).toList());
+            addPlanningMessage("Your saved fixed timing is available as route 1.");
+        });
     }
 
     /** Saves a fixed commute duration for later route planning. */

@@ -61,7 +61,7 @@ class CommandLineAppTest {
 
         assertTrue(!planResult.sessionEnded());
         assertTrue(!chooseResult.sessionEnded());
-        assertEquals("COM3", planResult.dashboardState().plan().orElseThrow().origin());
+        assertEquals("COM3", planResult.dashboardState().plan().orElseThrow().getOrigin());
         assertEquals(2, planResult.dashboardState().alternatives().size());
         assertEquals("Fastest Transit", chooseResult.dashboardState().recommendation().orElseThrow().routeName());
         assertEquals("Direct Bus", planResult.dashboardState().alternatives().get(1).name());

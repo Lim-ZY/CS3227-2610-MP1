@@ -3,7 +3,7 @@ package Timey.planner;
 import java.util.List;
 import java.util.Objects;
 
-import Timey.parser.PlanCommand;
+import Timey.command.PlanCommand;
 import Timey.domain.alert.DepartureCalculator;
 import Timey.domain.alert.DepartureRecommendation;
 import Timey.domain.transit.RouteAlternative;
@@ -25,7 +25,7 @@ public final class CommutePlanningService {
 
     public List<RouteAlternative> findAlternatives(PlanCommand plan) {
         Objects.requireNonNull(plan);
-        return transitPlanner.findRoutes(plan.origin(), plan.destination());
+        return transitPlanner.findRoutes(plan.getOrigin(), plan.getDestination());
     }
 
     /** Calculates the leave-by recommendation for a chosen route. */

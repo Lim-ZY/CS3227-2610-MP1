@@ -13,7 +13,7 @@ class ParserTest {
         var command = parser.parse("plan /from \"COM3\" /to \"VivoCity\" /by 1830");
 
         assertEquals(Parser.Type.PLAN, command.type());
-        assertEquals("COM3", command.plan().origin());
+        assertEquals("COM3", command.plan().getOrigin());
     }
 
     @Test

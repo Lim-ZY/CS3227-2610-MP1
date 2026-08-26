@@ -14,7 +14,7 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
-import Timey.parser.PlanCommand;
+import Timey.command.PlanCommand;
 import Timey.domain.location.ResolvedLocation;
 import Timey.domain.transit.LiveRouteLookup;
 import Timey.domain.transit.RouteAlternative;

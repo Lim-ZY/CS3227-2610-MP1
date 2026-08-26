@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-import Timey.parser.PlanCommand;
+import Timey.command.PlanCommand;
 import Timey.domain.location.LocationResolution;
 import Timey.domain.transit.RouteAlternative;
 import Timey.ports.LocationResolver;
@@ -27,8 +27,8 @@ public final class Planner {
 
     /** Finds live rail alternatives when available, otherwise deterministic alternatives. */
     public PlanningResult findAlternatives(PlanCommand plan) {
-        LocationResolution origin = locationResolver.resolve(plan.origin());
-        LocationResolution destination = locationResolver.resolve(plan.destination());
+        LocationResolution origin = locationResolver.resolve(plan.getOrigin());
+        LocationResolution destination = locationResolver.resolve(plan.getDestination());
         List<String> messages = new ArrayList<>();
         if (origin.isFound() && destination.isFound()) {
             messages.add("OneMap resolved your locations:");

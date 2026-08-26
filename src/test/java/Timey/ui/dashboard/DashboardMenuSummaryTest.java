@@ -9,7 +9,7 @@ import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 
-import Timey.parser.PlanCommand;
+import Timey.command.PlanCommand;
 import Timey.config.UserPreferences;
 import Timey.ui.DashboardState;
 

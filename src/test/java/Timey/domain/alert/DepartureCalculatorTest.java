@@ -7,7 +7,7 @@ import java.time.LocalTime;
 
 import org.junit.jupiter.api.Test;
 
-import Timey.parser.PlanCommand;
+import Timey.command.PlanCommand;
 import Timey.domain.transit.RouteAlternative;
 
 class DepartureCalculatorTest {

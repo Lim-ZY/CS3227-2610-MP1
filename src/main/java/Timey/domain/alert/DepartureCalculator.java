@@ -1,6 +1,6 @@
 package Timey.domain.alert;
 
-import Timey.parser.PlanCommand;
+import Timey.command.PlanCommand;
 import Timey.domain.transit.RouteAlternative;
 
 /** Calculates a leave-by time from an arrival target, route, and personal buffer. */
@@ -12,8 +12,8 @@ public final class DepartureCalculator {
         }
         return new DepartureRecommendation(
                 route.name(),
-                plan.arrivalTime().minus(route.totalDuration()).minus(plan.buffer()),
+                plan.getArrivalTime().minus(route.totalDuration()).minus(plan.getBuffer()),
                 route.totalDuration(),
-                plan.buffer());
+                plan.getBuffer());
     }
 }

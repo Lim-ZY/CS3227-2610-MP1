@@ -1,6 +1,7 @@
 package Timey.parser;
 
 import Timey.command.AddCommand;
+import Timey.command.PlanCommand;
 
 /** Parses a complete user command into the action requested by the user. */
 public final class Parser {

@@ -6,8 +6,8 @@ import java.time.Duration;
 
 import org.junit.jupiter.api.Test;
 
+import Timey.TestTimeyModelFactory;
 import Timey.infrastructure.transit.InMemoryFixedCommuteStore;
-import Timey.model.TimeyModel;
 
 class AddCommandTest {
     @Test
@@ -15,7 +15,7 @@ class AddCommandTest {
         var fixedCommutes = new InMemoryFixedCommuteStore();
         var command = new AddCommand("COM3", "VivoCity", Duration.ofMinutes(90));
 
-        var result = command.execute(new TimeyModel(fixedCommutes));
+        var result = command.execute(TestTimeyModelFactory.create(fixedCommutes));
 
         assertEquals(Duration.ofMinutes(90), fixedCommutes.find("COM3", "VivoCity").orElseThrow().duration());
         assertEquals("Saved fixed timing from COM3 to VivoCity: 90 minutes.", result.messages().getFirst());

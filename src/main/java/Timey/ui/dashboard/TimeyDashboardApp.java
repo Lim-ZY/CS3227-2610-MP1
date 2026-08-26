@@ -279,10 +279,10 @@ public final class TimeyDashboardApp extends Application {
 
     private void refreshDashboard(DashboardContent dashboard, Header header, DashboardState state) {
         state.plan().ifPresentOrElse(plan -> {
-            dashboard.nextEvent().title().setText("Commute to " + plan.destination());
-            dashboard.nextEvent().origin().setText(plan.origin());
-            dashboard.nextEvent().destination().setText(plan.destination());
-            dashboard.nextEvent().arrival().setText(TIME_FORMAT.format(plan.arrivalTime()));
+            dashboard.nextEvent().title().setText("Commute to " + plan.getDestination());
+            dashboard.nextEvent().origin().setText(plan.getOrigin());
+            dashboard.nextEvent().destination().setText(plan.getDestination());
+            dashboard.nextEvent().arrival().setText(TIME_FORMAT.format(plan.getArrivalTime()));
             state.recommendation().ifPresentOrElse(recommendation -> {
                 dashboard.nextEvent().departure().setText(TIME_FORMAT.format(recommendation.departureTime()));
                 dashboard.nextEvent().countdown().setText(DashboardDepartureText.until(recommendation.departureTime(),

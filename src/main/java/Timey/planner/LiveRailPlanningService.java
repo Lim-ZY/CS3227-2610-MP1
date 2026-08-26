@@ -5,7 +5,7 @@ import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.util.Objects;
 
-import Timey.parser.PlanCommand;
+import Timey.command.PlanCommand;
 import Timey.domain.alert.DepartureCalculator;
 import Timey.domain.location.ResolvedLocation;
 import Timey.domain.transit.LiveRouteLookup;
@@ -40,14 +40,14 @@ public final class LiveRailPlanningService {
         }
 
         LocalDateTime calculatedDeparture = targetArrival.minus(
-                departureCalculator.calculate(plan, probe.routes().getFirst()).travelDuration().plus(plan.buffer()));
+                departureCalculator.calculate(plan, probe.routes().getFirst()).travelDuration().plus(plan.getBuffer()));
         return railTransitPlanner.findRoutes(origin, destination,
                 calculatedDeparture.toLocalDate(), calculatedDeparture.toLocalTime());
     }
 
     private LocalDateTime nextTargetArrival(PlanCommand plan) {
         ZonedDateTime now = ZonedDateTime.now(clock);
-        LocalDateTime todayAtTarget = LocalDateTime.of(now.toLocalDate(), plan.arrivalTime());
+        LocalDateTime todayAtTarget = LocalDateTime.of(now.toLocalDate(), plan.getArrivalTime());
         return todayAtTarget.isAfter(now.toLocalDateTime()) ? todayAtTarget : todayAtTarget.plusDays(1);
     }
 }

@@ -8,6 +8,8 @@ import java.time.LocalTime;
 
 import org.junit.jupiter.api.Test;
 
+import Timey.command.PlanCommand;
+
 class PlanCommandParserTest {
     private final PlanCommandParser parser = new PlanCommandParser();
 
@@ -15,17 +17,17 @@ class PlanCommandParserTest {
     void parse_completeCommand_planCreated() {
         PlanCommand result = parser.parse("plan /from \"COM3\" /to \"VivoCity\" /by 1830 /buf 10m");
 
-        assertEquals("COM3", result.origin());
-        assertEquals("VivoCity", result.destination());
-        assertEquals(LocalTime.of(18, 30), result.arrivalTime());
-        assertEquals(Duration.ofMinutes(10), result.buffer());
+        assertEquals("COM3", result.getOrigin());
+        assertEquals("VivoCity", result.getDestination());
+        assertEquals(LocalTime.of(18, 30), result.getArrivalTime());
+        assertEquals(Duration.ofMinutes(10), result.getBuffer());
     }
 
     @Test
     void parse_bufferOmitted_defaultBufferUsed() {
         PlanCommand result = parser.parse("plan /from \"COM3\" /to \"VivoCity\" /by 1830");
 
-        assertEquals(Duration.ofMinutes(10), result.buffer());
+        assertEquals(Duration.ofMinutes(10), result.getBuffer());
     }
 
     @Test
@@ -33,14 +35,14 @@ class PlanCommandParserTest {
         PlanCommand result = new PlanCommandParser(Duration.ofMinutes(15))
                 .parse("plan /from \"COM3\" /to \"VivoCity\" /by 1830");
 
-        assertEquals(Duration.ofMinutes(15), result.buffer());
+        assertEquals(Duration.ofMinutes(15), result.getBuffer());
     }
 
     @Test
     void parse_zeroBuffer_zeroBufferAccepted() {
         PlanCommand result = parser.parse("plan /from \"COM3\" /to \"VivoCity\" /by 1830 /buf 0m");
 
-        assertEquals(Duration.ZERO, result.buffer());
+        assertEquals(Duration.ZERO, result.getBuffer());
     }
 
     @Test

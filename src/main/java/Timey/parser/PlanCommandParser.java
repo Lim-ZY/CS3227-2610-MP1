@@ -9,6 +9,8 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import Timey.command.PlanCommand;
+
 /** Parses the CLI syntax used to request a commute plan. */
 public final class PlanCommandParser {
     private static final Duration DEFAULT_BUFFER = Duration.ofMinutes(10);
