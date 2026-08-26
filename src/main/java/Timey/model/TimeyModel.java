@@ -1,6 +1,7 @@
 package Timey.model;
 
 import java.time.Clock;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -78,7 +79,7 @@ public final class TimeyModel {
     }
 
     /** Records the departure recommendation selected for the current plan. */
-    public void selectRecommendation(DepartureRecommendation recommendation) {
+    private void selectRecommendation(DepartureRecommendation recommendation) {
         this.selectedRecommendation = Objects.requireNonNull(recommendation);
     }
 
@@ -106,6 +107,28 @@ public final class TimeyModel {
     /** Cancels the requested one-based departure reminder, if it is active. */
     public boolean cancelReminder(int reminderNumber) {
         return departureReminderService.cancel(reminderNumber);
+    }
+
+    /** Selects a pending route and schedules a reminder when departure is still in the future. */
+    public RouteSelectionResult selectRoute(Integer routeNumber) {
+        if (pendingPlan == null) {
+            return RouteSelectionResult.noPlan();
+        }
+        if (routeNumber == null) {
+            return RouteSelectionResult.missingNumber(pendingAlternatives.size());
+        }
+        if (routeNumber < 1 || routeNumber > pendingAlternatives.size()) {
+            return RouteSelectionResult.invalidNumber(pendingAlternatives.size());
+        }
+
+        RouteAlternative route = pendingAlternatives.get(routeNumber - 1);
+        DepartureRecommendation recommendation = planner.recommendDeparture(pendingPlan, route);
+        selectRecommendation(recommendation);
+        if (recommendation.departureTime().isBefore(LocalTime.now(clock))) {
+            return RouteSelectionResult.leaveNow(recommendation);
+        }
+        ScheduledDepartureReminder reminder = departureReminderService.schedule(recommendation);
+        return RouteSelectionResult.reminderScheduled(recommendation, reminder);
     }
 
     /** Returns the clock used to present command-session times. */

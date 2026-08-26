@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Objects;
 
 import Timey.command.PlanCommand;
+import Timey.domain.alert.DepartureRecommendation;
 import Timey.domain.location.LocationResolution;
 import Timey.domain.transit.RouteAlternative;
 import Timey.ports.LocationResolver;
@@ -50,6 +51,11 @@ public final class Planner {
             messages.add("Using deterministic routes: " + reason);
         }
         return new PlanningResult(commutePlanningService.findAlternatives(plan), messages);
+    }
+
+    /** Calculates the leave-by recommendation for a selected route alternative. */
+    public DepartureRecommendation recommendDeparture(PlanCommand plan, RouteAlternative route) {
+        return commutePlanningService.recommendDeparture(plan, route);
     }
 
     /** The planned alternatives and explanation of the selected planning source. */

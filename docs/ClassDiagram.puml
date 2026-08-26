@@ -35,6 +35,8 @@ package "reminder" {
 
 package "model" {
   class TimeyModel
+  class RouteSelectionResult <<record>>
+  enum "RouteSelectionResult.Status" as RouteSelectionStatus
 }
 
 package "command" {
@@ -43,6 +45,7 @@ package "command" {
   class ThanksCommand
   class AddCommand
   class PlanCommand
+  class ChooseCommand
   class RemindersCommand
   class CancelCommand
   class UnknownCommand
@@ -119,11 +122,7 @@ CommandLineApp --> Ui
 CommandLineApp *--> TimeyModel
 CommandLineApp --> Command
 CommandLineApp *--> Parser
-CommandLineApp *--> DepartureReminderService
 CommandLineApp --> DepartureReminderNotifier : provides
-CommandLineApp --> CommutePlanningService : recommends departure
-CommandLineApp --> RouteAlternative
-CommandLineApp --> DepartureRecommendation
 TimeyModel --> PlanCommand
 TimeyModel --> RouteAlternative
 TimeyModel --> DepartureRecommendation
@@ -131,18 +130,24 @@ TimeyModel --> Planner
 ThanksCommand --|> Command
 AddCommand --|> Command
 PlanCommand --|> Command
+ChooseCommand --|> Command
 UnknownCommand --|> Command
 RemindersCommand --|> Command
 CancelCommand --|> Command
 Command --> TimeyModel
 Command --> CommandResult : creates
 AddCommand --> TimeyModel
+ChooseCommand --> TimeyModel
 RemindersCommand --> TimeyModel
 CancelCommand --> TimeyModel
 TimeyModel --> FixedCommuteStore
 TimeyModel --> FixedCommute : creates
 TimeyModel --> DepartureReminderService
 TimeyModel --> ScheduledDepartureReminder
+TimeyModel --> RouteSelectionResult : creates
+RouteSelectionResult --> RouteSelectionStatus
+RouteSelectionResult --> DepartureRecommendation : optional
+RouteSelectionResult --> ScheduledDepartureReminder : optional
 
 ' Command interpretation
 Parser *--> PlanCommandParser
@@ -159,6 +164,7 @@ Planner --> CommutePlanningService
 Planner --> LocationResolver
 Planner *--> LiveRailPlanningService
 Planner --> PlanCommand
+Planner --> DepartureRecommendation
 Planner --> PlanningResult : creates
 PlanningResult --> RouteAlternative
 LiveRailPlanningService --> RailTransitPlanner

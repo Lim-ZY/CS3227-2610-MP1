@@ -3,15 +3,12 @@ package Timey.ui;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.time.Duration;
 import java.time.Clock;
-import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 
-import Timey.reminder.DepartureReminderService;
 import Timey.command.Command;
 import Timey.command.CancelCommand;
+import Timey.command.ChooseCommand;
 import Timey.command.CommandResult;
 import Timey.command.ThanksCommand;
 import Timey.command.AddCommand;
@@ -22,9 +19,7 @@ import Timey.parser.Parser;
 import Timey.command.PlanCommand;
 import Timey.command.RemindersCommand;
 import Timey.parser.PlanCommandParser;
-import Timey.domain.alert.DepartureRecommendation;
 import Timey.domain.transit.LiveRouteLookup;
-import Timey.domain.transit.RouteAlternative;
 import Timey.infrastructure.http.HttpResult;
 import Timey.infrastructure.location.OneMapLocationResolver;
 import Timey.infrastructure.transit.InMemoryFixedCommuteStore;
@@ -36,14 +31,8 @@ import Timey.ports.ReminderScheduler;
 
 /** Interactive command-line presentation for Timey. */
 public final class CommandLineApp {
-    private static final DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern("HH:mm");
-    private static final DateTimeFormatter REMINDER_TIME_FORMAT = DateTimeFormatter.ofPattern("uuuu-MM-dd HH:mm");
-
     private final Ui ui;
     private final Parser parser;
-    private final CommutePlanningService commutePlanningService;
-    private final DepartureReminderService departureReminderService;
-    private final Clock clock;
     private final TimeyModel model;
 
     public CommandLineApp(BufferedReader input, PrintWriter output) {
@@ -94,14 +83,12 @@ public final class CommandLineApp {
             FixedCommuteStore fixedCommuteStore) {
         this.ui = ui;
         this.parser = new Parser(planCommandParser);
-        this.commutePlanningService = commutePlanningService;
         var planner = new Timey.planner.Planner(commutePlanningService, locationResolver, railTransitPlanner, clock);
-        this.departureReminderService = new DepartureReminderService(reminderScheduler, clock, reminder -> {
+        var departureReminderService = new Timey.reminder.DepartureReminderService(reminderScheduler, clock, reminder -> {
             ui.println();
             ui.println(reminder.message());
             ui.printPrompt();
         });
-        this.clock = clock;
         this.model = new TimeyModel(planner, fixedCommuteStore, departureReminderService, clock);
     }
 
@@ -145,8 +132,9 @@ public final class CommandLineApp {
                 yield addCommand.isExit();
             }
             case CHOOSE -> {
-                handleChoice(command.number());
-                yield false;
+                Command chooseCommand = new ChooseCommand(command.number());
+                execute(chooseCommand);
+                yield chooseCommand.isExit();
             }
             case REMINDERS -> {
                 Command remindersCommand = new RemindersCommand();
@@ -181,71 +169,5 @@ public final class CommandLineApp {
     public DashboardState getDashboardState() {
         return new DashboardState(model.getPendingPlan(), model.getPendingAlternatives(), model.getPlanningMessages(),
                 model.getSelectedRecommendation(), model.getScheduledReminders());
-    }
-
-
-    private void handleChoice(Integer routeNumber) {
-        if (model.getPendingPlan().isEmpty()) {
-            ui.println("Please create a plan before choosing a route.");
-            return;
-        }
-        if (routeNumber == null) {
-            ui.println("Choose a route by number, for example: choose 1");
-            return;
-        }
-        if (routeNumber < 1 || routeNumber > model.getPendingAlternatives().size()) {
-            ui.println("Please choose a route between 1 and " + model.getPendingAlternatives().size() + ".");
-            return;
-        }
-        RouteAlternative route = model.getPendingAlternatives().get(routeNumber - 1);
-        DepartureRecommendation recommendation = commutePlanningService.recommendDeparture(
-                model.getPendingPlan().orElseThrow(), route);
-        model.selectRecommendation(recommendation);
-        printRecommendation(recommendation);
-        if (recommendation.departureTime().isBefore(LocalTime.now(clock))) {
-            ui.println("You have to leave now to stay on time! Good luck!");
-            return;
-        }
-        scheduleReminder(recommendation);
-    }
-
-    private void scheduleReminder(DepartureRecommendation recommendation) {
-        var reminder = departureReminderService.schedule(recommendation);
-        ui.println("Departure reminder automatically set for "
-                + REMINDER_TIME_FORMAT.format(reminder.triggerAt().atZone(clock.getZone())) + ".");
-    }
-
-    private void printAlternatives(List<RouteAlternative> alternatives) {
-        ui.println("Here are your route alternatives:");
-        for (int index = 0; index < alternatives.size(); index++) {
-            RouteAlternative route = alternatives.get(index);
-            ui.println((index + 1) + ". " + route.name() + " — "
-                    + formatDuration(route.totalDuration()) + " total "
-                    + "(walk " + formatDuration(route.walkingDuration())
-                    + ", transit " + formatDuration(route.transitDuration())
-                    + ", " + route.transferCount() + pluraliseTransfer(route.transferCount()) + ")");
-            for (var step : route.steps()) {
-                ui.println("   - " + step.description() + " (" + formatDuration(step.duration()) + ")");
-            }
-        }
-    }
-
-    private String formatDuration(Duration duration) {
-        return duration.toMinutes() + " minutes";
-    }
-
-    private String pluraliseTransfer(int transferCount) {
-        return transferCount == 1 ? " transfer" : " transfers";
-    }
-
-    private void printRecommendation(DepartureRecommendation recommendation) {
-        ui.println("Great choice! Here is your departure plan:");
-        ui.println();
-        ui.println("Chosen route: " + recommendation.routeName());
-        ui.println("Total travel time: " + formatDuration(recommendation.travelDuration()));
-        ui.println("Personal buffer: " + formatDuration(recommendation.buffer()));
-        ui.println("Recommended departure: " + recommendation.departureTime().format(TIME_FORMAT));
-        ui.println();
-        ui.println("Please leave your desk by " + recommendation.departureTime().format(TIME_FORMAT) + ".");
     }
 }

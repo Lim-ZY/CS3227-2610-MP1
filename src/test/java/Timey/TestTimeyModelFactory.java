@@ -18,10 +18,13 @@ public final class TestTimeyModelFactory {
     }
 
     public static TimeyModel create(FixedCommuteStore fixedCommuteStore) {
+        return create(fixedCommuteStore, Clock.systemUTC());
+    }
+
+    public static TimeyModel create(FixedCommuteStore fixedCommuteStore, Clock clock) {
         var planner = new Planner(new CommutePlanningService(new MockTransitPlanner()),
                 query -> LocationResolution.unavailable("Offline"),
-                (origin, destination, date, time) -> LiveRouteLookup.available(List.of()), Clock.systemUTC());
-        Clock clock = Clock.systemUTC();
+                (origin, destination, date, time) -> LiveRouteLookup.available(List.of()), clock);
         return new TimeyModel(planner, fixedCommuteStore,
                 new DepartureReminderService((triggerAt, action) -> () -> { }, clock, reminder -> { }), clock);
     }
