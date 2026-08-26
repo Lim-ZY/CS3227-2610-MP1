@@ -12,6 +12,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.Test;
 
 import Timey.domain.alert.DepartureRecommendation;
+import Timey.domain.alert.ScheduledDepartureReminder;
 import Timey.ports.ReminderHandle;
 import Timey.ports.ReminderScheduler;
 
@@ -21,12 +22,11 @@ class DepartureReminderServiceTest {
     @Test
     void schedule_departureLaterToday_schedulesReminderToday() {
         var scheduler = new CapturingReminderScheduler();
-        var service = new DepartureReminderService(scheduler,
-                Clock.fixed(Instant.parse("2026-08-21T08:00:00Z"), SINGAPORE));
+        var service = createService(scheduler, Clock.fixed(Instant.parse("2026-08-21T08:00:00Z"), SINGAPORE));
         var recommendation = new DepartureRecommendation("Rail", LocalTime.of(17, 30), Duration.ofMinutes(43),
                 Duration.ofMinutes(10));
 
-        var reminder = service.schedule(recommendation, () -> { });
+        var reminder = service.schedule(recommendation);
 
         assertEquals(Instant.parse("2026-08-21T09:30:00Z"), reminder.triggerAt());
         assertEquals(reminder.triggerAt(), scheduler.triggerAt.get());
@@ -36,12 +36,11 @@ class DepartureReminderServiceTest {
     @Test
     void schedule_departureTimeNowOrPast_schedulesReminderTomorrow() {
         var scheduler = new CapturingReminderScheduler();
-        var service = new DepartureReminderService(scheduler,
-                Clock.fixed(Instant.parse("2026-08-21T09:30:00Z"), SINGAPORE));
+        var service = createService(scheduler, Clock.fixed(Instant.parse("2026-08-21T09:30:00Z"), SINGAPORE));
         var recommendation = new DepartureRecommendation("Rail", LocalTime.of(17, 30), Duration.ofMinutes(43),
                 Duration.ofMinutes(10));
 
-        var reminder = service.schedule(recommendation, () -> { });
+        var reminder = service.schedule(recommendation);
 
         assertEquals(Instant.parse("2026-08-22T09:30:00Z"), reminder.triggerAt());
     }
@@ -50,11 +49,11 @@ class DepartureReminderServiceTest {
     void scheduledReminders_triggerTimePassed_discardsReminder() {
         var clock = new MutableClock(Instant.parse("2026-08-21T08:00:00Z"), SINGAPORE);
         var scheduler = new CapturingReminderScheduler();
-        var service = new DepartureReminderService(scheduler, clock);
+        var service = createService(scheduler, clock);
         var recommendation = new DepartureRecommendation("Rail", LocalTime.of(17, 30), Duration.ofMinutes(43),
                 Duration.ofMinutes(10));
 
-        service.schedule(recommendation, () -> { });
+        service.schedule(recommendation);
         clock.setInstant(Instant.parse("2026-08-21T09:30:01Z"));
 
         assertEquals(java.util.List.of(), service.scheduledReminders());
@@ -64,25 +63,46 @@ class DepartureReminderServiceTest {
     @Test
     void cancel_activeReminder_removesReminderAndCancelsScheduledAction() {
         var scheduler = new CapturingReminderScheduler();
-        var service = new DepartureReminderService(scheduler,
-                Clock.fixed(Instant.parse("2026-08-21T08:00:00Z"), SINGAPORE));
+        var service = createService(scheduler, Clock.fixed(Instant.parse("2026-08-21T08:00:00Z"), SINGAPORE));
         var recommendation = new DepartureRecommendation("Rail", LocalTime.of(17, 30), Duration.ofMinutes(43),
                 Duration.ofMinutes(10));
 
-        service.schedule(recommendation, () -> { });
+        service.schedule(recommendation);
 
         assertEquals(true, service.cancel(1));
         assertEquals(java.util.List.of(), service.scheduledReminders());
         assertEquals(true, scheduler.cancelled.get());
     }
 
+    @Test
+    void scheduledAction_notifiesThroughPortAndRemovesReminder() {
+        var scheduler = new CapturingReminderScheduler();
+        var notifiedReminder = new AtomicReference<ScheduledDepartureReminder>();
+        var service = new DepartureReminderService(scheduler,
+                Clock.fixed(Instant.parse("2026-08-21T08:00:00Z"), SINGAPORE), notifiedReminder::set);
+        var recommendation = new DepartureRecommendation("Rail", LocalTime.of(17, 30), Duration.ofMinutes(43),
+                Duration.ofMinutes(10));
+
+        var reminder = service.schedule(recommendation);
+        scheduler.action.get().run();
+
+        assertEquals(reminder, notifiedReminder.get());
+        assertEquals(java.util.List.of(), service.scheduledReminders());
+    }
+
+    private DepartureReminderService createService(ReminderScheduler scheduler, Clock clock) {
+        return new DepartureReminderService(scheduler, clock, reminder -> { });
+    }
+
     private static final class CapturingReminderScheduler implements ReminderScheduler {
         private final AtomicReference<Instant> triggerAt = new AtomicReference<>();
+        private final AtomicReference<Runnable> action = new AtomicReference<>();
         private final java.util.concurrent.atomic.AtomicBoolean cancelled = new java.util.concurrent.atomic.AtomicBoolean();
 
         @Override
         public ReminderHandle schedule(Instant triggerAt, Runnable action) {
             this.triggerAt.set(triggerAt);
+            this.action.set(action);
             return () -> cancelled.set(true);
         }
     }

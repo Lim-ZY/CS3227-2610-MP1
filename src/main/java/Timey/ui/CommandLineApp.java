@@ -96,7 +96,11 @@ public final class CommandLineApp {
         this.parser = new Parser(planCommandParser);
         this.commutePlanningService = commutePlanningService;
         var planner = new Timey.planner.Planner(commutePlanningService, locationResolver, railTransitPlanner, clock);
-        this.departureReminderService = new DepartureReminderService(reminderScheduler, clock);
+        this.departureReminderService = new DepartureReminderService(reminderScheduler, clock, reminder -> {
+            ui.println();
+            ui.println(reminder.message());
+            ui.printPrompt();
+        });
         this.clock = clock;
         this.model = new TimeyModel(planner, fixedCommuteStore, departureReminderService, clock);
     }
@@ -206,11 +210,7 @@ public final class CommandLineApp {
     }
 
     private void scheduleReminder(DepartureRecommendation recommendation) {
-        var reminder = departureReminderService.schedule(recommendation, () -> {
-            ui.println();
-            ui.println("Timey reminder: Please leave your desk now.");
-            ui.printPrompt();
-        });
+        var reminder = departureReminderService.schedule(recommendation);
         ui.println("Departure reminder automatically set for "
                 + REMINDER_TIME_FORMAT.format(reminder.triggerAt().atZone(clock.getZone())) + ".");
     }

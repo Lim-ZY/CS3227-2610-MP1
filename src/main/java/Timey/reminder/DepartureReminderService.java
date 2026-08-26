@@ -11,6 +11,7 @@ import java.util.Objects;
 
 import Timey.domain.alert.DepartureRecommendation;
 import Timey.domain.alert.ScheduledDepartureReminder;
+import Timey.ports.DepartureReminderNotifier;
 import Timey.ports.ReminderHandle;
 import Timey.ports.ReminderScheduler;
 
@@ -18,19 +19,19 @@ import Timey.ports.ReminderScheduler;
 public final class DepartureReminderService {
     private final ReminderScheduler reminderScheduler;
     private final Clock clock;
+    private final DepartureReminderNotifier notifier;
     private final List<ScheduledDepartureReminder> scheduledReminders = new ArrayList<>();
     private final Map<ScheduledDepartureReminder, ReminderHandle> reminderHandles = new HashMap<>();
 
-    public DepartureReminderService(ReminderScheduler reminderScheduler, Clock clock) {
+    public DepartureReminderService(ReminderScheduler reminderScheduler, Clock clock, DepartureReminderNotifier notifier) {
         this.reminderScheduler = Objects.requireNonNull(reminderScheduler);
         this.clock = Objects.requireNonNull(clock);
+        this.notifier = Objects.requireNonNull(notifier);
     }
 
     /** Schedules a reminder today, or tomorrow when today's leave-by time has passed. */
-    public synchronized ScheduledDepartureReminder schedule(DepartureRecommendation recommendation,
-            Runnable notification) {
+    public synchronized ScheduledDepartureReminder schedule(DepartureRecommendation recommendation) {
         Objects.requireNonNull(recommendation);
-        Objects.requireNonNull(notification);
         ZonedDateTime now = ZonedDateTime.now(clock);
         ZonedDateTime triggerAt = now.with(recommendation.departureTime());
         if (!triggerAt.isAfter(now)) {
@@ -41,7 +42,7 @@ public final class DepartureReminderService {
         scheduledReminders.add(reminder);
         ReminderHandle handle = reminderScheduler.schedule(reminder.triggerAt(), () -> {
             try {
-                notification.run();
+                notifier.notifyDeparture(reminder);
             } finally {
                 removeAfterNotification(reminder);
             }

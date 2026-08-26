@@ -23,6 +23,6 @@ public final class TestTimeyModelFactory {
                 (origin, destination, date, time) -> LiveRouteLookup.available(List.of()), Clock.systemUTC());
         Clock clock = Clock.systemUTC();
         return new TimeyModel(planner, fixedCommuteStore,
-                new DepartureReminderService((triggerAt, action) -> () -> { }, clock), clock);
+                new DepartureReminderService((triggerAt, action) -> () -> { }, clock, reminder -> { }), clock);
     }
 }

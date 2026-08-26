@@ -74,6 +74,7 @@ package "ports" {
   interface RailTransitPlanner
   interface ReminderScheduler
   interface ReminderHandle
+  interface DepartureReminderNotifier
 }
 
 package "infrastructure.http" {
@@ -119,6 +120,7 @@ CommandLineApp *--> TimeyModel
 CommandLineApp --> Command
 CommandLineApp *--> Parser
 CommandLineApp *--> DepartureReminderService
+CommandLineApp --> DepartureReminderNotifier : provides
 CommandLineApp --> CommutePlanningService : recommends departure
 CommandLineApp --> RouteAlternative
 CommandLineApp --> DepartureRecommendation
@@ -170,6 +172,7 @@ CommutePlanningService --> PlanCommand
 CommutePlanningService --> RouteAlternative
 CommutePlanningService --> DepartureRecommendation
 DepartureReminderService --> ReminderScheduler
+DepartureReminderService --> DepartureReminderNotifier
 DepartureReminderService --> ReminderHandle
 DepartureReminderService --> DepartureRecommendation
 DepartureReminderService --> ScheduledDepartureReminder

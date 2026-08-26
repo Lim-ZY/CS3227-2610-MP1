@@ -217,6 +217,28 @@ class CommandLineAppTest {
     }
 
     @Test
+    void run_scheduledReminder_displaysConsoleNotification() {
+        var outputText = new StringWriter();
+        var scheduledAction = new AtomicReference<Runnable>();
+        ReminderScheduler scheduler = (triggerAt, action) -> {
+            scheduledAction.set(action);
+            return () -> { };
+        };
+        var clock = Clock.fixed(Instant.parse("2026-08-21T01:30:00Z"), ZoneId.of("Asia/Singapore"));
+        var resolver = (Timey.ports.LocationResolver) query -> LocationResolution.unavailable("Offline");
+        var app = new CommandLineApp(new BufferedReader(new StringReader(
+                "plan /from \"COM3\" /to \"VivoCity\" /by 1830\nchoose 1\nthx\n")),
+                new PrintWriter(outputText, true), new PlanCommandParser(),
+                new CommutePlanningService(new MockTransitPlanner()), resolver,
+                (origin, destination, date, time) -> LiveRouteLookup.available(List.of()), clock, scheduler);
+
+        app.run();
+        scheduledAction.get().run();
+
+        assertTrue(outputText.toString().contains("Timey reminder: Please leave your desk now."));
+    }
+
+    @Test
     void run_removedRemindCommand_displaysUnknownCommandGuidance() {
         var outputText = new StringWriter();
         var app = new CommandLineApp(new BufferedReader(new StringReader("remind\nthx\n")),
