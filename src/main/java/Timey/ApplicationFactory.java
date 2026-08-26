@@ -3,6 +3,7 @@ package Timey;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.ZoneId;
+import java.nio.file.Path;
 
 import Timey.config.ApplicationConfiguration;
 import Timey.config.UserPreferences;
@@ -11,6 +12,7 @@ import Timey.infrastructure.http.RetryingHttpRequester;
 import Timey.infrastructure.location.OneMapLocationResolver;
 import Timey.infrastructure.notification.ScheduledExecutorReminderScheduler;
 import Timey.infrastructure.transit.MockTransitPlanner;
+import Timey.infrastructure.transit.FileFixedCommuteStore;
 import Timey.infrastructure.transit.OneMapRailTransitPlanner;
 import Timey.parser.PlanCommandParser;
 import Timey.planner.CommutePlanningService;
@@ -35,7 +37,8 @@ public final class ApplicationFactory {
         return new CommandLineApp(ui, new PlanCommandParser(preferences.defaultDepartureBuffer()),
                 new CommutePlanningService(new MockTransitPlanner()), locationResolver, railTransitPlanner,
                 Clock.system(preferences.timeZone()),
-                new ScheduledExecutorReminderScheduler());
+                new ScheduledExecutorReminderScheduler(),
+                new FileFixedCommuteStore(Path.of("data", "fixed-commutes.properties")));
     }
 
     /** Loads the local preferences displayed by the JavaFX dashboard. */

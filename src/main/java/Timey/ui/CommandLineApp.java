@@ -18,12 +18,16 @@ import Timey.parser.PlanCommand;
 import Timey.parser.PlanCommandParser;
 import Timey.domain.alert.DepartureRecommendation;
 import Timey.domain.alert.ScheduledDepartureReminder;
+import Timey.domain.transit.FixedCommute;
 import Timey.domain.transit.LiveRouteLookup;
 import Timey.domain.transit.RouteAlternative;
 import Timey.infrastructure.http.HttpResult;
 import Timey.infrastructure.location.OneMapLocationResolver;
+import Timey.infrastructure.transit.InMemoryFixedCommuteStore;
 import Timey.infrastructure.transit.MockTransitPlanner;
+import Timey.parser.AddTimingCommand;
 import Timey.ports.LocationResolver;
+import Timey.ports.FixedCommuteStore;
 import Timey.ports.RailTransitPlanner;
 import Timey.ports.ReminderScheduler;
 
@@ -38,6 +42,7 @@ public final class CommandLineApp {
     private final Planner planner;
     private final DepartureReminderService departureReminderService;
     private final Clock clock;
+    private final FixedCommuteStore fixedCommuteStore;
     private PlanCommand pendingPlan;
     private List<RouteAlternative> pendingAlternatives = List.of();
     private List<String> planningMessages = List.of();
@@ -53,7 +58,7 @@ public final class CommandLineApp {
             CommutePlanningService commutePlanningService, LocationResolver locationResolver) {
         this(new Ui(input, output), planCommandParser, commutePlanningService, locationResolver,
                 (origin, destination, date, time) -> LiveRouteLookup.available(List.of()),
-                Clock.systemDefaultZone(), (triggerAt, action) -> () -> { });
+                Clock.systemDefaultZone(), (triggerAt, action) -> () -> { }, new InMemoryFixedCommuteStore());
     }
 
     public CommandLineApp(BufferedReader input, PrintWriter output, PlanCommandParser planCommandParser,
@@ -70,15 +75,32 @@ public final class CommandLineApp {
                 reminderScheduler);
     }
 
+    public CommandLineApp(BufferedReader input, PrintWriter output, PlanCommandParser planCommandParser,
+            CommutePlanningService commutePlanningService, LocationResolver locationResolver,
+            RailTransitPlanner railTransitPlanner, Clock clock, ReminderScheduler reminderScheduler,
+            FixedCommuteStore fixedCommuteStore) {
+        this(new Ui(input, output), planCommandParser, commutePlanningService, locationResolver, railTransitPlanner, clock,
+                reminderScheduler, fixedCommuteStore);
+    }
+
     public CommandLineApp(Ui ui, PlanCommandParser planCommandParser,
             CommutePlanningService commutePlanningService, LocationResolver locationResolver,
             RailTransitPlanner railTransitPlanner, Clock clock, ReminderScheduler reminderScheduler) {
+        this(ui, planCommandParser, commutePlanningService, locationResolver, railTransitPlanner, clock,
+                reminderScheduler, new InMemoryFixedCommuteStore());
+    }
+
+    public CommandLineApp(Ui ui, PlanCommandParser planCommandParser,
+            CommutePlanningService commutePlanningService, LocationResolver locationResolver,
+            RailTransitPlanner railTransitPlanner, Clock clock, ReminderScheduler reminderScheduler,
+            FixedCommuteStore fixedCommuteStore) {
         this.ui = ui;
         this.commandParser = new CommandParser(planCommandParser);
         this.commutePlanningService = commutePlanningService;
         this.planner = new Planner(commutePlanningService, locationResolver, railTransitPlanner, clock);
         this.departureReminderService = new DepartureReminderService(reminderScheduler, clock);
         this.clock = clock;
+        this.fixedCommuteStore = fixedCommuteStore;
     }
 
     /** Runs until the user says thanks or standard input closes. */
@@ -111,6 +133,10 @@ public final class CommandLineApp {
             }
             case PLAN -> {
                 handlePlan(command.plan());
+                yield false;
+            }
+            case ADD -> {
+                handleAddTiming(command.addTiming());
                 yield false;
             }
             case CHOOSE -> {
@@ -153,12 +179,33 @@ public final class CommandLineApp {
         ui.println();
         Planner.PlanningResult result = findAlternatives(plan);
         pendingPlan = plan;
-        pendingAlternatives = result.alternatives();
         planningMessages = result.messages();
+        pendingAlternatives = withFixedTiming(plan, result.alternatives());
         selectedRecommendation = null;
         printAlternatives(pendingAlternatives);
         ui.println();
         ui.println("Choose a route with: choose 1");
+    }
+
+    private List<RouteAlternative> withFixedTiming(PlanCommand plan, List<RouteAlternative> alternatives) {
+        return fixedCommuteStore.find(plan.origin(), plan.destination()).map(commute -> {
+            RouteAlternative fixedRoute = new RouteAlternative("Saved timing", Duration.ZERO, commute.duration(), 0);
+            planningMessages = appendMessage(planningMessages, "Your saved fixed timing is available as route 1.");
+            ui.println("Your saved fixed timing is available as route 1.");
+            return java.util.stream.Stream.concat(java.util.stream.Stream.of(fixedRoute), alternatives.stream()).toList();
+        }).orElse(alternatives);
+    }
+
+    private List<String> appendMessage(List<String> messages, String message) {
+        return java.util.stream.Stream.concat(messages.stream(), java.util.stream.Stream.of(message)).toList();
+    }
+
+    private void handleAddTiming(AddTimingCommand command) {
+        FixedCommute commute = new FixedCommute(command.origin(), command.destination(), command.duration());
+        fixedCommuteStore.save(commute);
+        ui.println("Saved fixed timing from " + commute.origin() + " to " + commute.destination() + ": "
+                + formatDuration(commute.duration()) + ".");
+        ui.println("It will appear as a route option in your next matching plan.");
     }
 
     private Planner.PlanningResult findAlternatives(PlanCommand plan) {

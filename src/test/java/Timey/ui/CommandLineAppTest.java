@@ -26,10 +26,31 @@ import Timey.domain.transit.RouteAlternative;
 import Timey.domain.transit.RouteStep;
 import Timey.domain.transit.RouteStepMode;
 import Timey.infrastructure.transit.MockTransitPlanner;
+import Timey.infrastructure.transit.InMemoryFixedCommuteStore;
 import Timey.ports.RailTransitPlanner;
 import Timey.ports.ReminderScheduler;
 
 class CommandLineAppTest {
+    @Test
+    void executeCommand_addThenPlan_matchingFixedTimingIsFirstAlternative() {
+        var outputText = new StringWriter();
+        var fixedCommutes = new InMemoryFixedCommuteStore();
+        var app = new CommandLineApp(new BufferedReader(new StringReader("")), new PrintWriter(outputText, true),
+                new PlanCommandParser(), new CommutePlanningService(new MockTransitPlanner()),
+                query -> LocationResolution.unavailable("Offline"),
+                (origin, destination, date, time) -> LiveRouteLookup.available(List.of()),
+                Clock.fixed(Instant.parse("2026-08-21T01:30:00Z"), ZoneId.of("Asia/Singapore")),
+                (triggerAt, action) -> () -> { }, fixedCommutes);
+
+        app.executeCommand("add /from \"COM3\" /to \"VivoCity\" /dur 1h30m");
+        var result = app.executeCommand("plan /from \"COM3\" /to \"VivoCity\" /by 1830");
+
+        assertEquals("Saved timing", result.dashboardState().alternatives().getFirst().name());
+        assertEquals(Duration.ofMinutes(90), result.dashboardState().alternatives().getFirst().totalDuration());
+        assertTrue(outputText.toString().contains("Saved fixed timing from COM3 to VivoCity: 90 minutes."));
+        assertTrue(outputText.toString().contains("Your saved fixed timing is available as route 1."));
+    }
+
     @Test
     void executeCommand_planThenChoose_preservesCommandStateOutsideTerminalLoop() {
         var outputText = new StringWriter();

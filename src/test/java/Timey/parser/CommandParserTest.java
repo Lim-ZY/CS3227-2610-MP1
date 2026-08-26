@@ -17,6 +17,14 @@ class CommandParserTest {
     }
 
     @Test
+    void parse_addCommand_returnsValidatedFixedTimingAction() {
+        var command = parser.parse("add /from COM3 /to VivoCity /dur 1h30m");
+
+        assertEquals(CommandParser.Type.ADD, command.type());
+        assertEquals(java.time.Duration.ofMinutes(90), command.addTiming().duration());
+    }
+
+    @Test
     void parse_numberedCommands_returnsNumberWhenPresent() {
         assertEquals(2, parser.parse("choose 2").number());
         assertEquals(1, parser.parse("cancel 1").number());

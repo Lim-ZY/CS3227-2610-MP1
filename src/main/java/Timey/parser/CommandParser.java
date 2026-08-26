@@ -3,9 +3,15 @@ package Timey.parser;
 /** Parses a complete user command into the action requested by the user. */
 public final class CommandParser {
     private final PlanCommandParser planCommandParser;
+    private final AddTimingCommandParser addTimingCommandParser;
 
     public CommandParser(PlanCommandParser planCommandParser) {
+        this(planCommandParser, new AddTimingCommandParser());
+    }
+
+    public CommandParser(PlanCommandParser planCommandParser, AddTimingCommandParser addTimingCommandParser) {
         this.planCommandParser = planCommandParser;
+        this.addTimingCommandParser = addTimingCommandParser;
     }
 
     /**
@@ -22,6 +28,9 @@ public final class CommandParser {
         }
         if (command.startsWith("plan")) {
             return Command.plan(planCommandParser.parse(command));
+        }
+        if (command.startsWith("add")) {
+            return Command.addTiming(addTimingCommandParser.parse(command));
         }
         if (command.startsWith("choose")) {
             return Command.choose(parseNumberArgument(command));
@@ -48,29 +57,33 @@ public final class CommandParser {
     }
 
     /** A parsed command and any arguments required to execute it. */
-    public record Command(Type type, PlanCommand plan, Integer number) {
+    public record Command(Type type, PlanCommand plan, AddTimingCommand addTiming, Integer number) {
         public static Command thanks() {
-            return new Command(Type.THANKS, null, null);
+            return new Command(Type.THANKS, null, null, null);
         }
 
         public static Command plan(PlanCommand plan) {
-            return new Command(Type.PLAN, plan, null);
+            return new Command(Type.PLAN, plan, null, null);
+        }
+
+        public static Command addTiming(AddTimingCommand addTiming) {
+            return new Command(Type.ADD, null, addTiming, null);
         }
 
         public static Command choose(Integer number) {
-            return new Command(Type.CHOOSE, null, number);
+            return new Command(Type.CHOOSE, null, null, number);
         }
 
         public static Command reminders() {
-            return new Command(Type.REMINDERS, null, null);
+            return new Command(Type.REMINDERS, null, null, null);
         }
 
         public static Command cancel(Integer number) {
-            return new Command(Type.CANCEL, null, number);
+            return new Command(Type.CANCEL, null, null, number);
         }
 
         public static Command unknown() {
-            return new Command(Type.UNKNOWN, null, null);
+            return new Command(Type.UNKNOWN, null, null, null);
         }
     }
 
@@ -78,6 +91,7 @@ public final class CommandParser {
     public enum Type {
         THANKS,
         PLAN,
+        ADD,
         CHOOSE,
         REMINDERS,
         CANCEL,
