@@ -31,6 +31,8 @@ class ParserTest {
                 parser.parse("choose 2")).getRouteNumber());
         assertEquals(1, assertInstanceOf(Timey.command.CancelCommand.class,
                 parser.parse("cancel 1")).getReminderNumber());
+        assertEquals(1, assertInstanceOf(Timey.command.RemoveFixedTimingCommand.class,
+                parser.parse("rm 1")).getTimingNumber());
     }
 
     @Test
@@ -39,12 +41,15 @@ class ParserTest {
                 parser.parse("choose one")).getRouteNumber());
         assertNull(assertInstanceOf(Timey.command.CancelCommand.class,
                 parser.parse("cancel 1 2")).getReminderNumber());
+        assertNull(assertInstanceOf(Timey.command.RemoveFixedTimingCommand.class,
+                parser.parse("rm one")).getTimingNumber());
     }
 
     @Test
     void parse_nonArgumentCommands_classifiesActions() {
         assertInstanceOf(Timey.command.ThanksCommand.class, parser.parse("thx"));
         assertInstanceOf(Timey.command.RemindersCommand.class, parser.parse("reminders"));
+        assertInstanceOf(Timey.command.ListFixedTimingsCommand.class, parser.parse("ls"));
         assertInstanceOf(Timey.command.UnknownCommand.class, parser.parse("help"));
     }
 }

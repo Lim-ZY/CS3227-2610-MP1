@@ -1,6 +1,8 @@
 package Timey.infrastructure.transit;
 
 import java.util.HashMap;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -19,6 +21,19 @@ public final class InMemoryFixedCommuteStore implements FixedCommuteStore {
     @Override
     public Optional<FixedCommute> find(String origin, String destination) {
         return Optional.ofNullable(commutes.get(key(origin, destination)));
+    }
+
+    @Override
+    public List<FixedCommute> findAll() {
+        return commutes.values().stream()
+                .sorted(Comparator.comparing(FixedCommute::origin, String.CASE_INSENSITIVE_ORDER)
+                        .thenComparing(FixedCommute::destination, String.CASE_INSENSITIVE_ORDER))
+                .toList();
+    }
+
+    @Override
+    public boolean remove(String origin, String destination) {
+        return commutes.remove(key(origin, destination)) != null;
     }
 
     private String key(String origin, String destination) {

@@ -1,5 +1,6 @@
 package Timey.ports;
 
+import java.util.List;
 import java.util.Optional;
 
 import Timey.domain.transit.FixedCommute;
@@ -9,4 +10,10 @@ public interface FixedCommuteStore {
     void save(FixedCommute commute);
 
     Optional<FixedCommute> find(String origin, String destination);
+
+    /** Returns saved timings in stable presentation order. */
+    List<FixedCommute> findAll();
+
+    /** Removes the exact origin/destination timing, returning whether it existed. */
+    boolean remove(String origin, String destination);
 }

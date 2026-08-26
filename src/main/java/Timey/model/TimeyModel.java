@@ -59,6 +59,16 @@ public final class TimeyModel {
         return fixedCommuteStore.find(origin, destination);
     }
 
+    /** Returns all fixed commute timings in a stable list order. */
+    public List<FixedCommute> getFixedCommutes() {
+        return fixedCommuteStore.findAll();
+    }
+
+    /** Removes a timing that was previously returned by {@link #getFixedCommutes()}. */
+    public boolean removeFixedCommute(FixedCommute commute) {
+        return fixedCommuteStore.remove(commute.origin(), commute.destination());
+    }
+
     /** Replaces the current plan and clears its previous route selection. */
     public void replacePlan(PlanCommand plan, List<RouteAlternative> alternatives, List<String> messages) {
         this.pendingPlan = Objects.requireNonNull(plan);

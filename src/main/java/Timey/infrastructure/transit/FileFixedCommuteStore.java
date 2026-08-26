@@ -8,6 +8,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.Base64;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
 
@@ -25,7 +27,7 @@ public final class FileFixedCommuteStore implements FixedCommuteStore {
     @Override
     public synchronized void save(FixedCommute commute) {
         Properties timings = load();
-        timings.setProperty(key(commute.origin(), commute.destination()), Long.toString(commute.duration().toMinutes()));
+        timings.setProperty(key(commute.origin(), commute.destination()), value(commute));
         try {
             Path parent = path.getParent();
             if (parent != null) {
@@ -41,16 +43,37 @@ public final class FileFixedCommuteStore implements FixedCommuteStore {
 
     @Override
     public synchronized Optional<FixedCommute> find(String origin, String destination) {
-        String minutes = load().getProperty(key(origin, destination));
-        if (minutes == null) {
+        String value = load().getProperty(key(origin, destination));
+        if (value == null) {
             return Optional.empty();
         }
         try {
-            long duration = Long.parseLong(minutes);
+            long duration = duration(value);
             return Optional.of(new FixedCommute(origin, destination, Duration.ofMinutes(duration)));
         } catch (IllegalArgumentException | ArithmeticException exception) {
             return Optional.empty();
         }
+    }
+
+    @Override
+    public synchronized List<FixedCommute> findAll() {
+        Properties timings = load();
+        return timings.stringPropertyNames().stream()
+                .map(key -> fixedCommute(key, timings.getProperty(key)))
+                .flatMap(Optional::stream)
+                .sorted(Comparator.comparing(FixedCommute::origin, String.CASE_INSENSITIVE_ORDER)
+                        .thenComparing(FixedCommute::destination, String.CASE_INSENSITIVE_ORDER))
+                .toList();
+    }
+
+    @Override
+    public synchronized boolean remove(String origin, String destination) {
+        Properties timings = load();
+        if (timings.remove(key(origin, destination)) == null) {
+            return false;
+        }
+        save(timings);
+        return true;
     }
 
     private Properties load() {
@@ -66,11 +89,52 @@ public final class FileFixedCommuteStore implements FixedCommuteStore {
         }
     }
 
+    private Optional<FixedCommute> fixedCommute(String key, String value) {
+        String[] locations = key.split("\\.", -1);
+        if (locations.length != 2) {
+            return Optional.empty();
+        }
+        try {
+            String[] parts = value.split("\\|", -1);
+            String origin = parts.length == 3 ? decode(parts[1]) : decode(locations[0]);
+            String destination = parts.length == 3 ? decode(parts[2]) : decode(locations[1]);
+            return Optional.of(new FixedCommute(origin, destination, Duration.ofMinutes(duration(value))));
+        } catch (IllegalArgumentException | ArithmeticException exception) {
+            return Optional.empty();
+        }
+    }
+
+    private void save(Properties timings) {
+        try {
+            Path parent = path.getParent();
+            if (parent != null) {
+                Files.createDirectories(parent);
+            }
+            try (OutputStream output = Files.newOutputStream(path)) {
+                timings.store(output, "Timey fixed commute timings");
+            }
+        } catch (IOException exception) {
+            throw new IllegalStateException("Could not save fixed commute timings.", exception);
+        }
+    }
+
     private String key(String origin, String destination) {
         return encode(origin.trim().toLowerCase()) + "." + encode(destination.trim().toLowerCase());
     }
 
     private String encode(String value) {
         return Base64.getUrlEncoder().withoutPadding().encodeToString(value.getBytes(StandardCharsets.UTF_8));
+    }
+
+    private String value(FixedCommute commute) {
+        return commute.duration().toMinutes() + "|" + encode(commute.origin()) + "|" + encode(commute.destination());
+    }
+
+    private long duration(String value) {
+        return Long.parseLong(value.split("\\|", 2)[0]);
+    }
+
+    private String decode(String value) {
+        return new String(Base64.getUrlDecoder().decode(value), StandardCharsets.UTF_8);
     }
 }
