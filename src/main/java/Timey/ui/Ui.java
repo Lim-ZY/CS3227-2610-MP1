@@ -6,6 +6,8 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 
+import Timey.command.CommandResult;
+
 /** Handles all console input and output for the Timey command-line interface. */
 public final class Ui {
     private static final String DIVIDER = "_______________________________________________________";
@@ -55,6 +57,11 @@ public final class Ui {
 
     public void showReadingError() {
         println("I could not read your command. Please restart Timey and try again.");
+    }
+
+    /** Displays feedback produced by a command. */
+    public void show(CommandResult result) {
+        result.messages().forEach(this::println);
     }
 
     public void println(String message) {

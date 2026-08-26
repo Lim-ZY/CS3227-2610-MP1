@@ -10,6 +10,9 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 import Timey.reminder.DepartureReminderService;
+import Timey.command.Command;
+import Timey.command.CommandResult;
+import Timey.command.ThanksCommand;
 import Timey.model.TimeyModel;
 import Timey.planner.CommutePlanningService;
 import Timey.planner.Planner;
@@ -125,8 +128,9 @@ public final class CommandLineApp {
             CommandParser.Command command = commandParser.parse(input);
             sessionEnded = switch (command.type()) {
             case THANKS -> {
-                ui.println("Alrighty, hope you'll have a nice day ahead!");
-                yield true;
+                Command thanksCommand = new ThanksCommand();
+                execute(thanksCommand);
+                yield thanksCommand.isExit();
             }
             case PLAN -> {
                 handlePlan(command.plan());
@@ -158,6 +162,12 @@ public final class CommandLineApp {
             sessionEnded = false;
         }
         return new CommandExecutionResult(sessionEnded, dashboardState());
+    }
+
+    private CommandResult execute(Command command) {
+        CommandResult result = command.execute(model);
+        ui.show(result);
+        return result;
     }
 
     /** Returns current session data for a dashboard without invoking any planner or API itself. */

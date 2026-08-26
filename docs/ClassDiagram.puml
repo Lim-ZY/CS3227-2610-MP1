@@ -37,6 +37,12 @@ package "model" {
   class TimeyModel
 }
 
+package "command" {
+  abstract class Command
+  class CommandResult <<record>>
+  class ThanksCommand
+}
+
 package "domain.alert" {
   class DepartureCalculator
   class DepartureRecommendation <<record>>
@@ -103,6 +109,7 @@ Timey *--> ScheduledExecutorReminderScheduler
 
 CommandLineApp --> Ui
 CommandLineApp *--> TimeyModel
+CommandLineApp --> Command
 CommandLineApp *--> CommandParser
 CommandLineApp *--> Planner
 CommandLineApp *--> DepartureReminderService
@@ -114,6 +121,9 @@ CommandLineApp --> ScheduledDepartureReminder
 TimeyModel --> PlanCommand
 TimeyModel --> RouteAlternative
 TimeyModel --> DepartureRecommendation
+ThanksCommand --|> Command
+Command --> TimeyModel
+Command --> CommandResult : creates
 
 ' Command interpretation
 CommandParser *--> PlanCommandParser
