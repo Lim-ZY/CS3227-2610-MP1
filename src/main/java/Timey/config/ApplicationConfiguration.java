@@ -40,12 +40,12 @@ public final class ApplicationConfiguration {
         return new ApplicationConfiguration(properties);
     }
 
-    public Optional<String> oneMapAccessToken() {
+    public Optional<String> getOneMapAccessToken() {
         return firstNonBlank(System.getenv("ONEMAP_ACCESS_TOKEN"), properties.getProperty("onemap.access-token"));
     }
 
     /** Loads local preferences, falling back safely when a value is absent or invalid. */
-    public UserPreferences userPreferences() {
+    public UserPreferences getUserPreferences() {
         return new UserPreferences(timeZone(), defaultDepartureBuffer(), savedLocations());
     }
 

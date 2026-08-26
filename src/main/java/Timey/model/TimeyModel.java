@@ -39,19 +39,19 @@ public final class TimeyModel {
         this.selectedRecommendation = Objects.requireNonNull(recommendation);
     }
 
-    public Optional<PlanCommand> pendingPlan() {
+    public Optional<PlanCommand> getPendingPlan() {
         return Optional.ofNullable(pendingPlan);
     }
 
-    public List<RouteAlternative> pendingAlternatives() {
+    public List<RouteAlternative> getPendingAlternatives() {
         return pendingAlternatives;
     }
 
-    public List<String> planningMessages() {
+    public List<String> getPlanningMessages() {
         return planningMessages;
     }
 
-    public Optional<DepartureRecommendation> selectedRecommendation() {
+    public Optional<DepartureRecommendation> getSelectedRecommendation() {
         return Optional.ofNullable(selectedRecommendation);
     }
 }

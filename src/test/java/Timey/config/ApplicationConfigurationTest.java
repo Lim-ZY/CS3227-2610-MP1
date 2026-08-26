@@ -18,7 +18,7 @@ class ApplicationConfigurationTest {
 
             var configuration = ApplicationConfiguration.load(propertiesFile);
 
-            assertEquals("local-token", configuration.oneMapAccessToken().orElseThrow());
+            assertEquals("local-token", configuration.getOneMapAccessToken().orElseThrow());
         } finally {
             Files.deleteIfExists(propertiesFile);
         }
@@ -37,7 +37,7 @@ class ApplicationConfigurationTest {
                     + "departure-buffer-minutes=15\n"
                     + "saved-locations=COM3, Home, COM3\n");
 
-            var preferences = ApplicationConfiguration.load(propertiesFile).userPreferences();
+            var preferences = ApplicationConfiguration.load(propertiesFile).getUserPreferences();
 
             assertEquals(ZoneId.of("Europe/London"), preferences.timeZone());
             assertEquals(Duration.ofMinutes(15), preferences.defaultDepartureBuffer());
@@ -53,7 +53,7 @@ class ApplicationConfigurationTest {
         try {
             Files.writeString(propertiesFile, "timezone=Not/AZone\ndeparture-buffer-minutes=-2\n");
 
-            var preferences = ApplicationConfiguration.load(propertiesFile).userPreferences();
+            var preferences = ApplicationConfiguration.load(propertiesFile).getUserPreferences();
 
             assertEquals(ZoneId.of("Asia/Singapore"), preferences.timeZone());
             assertEquals(Duration.ofMinutes(10), preferences.defaultDepartureBuffer());

@@ -161,7 +161,7 @@ public final class CommandLineApp {
             ui.println("I could not create that plan: " + exception.getMessage());
             sessionEnded = false;
         }
-        return new CommandExecutionResult(sessionEnded, dashboardState());
+        return new CommandExecutionResult(sessionEnded, getDashboardState());
     }
 
     private CommandResult execute(Command command) {
@@ -171,9 +171,9 @@ public final class CommandLineApp {
     }
 
     /** Returns current session data for a dashboard without invoking any planner or API itself. */
-    public DashboardState dashboardState() {
-        return new DashboardState(model.pendingPlan(), model.pendingAlternatives(), model.planningMessages(),
-                model.selectedRecommendation(), departureReminderService.scheduledReminders());
+    public DashboardState getDashboardState() {
+        return new DashboardState(model.getPendingPlan(), model.getPendingAlternatives(), model.getPlanningMessages(),
+                model.getSelectedRecommendation(), departureReminderService.scheduledReminders());
     }
 
     private void handlePlan(PlanCommand plan) {
@@ -186,8 +186,8 @@ public final class CommandLineApp {
         ui.println();
         Planner.PlanningResult result = findAlternatives(plan);
         model.replacePlan(plan, result.alternatives(), result.messages());
-        model.replaceAlternatives(withFixedTiming(plan, model.pendingAlternatives()));
-        printAlternatives(model.pendingAlternatives());
+        model.replaceAlternatives(withFixedTiming(plan, model.getPendingAlternatives()));
+        printAlternatives(model.getPendingAlternatives());
         ui.println();
         ui.println("Choose a route with: choose 1");
     }
@@ -217,7 +217,7 @@ public final class CommandLineApp {
     }
 
     private void handleChoice(Integer routeNumber) {
-        if (model.pendingPlan().isEmpty()) {
+        if (model.getPendingPlan().isEmpty()) {
             ui.println("Please create a plan before choosing a route.");
             return;
         }
@@ -225,13 +225,13 @@ public final class CommandLineApp {
             ui.println("Choose a route by number, for example: choose 1");
             return;
         }
-        if (routeNumber < 1 || routeNumber > model.pendingAlternatives().size()) {
-            ui.println("Please choose a route between 1 and " + model.pendingAlternatives().size() + ".");
+        if (routeNumber < 1 || routeNumber > model.getPendingAlternatives().size()) {
+            ui.println("Please choose a route between 1 and " + model.getPendingAlternatives().size() + ".");
             return;
         }
-        RouteAlternative route = model.pendingAlternatives().get(routeNumber - 1);
+        RouteAlternative route = model.getPendingAlternatives().get(routeNumber - 1);
         DepartureRecommendation recommendation = commutePlanningService.recommendDeparture(
-                model.pendingPlan().orElseThrow(), route);
+                model.getPendingPlan().orElseThrow(), route);
         model.selectRecommendation(recommendation);
         printRecommendation(recommendation);
         if (recommendation.departureTime().isBefore(LocalTime.now(clock))) {

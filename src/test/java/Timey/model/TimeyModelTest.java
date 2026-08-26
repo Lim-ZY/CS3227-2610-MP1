@@ -22,9 +22,9 @@ class TimeyModelTest {
         model.replacePlan(plan, alternatives, List.of("Offline route available."));
         model.addPlanningMessage("Saved timing available.");
 
-        assertEquals(plan, model.pendingPlan().orElseThrow());
-        assertEquals(alternatives, model.pendingAlternatives());
-        assertEquals(List.of("Offline route available.", "Saved timing available."), model.planningMessages());
-        assertTrue(model.selectedRecommendation().isEmpty());
+        assertEquals(plan, model.getPendingPlan().orElseThrow());
+        assertEquals(alternatives, model.getPendingAlternatives());
+        assertEquals(List.of("Offline route available.", "Saved timing available."), model.getPlanningMessages());
+        assertTrue(model.getSelectedRecommendation().isEmpty());
     }
 }

@@ -28,12 +28,12 @@ public final class ApplicationFactory {
 
     public static CommandLineApp createCommandLineApp(Ui ui) {
         var configuration = ApplicationConfiguration.loadDefault();
-        var preferences = configuration.userPreferences();
+        var preferences = configuration.getUserPreferences();
         var locationResolver = new OneMapLocationResolver(new RetryingHttpRequester(new JdkHttpRequester()),
-                configuration.oneMapAccessToken());
+                configuration.getOneMapAccessToken());
         var railTransitPlanner = new OneMapRailTransitPlanner(
                 new RetryingHttpRequester(new JdkHttpRequester(ROUTING_REQUEST_TIMEOUT)),
-                configuration.oneMapAccessToken());
+                configuration.getOneMapAccessToken());
         return new CommandLineApp(ui, new PlanCommandParser(preferences.defaultDepartureBuffer()),
                 new CommutePlanningService(new MockTransitPlanner()), locationResolver, railTransitPlanner,
                 Clock.system(preferences.timeZone()),
@@ -43,6 +43,6 @@ public final class ApplicationFactory {
 
     /** Loads the local preferences displayed by the JavaFX dashboard. */
     public static UserPreferences loadUserPreferences() {
-        return ApplicationConfiguration.loadDefault().userPreferences();
+        return ApplicationConfiguration.loadDefault().getUserPreferences();
     }
 }
