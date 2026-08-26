@@ -18,8 +18,6 @@ package "parser" {
   class Parser
   class PlanCommandParser
   class AddCommandParser
-  class "Parser.ParsedCommand" as ParsedCommand <<record>>
-  enum "Parser.Type" as CommandType
 }
 
 package "planner" {
@@ -152,10 +150,7 @@ RouteSelectionResult --> ScheduledDepartureReminder : optional
 ' Command interpretation
 Parser *--> PlanCommandParser
 Parser *--> AddCommandParser
-Parser --> ParsedCommand : creates
-ParsedCommand --> CommandType
-ParsedCommand --> PlanCommand : optional plan
-ParsedCommand --> AddCommand : optional add command
+Parser --> Command : creates
 PlanCommandParser --> PlanCommand : creates
 AddCommandParser --> AddCommand : creates
 

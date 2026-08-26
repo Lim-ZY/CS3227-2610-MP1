@@ -1,7 +1,11 @@
 package Timey.parser;
 
-import Timey.command.AddCommand;
-import Timey.command.PlanCommand;
+import Timey.command.CancelCommand;
+import Timey.command.ChooseCommand;
+import Timey.command.Command;
+import Timey.command.RemindersCommand;
+import Timey.command.ThanksCommand;
+import Timey.command.UnknownCommand;
 
 /** Parses a complete user command into the action requested by the user. */
 public final class Parser {
@@ -24,27 +28,27 @@ public final class Parser {
      * @return the requested command action
      * @throws IllegalArgumentException when a plan command is invalid
      */
-    public ParsedCommand parse(String input) {
+    public Command parse(String input) {
         String command = input.trim();
         if (command.equalsIgnoreCase("thx")) {
-            return ParsedCommand.thanks();
+            return new ThanksCommand();
         }
         if (command.startsWith("plan")) {
-            return ParsedCommand.plan(planCommandParser.parse(command));
+            return planCommandParser.parse(command);
         }
         if (command.startsWith("add")) {
-            return ParsedCommand.add(addCommandParser.parse(command));
+            return addCommandParser.parse(command);
         }
         if (command.startsWith("choose")) {
-            return ParsedCommand.choose(parseNumberArgument(command));
+            return new ChooseCommand(parseNumberArgument(command));
         }
         if (command.equalsIgnoreCase("reminders")) {
-            return ParsedCommand.reminders();
+            return new RemindersCommand();
         }
         if (command.startsWith("cancel")) {
-            return ParsedCommand.cancel(parseNumberArgument(command));
+            return new CancelCommand(parseNumberArgument(command));
         }
-        return ParsedCommand.unknown();
+        return new UnknownCommand();
     }
 
     private Integer parseNumberArgument(String command) {
@@ -57,47 +61,5 @@ public final class Parser {
         } catch (NumberFormatException exception) {
             return null;
         }
-    }
-
-    /** A parsed command and any arguments required to execute it. */
-    public record ParsedCommand(Type type, PlanCommand plan, AddCommand addCommand, Integer number) {
-        public static ParsedCommand thanks() {
-            return new ParsedCommand(Type.THANKS, null, null, null);
-        }
-
-        public static ParsedCommand plan(PlanCommand plan) {
-            return new ParsedCommand(Type.PLAN, plan, null, null);
-        }
-
-        public static ParsedCommand add(AddCommand addCommand) {
-            return new ParsedCommand(Type.ADD, null, addCommand, null);
-        }
-
-        public static ParsedCommand choose(Integer number) {
-            return new ParsedCommand(Type.CHOOSE, null, null, number);
-        }
-
-        public static ParsedCommand reminders() {
-            return new ParsedCommand(Type.REMINDERS, null, null, null);
-        }
-
-        public static ParsedCommand cancel(Integer number) {
-            return new ParsedCommand(Type.CANCEL, null, null, number);
-        }
-
-        public static ParsedCommand unknown() {
-            return new ParsedCommand(Type.UNKNOWN, null, null, null);
-        }
-    }
-
-    /** The actions accepted by the command-line interface. */
-    public enum Type {
-        THANKS,
-        PLAN,
-        ADD,
-        CHOOSE,
-        REMINDERS,
-        CANCEL,
-        UNKNOWN
     }
 }

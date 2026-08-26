@@ -10,6 +10,10 @@ public final class CancelCommand extends Command {
         this.reminderNumber = reminderNumber;
     }
 
+    public Integer getReminderNumber() {
+        return reminderNumber;
+    }
+
     @Override
     public CommandResult execute(TimeyModel model) {
         if (reminderNumber == null) {

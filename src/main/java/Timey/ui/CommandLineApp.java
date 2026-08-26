@@ -7,17 +7,10 @@ import java.time.Clock;
 import java.util.List;
 
 import Timey.command.Command;
-import Timey.command.CancelCommand;
-import Timey.command.ChooseCommand;
 import Timey.command.CommandResult;
-import Timey.command.ThanksCommand;
-import Timey.command.AddCommand;
-import Timey.command.UnknownCommand;
 import Timey.model.TimeyModel;
 import Timey.planner.CommutePlanningService;
 import Timey.parser.Parser;
-import Timey.command.PlanCommand;
-import Timey.command.RemindersCommand;
 import Timey.parser.PlanCommandParser;
 import Timey.domain.transit.LiveRouteLookup;
 import Timey.infrastructure.http.HttpResult;
@@ -114,44 +107,10 @@ public final class CommandLineApp {
     public CommandExecutionResult executeCommand(String input) {
         boolean sessionEnded;
         try {
-            Parser.ParsedCommand command = parser.parse(input);
-            sessionEnded = switch (command.type()) {
-            case THANKS -> {
-                Command thanksCommand = new ThanksCommand();
-                execute(thanksCommand);
-                yield thanksCommand.isExit();
-            }
-            case PLAN -> {
-                PlanCommand planCommand = command.plan();
-                execute(planCommand);
-                yield planCommand.isExit();
-            }
-            case ADD -> {
-                AddCommand addCommand = command.addCommand();
-                execute(addCommand);
-                yield addCommand.isExit();
-            }
-            case CHOOSE -> {
-                Command chooseCommand = new ChooseCommand(command.number());
-                execute(chooseCommand);
-                yield chooseCommand.isExit();
-            }
-            case REMINDERS -> {
-                Command remindersCommand = new RemindersCommand();
-                execute(remindersCommand);
-                yield remindersCommand.isExit();
-            }
-            case CANCEL -> {
-                Command cancelCommand = new CancelCommand(command.number());
-                execute(cancelCommand);
-                yield cancelCommand.isExit();
-            }
-            case UNKNOWN -> {
-                UnknownCommand unknownCommand = new UnknownCommand();
-                execute(unknownCommand);
-                yield unknownCommand.isExit();
-            }
-            };
+            Command command = parser.parse(input);
+            assert command != null : "Parser.parse should return a Command";
+            execute(command);
+            sessionEnded = command.isExit();
         } catch (IllegalArgumentException exception) {
             ui.println("I could not create that plan: " + exception.getMessage());
             sessionEnded = false;

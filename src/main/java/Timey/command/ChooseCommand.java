@@ -19,6 +19,10 @@ public final class ChooseCommand extends Command {
         this.routeNumber = routeNumber;
     }
 
+    public Integer getRouteNumber() {
+        return routeNumber;
+    }
+
     @Override
     public CommandResult execute(TimeyModel model) {
         RouteSelectionResult result = model.selectRoute(routeNumber);
