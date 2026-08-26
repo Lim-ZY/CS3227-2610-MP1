@@ -16,7 +16,7 @@ import Timey.command.ThanksCommand;
 import Timey.model.TimeyModel;
 import Timey.planner.CommutePlanningService;
 import Timey.planner.Planner;
-import Timey.parser.CommandParser;
+import Timey.parser.Parser;
 import Timey.parser.PlanCommand;
 import Timey.parser.PlanCommandParser;
 import Timey.domain.alert.DepartureRecommendation;
@@ -40,7 +40,7 @@ public final class CommandLineApp {
     private static final DateTimeFormatter REMINDER_TIME_FORMAT = DateTimeFormatter.ofPattern("uuuu-MM-dd HH:mm");
 
     private final Ui ui;
-    private final CommandParser commandParser;
+    private final Parser parser;
     private final CommutePlanningService commutePlanningService;
     private final Planner planner;
     private final DepartureReminderService departureReminderService;
@@ -95,7 +95,7 @@ public final class CommandLineApp {
             RailTransitPlanner railTransitPlanner, Clock clock, ReminderScheduler reminderScheduler,
             FixedCommuteStore fixedCommuteStore) {
         this.ui = ui;
-        this.commandParser = new CommandParser(planCommandParser);
+        this.parser = new Parser(planCommandParser);
         this.commutePlanningService = commutePlanningService;
         this.planner = new Planner(commutePlanningService, locationResolver, railTransitPlanner, clock);
         this.departureReminderService = new DepartureReminderService(reminderScheduler, clock);
@@ -125,7 +125,7 @@ public final class CommandLineApp {
     public CommandExecutionResult executeCommand(String input) {
         boolean sessionEnded;
         try {
-            CommandParser.Command command = commandParser.parse(input);
+            Parser.ParsedCommand command = parser.parse(input);
             sessionEnded = switch (command.type()) {
             case THANKS -> {
                 Command thanksCommand = new ThanksCommand();

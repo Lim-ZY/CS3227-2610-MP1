@@ -1,15 +1,15 @@
 package Timey.parser;
 
 /** Parses a complete user command into the action requested by the user. */
-public final class CommandParser {
+public final class Parser {
     private final PlanCommandParser planCommandParser;
     private final AddTimingCommandParser addTimingCommandParser;
 
-    public CommandParser(PlanCommandParser planCommandParser) {
+    public Parser(PlanCommandParser planCommandParser) {
         this(planCommandParser, new AddTimingCommandParser());
     }
 
-    public CommandParser(PlanCommandParser planCommandParser, AddTimingCommandParser addTimingCommandParser) {
+    public Parser(PlanCommandParser planCommandParser, AddTimingCommandParser addTimingCommandParser) {
         this.planCommandParser = planCommandParser;
         this.addTimingCommandParser = addTimingCommandParser;
     }
@@ -21,27 +21,27 @@ public final class CommandParser {
      * @return the requested command action
      * @throws IllegalArgumentException when a plan command is invalid
      */
-    public Command parse(String input) {
+    public ParsedCommand parse(String input) {
         String command = input.trim();
         if (command.equalsIgnoreCase("thx")) {
-            return Command.thanks();
+            return ParsedCommand.thanks();
         }
         if (command.startsWith("plan")) {
-            return Command.plan(planCommandParser.parse(command));
+            return ParsedCommand.plan(planCommandParser.parse(command));
         }
         if (command.startsWith("add")) {
-            return Command.addTiming(addTimingCommandParser.parse(command));
+            return ParsedCommand.addTiming(addTimingCommandParser.parse(command));
         }
         if (command.startsWith("choose")) {
-            return Command.choose(parseNumberArgument(command));
+            return ParsedCommand.choose(parseNumberArgument(command));
         }
         if (command.equalsIgnoreCase("reminders")) {
-            return Command.reminders();
+            return ParsedCommand.reminders();
         }
         if (command.startsWith("cancel")) {
-            return Command.cancel(parseNumberArgument(command));
+            return ParsedCommand.cancel(parseNumberArgument(command));
         }
-        return Command.unknown();
+        return ParsedCommand.unknown();
     }
 
     private Integer parseNumberArgument(String command) {
@@ -57,33 +57,33 @@ public final class CommandParser {
     }
 
     /** A parsed command and any arguments required to execute it. */
-    public record Command(Type type, PlanCommand plan, AddTimingCommand addTiming, Integer number) {
-        public static Command thanks() {
-            return new Command(Type.THANKS, null, null, null);
+    public record ParsedCommand(Type type, PlanCommand plan, AddTimingCommand addTiming, Integer number) {
+        public static ParsedCommand thanks() {
+            return new ParsedCommand(Type.THANKS, null, null, null);
         }
 
-        public static Command plan(PlanCommand plan) {
-            return new Command(Type.PLAN, plan, null, null);
+        public static ParsedCommand plan(PlanCommand plan) {
+            return new ParsedCommand(Type.PLAN, plan, null, null);
         }
 
-        public static Command addTiming(AddTimingCommand addTiming) {
-            return new Command(Type.ADD, null, addTiming, null);
+        public static ParsedCommand addTiming(AddTimingCommand addTiming) {
+            return new ParsedCommand(Type.ADD, null, addTiming, null);
         }
 
-        public static Command choose(Integer number) {
-            return new Command(Type.CHOOSE, null, null, number);
+        public static ParsedCommand choose(Integer number) {
+            return new ParsedCommand(Type.CHOOSE, null, null, number);
         }
 
-        public static Command reminders() {
-            return new Command(Type.REMINDERS, null, null, null);
+        public static ParsedCommand reminders() {
+            return new ParsedCommand(Type.REMINDERS, null, null, null);
         }
 
-        public static Command cancel(Integer number) {
-            return new Command(Type.CANCEL, null, null, number);
+        public static ParsedCommand cancel(Integer number) {
+            return new ParsedCommand(Type.CANCEL, null, null, number);
         }
 
-        public static Command unknown() {
-            return new Command(Type.UNKNOWN, null, null, null);
+        public static ParsedCommand unknown() {
+            return new ParsedCommand(Type.UNKNOWN, null, null, null);
         }
     }
 

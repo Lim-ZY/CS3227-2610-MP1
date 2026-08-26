@@ -15,11 +15,11 @@ package "ui" {
 }
 
 package "parser" {
-  class CommandParser
+  class Parser
   class PlanCommandParser
   class PlanCommand <<record>>
-  class "CommandParser.Command" as ParsedCommand <<record>>
-  enum "CommandParser.Type" as CommandType
+  class "Parser.ParsedCommand" as ParsedCommand <<record>>
+  enum "Parser.Type" as CommandType
 }
 
 package "planner" {
@@ -110,7 +110,7 @@ Timey *--> ScheduledExecutorReminderScheduler
 CommandLineApp --> Ui
 CommandLineApp *--> TimeyModel
 CommandLineApp --> Command
-CommandLineApp *--> CommandParser
+CommandLineApp *--> Parser
 CommandLineApp *--> Planner
 CommandLineApp *--> DepartureReminderService
 CommandLineApp --> CommutePlanningService : recommends departure
@@ -126,8 +126,8 @@ Command --> TimeyModel
 Command --> CommandResult : creates
 
 ' Command interpretation
-CommandParser *--> PlanCommandParser
-CommandParser --> ParsedCommand : creates
+Parser *--> PlanCommandParser
+Parser --> ParsedCommand : creates
 ParsedCommand --> CommandType
 ParsedCommand --> PlanCommand : optional plan
 PlanCommandParser --> PlanCommand : creates
