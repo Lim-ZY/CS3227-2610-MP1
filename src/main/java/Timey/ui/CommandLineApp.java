@@ -14,6 +14,7 @@ import Timey.command.Command;
 import Timey.command.CommandResult;
 import Timey.command.ThanksCommand;
 import Timey.command.AddCommand;
+import Timey.command.UnknownCommand;
 import Timey.model.TimeyModel;
 import Timey.planner.CommutePlanningService;
 import Timey.parser.Parser;
@@ -151,8 +152,9 @@ public final class CommandLineApp {
                 yield false;
             }
             case UNKNOWN -> {
-                ui.println("I did not understand that. Try: plan /from \"COM3\" /to \"VivoCity\" /by 1830 /buf 10m");
-                yield false;
+                UnknownCommand unknownCommand = new UnknownCommand();
+                execute(unknownCommand);
+                yield unknownCommand.isExit();
             }
             };
         } catch (IllegalArgumentException exception) {

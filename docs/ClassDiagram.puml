@@ -43,6 +43,7 @@ package "command" {
   class ThanksCommand
   class AddCommand
   class PlanCommand
+  class UnknownCommand
 }
 
 package "domain.alert" {
@@ -127,6 +128,7 @@ TimeyModel --> Planner
 ThanksCommand --|> Command
 AddCommand --|> Command
 PlanCommand --|> Command
+UnknownCommand --|> Command
 Command --> TimeyModel
 Command --> CommandResult : creates
 AddCommand --> TimeyModel
