@@ -27,11 +27,11 @@ public final class RetryingHttpRequester implements HttpRequester {
     }
 
     @Override
-    public HttpResult get(URI uri, String authorization) {
+    public HttpResult get(URI uri) {
         IllegalStateException lastFailure = null;
         for (int attempt = 0; attempt <= maxRetries; attempt++) {
             try {
-                HttpResult result = delegate.get(uri, authorization);
+                HttpResult result = delegate.get(uri);
                 if (!isTransient(result.statusCode()) || attempt == maxRetries) {
                     return result;
                 }

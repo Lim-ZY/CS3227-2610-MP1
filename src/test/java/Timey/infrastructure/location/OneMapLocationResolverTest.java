@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.net.URI;
 import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
@@ -13,13 +14,12 @@ import Timey.infrastructure.http.HttpResult;
 class OneMapLocationResolverTest {
     @Test
     void resolve_successfulOneMapResponse_returnsFirstLocation() {
-        var resolver = new OneMapLocationResolver((uri, authorization) -> {
-            assertTrue(uri.toString().contains("searchVal=VivoCity"));
-            assertEquals("access-token", authorization);
+        var resolver = new OneMapLocationResolver(uri -> {
+            assertEquals("https://timey.example.workers.dev/v1/search?q=VivoCity", uri.toString());
             return new HttpResult(200, """
                     {"results":[{"SEARCHVAL":"VivoCity","ADDRESS":"1 HarbourFront Walk, Singapore 098585",
                     "LATITUDE":"1.2645","LONGITUDE":"103.8224"}]}""");
-        }, Optional.of("access-token"));
+        }, Optional.of(URI.create("https://timey.example.workers.dev")));
 
         var result = resolver.resolve("VivoCity");
 
@@ -29,22 +29,22 @@ class OneMapLocationResolverTest {
     }
 
     @Test
-    void resolve_tokenMissing_doesNotAccessNetwork() {
-        var resolver = new OneMapLocationResolver((uri, authorization) -> {
-            throw new AssertionError("No request should be made without a token.");
+    void resolve_serviceNotConfigured_doesNotAccessNetwork() {
+        var resolver = new OneMapLocationResolver(uri -> {
+            throw new AssertionError("No request should be made without a service URL.");
         }, Optional.empty());
 
         var result = resolver.resolve("COM3");
 
         assertFalse(result.isFound());
-        assertEquals("OneMap lookup is not configured.", result.reason());
+        assertEquals("Live location lookup is not configured.", result.reason());
     }
 
     @Test
     void resolve_blankQuery_doesNotAccessNetwork() {
-        var resolver = new OneMapLocationResolver((uri, authorization) -> {
+        var resolver = new OneMapLocationResolver(uri -> {
             throw new AssertionError("No request should be made for a blank query.");
-        }, Optional.of("access-token"));
+        }, Optional.of(URI.create("https://timey.example.workers.dev")));
 
         var result = resolver.resolve("  ");
 
@@ -54,8 +54,8 @@ class OneMapLocationResolverTest {
 
     @Test
     void resolve_incompleteProviderResponse_returnsNotFoundReason() {
-        var resolver = new OneMapLocationResolver((uri, authorization) -> new HttpResult(200,
-                "{\"results\":[{\"SEARCHVAL\":\"COM3\"}]}"), Optional.of("access-token"));
+        var resolver = new OneMapLocationResolver(uri -> new HttpResult(200,
+                "{\"results\":[{\"SEARCHVAL\":\"COM3\"}]}"), Optional.of(URI.create("https://timey.example.workers.dev")));
 
         var result = resolver.resolve("COM3");
 
@@ -65,8 +65,8 @@ class OneMapLocationResolverTest {
 
     @Test
     void resolve_providerFailure_returnsFallbackReason() {
-        var resolver = new OneMapLocationResolver((uri, authorization) -> new HttpResult(429, "{}"),
-                Optional.of("access-token"));
+        var resolver = new OneMapLocationResolver(uri -> new HttpResult(429, "{}"),
+                Optional.of(URI.create("https://timey.example.workers.dev")));
 
         var result = resolver.resolve("COM3");
 
@@ -76,9 +76,9 @@ class OneMapLocationResolverTest {
 
     @Test
     void resolve_requestFailure_returnsTemporaryUnavailableReason() {
-        var resolver = new OneMapLocationResolver((uri, authorization) -> {
+        var resolver = new OneMapLocationResolver(uri -> {
             throw new IllegalStateException("Connection timed out");
-        }, Optional.of("access-token"));
+        }, Optional.of(URI.create("https://timey.example.workers.dev")));
 
         var result = resolver.resolve("COM3");
 

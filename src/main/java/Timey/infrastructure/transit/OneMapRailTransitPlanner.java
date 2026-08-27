@@ -21,30 +21,28 @@ import Timey.domain.transit.RouteStepMode;
 import Timey.infrastructure.http.HttpRequester;
 import Timey.ports.RailTransitPlanner;
 
-/** OneMap public-transport adapter limited to rail itineraries. */
+/** Live-data adapter for server-authenticated OneMap rail itineraries. */
 public final class OneMapRailTransitPlanner implements RailTransitPlanner {
-    private static final String ROUTING_ENDPOINT = "https://www.onemap.gov.sg/api/public/routingsvc/route";
     private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("MM-dd-uuuu");
     private static final DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern("HH:mm:ss");
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     private final HttpRequester httpRequester;
-    private final Optional<String> accessToken;
+    private final Optional<URI> liveDataBaseUri;
 
-    public OneMapRailTransitPlanner(HttpRequester httpRequester, Optional<String> accessToken) {
+    public OneMapRailTransitPlanner(HttpRequester httpRequester, Optional<URI> liveDataBaseUri) {
         this.httpRequester = httpRequester;
-        this.accessToken = accessToken.filter(token -> !token.isBlank());
+        this.liveDataBaseUri = liveDataBaseUri;
     }
 
     @Override
     public LiveRouteLookup findRoutes(ResolvedLocation origin, ResolvedLocation destination,
             LocalDate departureDate, LocalTime departureTime) {
-        if (accessToken.isEmpty()) {
-            return LiveRouteLookup.unavailable("OneMap routing is not configured.");
+        if (liveDataBaseUri.isEmpty()) {
+            return LiveRouteLookup.unavailable("Live rail routing is not configured.");
         }
         try {
-            var response = httpRequester.get(routeUri(origin, destination, departureDate, departureTime),
-                    accessToken.orElseThrow());
+            var response = httpRequester.get(routeUri(origin, destination, departureDate, departureTime));
             if (response.statusCode() != 200) {
                 return LiveRouteLookup.unavailable("OneMap routing failed (HTTP " + response.statusCode() + ").");
             }
@@ -58,9 +56,9 @@ public final class OneMapRailTransitPlanner implements RailTransitPlanner {
             LocalDate departureDate, LocalTime departureTime) {
         String start = origin.latitude() + "," + origin.longitude();
         String end = destination.latitude() + "," + destination.longitude();
-        return URI.create(ROUTING_ENDPOINT + "?start=" + start + "&end=" + end
-                + "&routeType=pt&mode=rail&date=" + DATE_FORMAT.format(departureDate)
-                + "&time=" + TIME_FORMAT.format(departureTime) + "&numItineraries=3");
+        return URI.create(liveDataBaseUri.orElseThrow().toString().replaceAll("/$", "")
+                + "/v1/rail-route?start=" + start + "&end=" + end
+                + "&date=" + DATE_FORMAT.format(departureDate) + "&time=" + TIME_FORMAT.format(departureTime));
     }
 
     /** Parses every itinerary in OneMap's response instead of relying on partial text matching. */

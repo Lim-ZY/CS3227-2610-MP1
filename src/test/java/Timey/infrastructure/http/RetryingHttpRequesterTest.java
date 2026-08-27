@@ -17,7 +17,7 @@ class RetryingHttpRequesterTest {
     @Test
     void constructor_negativeRetryLimit_validationErrorThrown() {
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-                () -> new RetryingHttpRequester((uri, authorization) -> new HttpResult(200, "ok"), -1,
+                () -> new RetryingHttpRequester(uri -> new HttpResult(200, "ok"), -1,
                         duration -> { }));
 
         assertEquals("Maximum retries must not be negative.", exception.getMessage());
@@ -27,14 +27,14 @@ class RetryingHttpRequesterTest {
     void get_transientHttpFailures_thenSuccessRetriesAndReturnsSuccess() {
         var calls = new AtomicInteger();
         List<Duration> delays = new ArrayList<>();
-        HttpRequester requester = (uri, authorization) -> switch (calls.getAndIncrement()) {
+        HttpRequester requester = uri -> switch (calls.getAndIncrement()) {
         case 0 -> new HttpResult(429, "rate limited");
         case 1 -> new HttpResult(503, "unavailable");
         default -> new HttpResult(200, "ok");
         };
         var retryingRequester = new RetryingHttpRequester(requester, 2, delays::add);
 
-        var result = retryingRequester.get(URI, "token");
+        var result = retryingRequester.get(URI);
 
         assertEquals(200, result.statusCode());
         assertEquals(3, calls.get());
@@ -44,14 +44,14 @@ class RetryingHttpRequesterTest {
     @Test
     void get_permanentClientError_returnsWithoutRetrying() {
         var calls = new AtomicInteger();
-        var retryingRequester = new RetryingHttpRequester((uri, authorization) -> {
+        var retryingRequester = new RetryingHttpRequester(uri -> {
             calls.incrementAndGet();
             return new HttpResult(400, "bad request");
         }, 2, duration -> {
             throw new AssertionError("Permanent failures should not pause.");
         });
 
-        var result = retryingRequester.get(URI, "token");
+        var result = retryingRequester.get(URI);
 
         assertEquals(400, result.statusCode());
         assertEquals(1, calls.get());
@@ -60,24 +60,24 @@ class RetryingHttpRequesterTest {
     @Test
     void get_connectionFailure_retriesOnlyToConfiguredLimit() {
         var calls = new AtomicInteger();
-        var retryingRequester = new RetryingHttpRequester((uri, authorization) -> {
+        var retryingRequester = new RetryingHttpRequester(uri -> {
             calls.incrementAndGet();
             throw new IllegalStateException("Timed out");
         }, 2, duration -> { });
 
-        assertThrows(IllegalStateException.class, () -> retryingRequester.get(URI, "token"));
+        assertThrows(IllegalStateException.class, () -> retryingRequester.get(URI));
         assertEquals(3, calls.get());
     }
 
     @Test
     void get_persistentServerError_returnsFinalServerResponse() {
         var calls = new AtomicInteger();
-        var retryingRequester = new RetryingHttpRequester((uri, authorization) -> {
+        var retryingRequester = new RetryingHttpRequester(uri -> {
             calls.incrementAndGet();
             return new HttpResult(503, "unavailable");
         }, 2, duration -> { });
 
-        var result = retryingRequester.get(URI, "token");
+        var result = retryingRequester.get(URI);
 
         assertEquals(503, result.statusCode());
         assertEquals(3, calls.get());

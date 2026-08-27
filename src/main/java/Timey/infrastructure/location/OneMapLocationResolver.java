@@ -12,20 +12,19 @@ import Timey.domain.location.ResolvedLocation;
 import Timey.infrastructure.http.HttpRequester;
 import Timey.ports.LocationResolver;
 
-/** Resolves Singapore addresses through OneMap's authenticated Search API. */
+/** Resolves Singapore addresses through Timey's server-held live-data service. */
 public final class OneMapLocationResolver implements LocationResolver {
-    private static final String SEARCH_ENDPOINT = "https://www.onemap.gov.sg/api/common/elastic/search";
     private static final Pattern ADDRESS = Pattern.compile("\\\"ADDRESS\\\"\\s*:\\s*\\\"([^\\\"]*)\\\"");
     private static final Pattern SEARCH_VALUE = Pattern.compile("\\\"SEARCHVAL\\\"\\s*:\\s*\\\"([^\\\"]*)\\\"");
     private static final Pattern LATITUDE = Pattern.compile("\\\"LATITUDE\\\"\\s*:\\s*\\\"?([-+0-9.]+)\\\"?");
     private static final Pattern LONGITUDE = Pattern.compile("\\\"LONGITUDE\\\"\\s*:\\s*\\\"?([-+0-9.]+)\\\"?");
 
     private final HttpRequester httpRequester;
-    private final Optional<String> accessToken;
+    private final Optional<URI> liveDataBaseUri;
 
-    public OneMapLocationResolver(HttpRequester httpRequester, Optional<String> accessToken) {
+    public OneMapLocationResolver(HttpRequester httpRequester, Optional<URI> liveDataBaseUri) {
         this.httpRequester = httpRequester;
-        this.accessToken = accessToken.filter(token -> !token.isBlank());
+        this.liveDataBaseUri = liveDataBaseUri;
     }
 
     @Override
@@ -33,11 +32,11 @@ public final class OneMapLocationResolver implements LocationResolver {
         if (query == null || query.isBlank()) {
             return LocationResolution.unavailable("A location is required for online lookup.");
         }
-        if (accessToken.isEmpty()) {
-            return LocationResolution.unavailable("OneMap lookup is not configured.");
+        if (liveDataBaseUri.isEmpty()) {
+            return LocationResolution.unavailable("Live location lookup is not configured.");
         }
         try {
-            var response = httpRequester.get(searchUri(query), accessToken.orElseThrow());
+            var response = httpRequester.get(searchUri(query));
             if (response.statusCode() != 200) {
                 return LocationResolution.unavailable("OneMap lookup is temporarily unavailable (HTTP "
                         + response.statusCode() + ").");
@@ -51,8 +50,8 @@ public final class OneMapLocationResolver implements LocationResolver {
 
     private URI searchUri(String query) {
         String encodedQuery = URLEncoder.encode(query, StandardCharsets.UTF_8);
-        return URI.create(SEARCH_ENDPOINT + "?searchVal=" + encodedQuery
-                + "&returnGeom=Y&getAddrDetails=Y&pageNum=1");
+        return URI.create(liveDataBaseUri.orElseThrow().toString().replaceAll("/$", "")
+                + "/v1/search?q=" + encodedQuery);
     }
 
     private Optional<ResolvedLocation> parseFirstResult(String body) {

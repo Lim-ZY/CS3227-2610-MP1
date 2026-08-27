@@ -32,10 +32,9 @@ public final class JdkHttpRequester implements HttpRequester {
     }
 
     @Override
-    public HttpResult get(URI uri, String authorization) {
+    public HttpResult get(URI uri) {
         HttpRequest request = HttpRequest.newBuilder(uri)
                 .timeout(requestTimeout)
-                .header("Authorization", authorization)
                 .GET()
                 .build();
         try {

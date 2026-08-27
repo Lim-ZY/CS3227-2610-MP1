@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.net.URI;
 import java.time.Duration;
 import java.time.ZoneId;
 import java.time.DateTimeException;
@@ -40,8 +41,10 @@ public final class ApplicationConfiguration {
         return new ApplicationConfiguration(properties);
     }
 
-    public Optional<String> getOneMapAccessToken() {
-        return firstNonBlank(System.getenv("ONEMAP_ACCESS_TOKEN"), properties.getProperty("onemap.access-token"));
+    /** Returns the HTTPS base URL of Timey's server-held live-data service, if configured. */
+    public Optional<URI> getLiveDataBaseUri() {
+        return firstNonBlank(System.getenv("TIMEY_LIVE_DATA_URL"), properties.getProperty("timey.live-data-url"))
+                .flatMap(this::httpsUri);
     }
 
     /** Loads local preferences, falling back safely when a value is absent or invalid. */
@@ -91,5 +94,18 @@ public final class ApplicationConfiguration {
             return Optional.of(second.trim());
         }
         return Optional.empty();
+    }
+
+    private Optional<URI> httpsUri(String value) {
+        try {
+            URI uri = URI.create(value);
+            if (!"https".equalsIgnoreCase(uri.getScheme()) || uri.getHost() == null
+                    || uri.getRawQuery() != null || uri.getRawFragment() != null) {
+                return Optional.empty();
+            }
+            return Optional.of(uri);
+        } catch (IllegalArgumentException exception) {
+            return Optional.empty();
+        }
     }
 }

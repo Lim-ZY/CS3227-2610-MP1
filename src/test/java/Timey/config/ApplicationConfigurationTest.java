@@ -11,14 +11,27 @@ import org.junit.jupiter.api.Test;
 
 class ApplicationConfigurationTest {
     @Test
-    void load_localTokenProperty_tokenReturned() throws Exception {
+    void load_liveDataUrlProperty_httpsUriReturned() throws Exception {
         var propertiesFile = Files.createTempFile("timey", ".properties");
         try {
-            Files.writeString(propertiesFile, "onemap.access-token= local-token ");
+            Files.writeString(propertiesFile, "timey.live-data-url=https://timey.example.workers.dev ");
 
             var configuration = ApplicationConfiguration.load(propertiesFile);
 
-            assertEquals("local-token", configuration.getOneMapAccessToken().orElseThrow());
+            assertEquals(java.net.URI.create("https://timey.example.workers.dev"),
+                    configuration.getLiveDataBaseUri().orElseThrow());
+        } finally {
+            Files.deleteIfExists(propertiesFile);
+        }
+    }
+
+    @Test
+    void load_nonHttpsLiveDataUrl_notConfigured() throws Exception {
+        var propertiesFile = Files.createTempFile("timey", ".properties");
+        try {
+            Files.writeString(propertiesFile, "timey.live-data-url=http://localhost:8787");
+
+            assertEquals(java.util.Optional.empty(), ApplicationConfiguration.load(propertiesFile).getLiveDataBaseUri());
         } finally {
             Files.deleteIfExists(propertiesFile);
         }

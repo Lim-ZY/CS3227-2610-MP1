@@ -30,10 +30,10 @@ public final class ApplicationFactory {
         var configuration = ApplicationConfiguration.loadDefault();
         var preferences = configuration.getUserPreferences();
         var locationResolver = new OneMapLocationResolver(new RetryingHttpRequester(new JdkHttpRequester()),
-                configuration.getOneMapAccessToken());
+                configuration.getLiveDataBaseUri());
         var railTransitPlanner = new OneMapRailTransitPlanner(
                 new RetryingHttpRequester(new JdkHttpRequester(ROUTING_REQUEST_TIMEOUT)),
-                configuration.getOneMapAccessToken());
+                configuration.getLiveDataBaseUri());
         return new CommandLineApp(ui, new PlanCommandParser(preferences.defaultDepartureBuffer()),
                 new CommutePlanningService(new MockTransitPlanner()), locationResolver, railTransitPlanner,
                 Clock.system(preferences.timeZone()),

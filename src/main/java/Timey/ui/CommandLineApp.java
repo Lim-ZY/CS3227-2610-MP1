@@ -30,7 +30,7 @@ public final class CommandLineApp {
 
     public CommandLineApp(BufferedReader input, PrintWriter output) {
         this(input, output, new PlanCommandParser(), new CommutePlanningService(new MockTransitPlanner()),
-                new OneMapLocationResolver((uri, authorization) -> new HttpResult(503, ""),
+                new OneMapLocationResolver(uri -> new HttpResult(503, ""),
                         java.util.Optional.empty()));
     }
 
