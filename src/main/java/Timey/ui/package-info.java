@@ -1,2 +1,2 @@
-/** Console interaction and command-line workflow coordination. */
+/** Console interaction, command-line workflow coordination, and JavaFX presentation support. */
 package Timey.ui;

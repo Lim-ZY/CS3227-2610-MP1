@@ -23,7 +23,7 @@ application {
 
 javafx {
     version = '25.0.1'
-    modules = ['javafx.controls']
+    modules = ['javafx.controls', 'javafx.fxml']
 }
 
 dependencies {

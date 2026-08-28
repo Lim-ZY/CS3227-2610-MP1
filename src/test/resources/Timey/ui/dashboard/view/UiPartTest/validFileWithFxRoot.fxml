@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import Timey.ui.TestFxmlObject?>
+
+<fx:root type="TestFxmlObject" fx:id="validFileRoot" text="Hello World!"
+         xmlns:fx="http://javafx.com/fxml/1" />
