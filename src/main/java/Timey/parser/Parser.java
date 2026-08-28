@@ -6,7 +6,7 @@ import Timey.command.Command;
 import Timey.command.HelpCommand;
 import Timey.command.RemindersCommand;
 import Timey.command.ListCommand;
-import Timey.command.RemoveFixedTimingCommand;
+import Timey.command.RemoveCommand;
 import Timey.command.ThanksCommand;
 import Timey.command.UnknownCommand;
 
@@ -49,7 +49,7 @@ public final class Parser {
             return new ListCommand();
         }
         if (command.equalsIgnoreCase("rm") || command.startsWith("rm ")) {
-            return new RemoveFixedTimingCommand(parseNumberArgument(command));
+            return new RemoveCommand(parseNumberArgument(command));
         }
         if (command.startsWith("choose")) {
             return new ChooseCommand(parseNumberArgument(command));

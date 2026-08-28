@@ -31,7 +31,7 @@ class ParserTest {
                 parser.parse("choose 2")).getRouteNumber());
         assertEquals(1, assertInstanceOf(Timey.command.CancelCommand.class,
                 parser.parse("cancel 1")).getReminderNumber());
-        assertEquals(1, assertInstanceOf(Timey.command.RemoveFixedTimingCommand.class,
+        assertEquals(1, assertInstanceOf(Timey.command.RemoveCommand.class,
                 parser.parse("rm 1")).getTimingNumber());
     }
 
@@ -41,7 +41,7 @@ class ParserTest {
                 parser.parse("choose one")).getRouteNumber());
         assertNull(assertInstanceOf(Timey.command.CancelCommand.class,
                 parser.parse("cancel 1 2")).getReminderNumber());
-        assertNull(assertInstanceOf(Timey.command.RemoveFixedTimingCommand.class,
+        assertNull(assertInstanceOf(Timey.command.RemoveCommand.class,
                 parser.parse("rm one")).getTimingNumber());
     }
 

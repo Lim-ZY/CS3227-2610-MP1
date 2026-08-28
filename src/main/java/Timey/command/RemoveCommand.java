@@ -2,11 +2,11 @@ package Timey.command;
 
 import Timey.model.TimeyModel;
 
-/** Removes a saved fixed commute timing by its one-based list number. */
-public final class RemoveFixedTimingCommand extends Command {
+/** Removes a saved commute timing by its one-based list number. */
+public final class RemoveCommand extends Command {
     private final Integer timingNumber;
 
-    public RemoveFixedTimingCommand(Integer timingNumber) {
+    public RemoveCommand(Integer timingNumber) {
         this.timingNumber = timingNumber;
     }
 
@@ -21,10 +21,10 @@ public final class RemoveFixedTimingCommand extends Command {
         }
         var timings = model.getFixedCommutes();
         if (timingNumber < 1 || timingNumber > timings.size()) {
-            return CommandResult.message("No saved fixed timing numbered " + timingNumber + ".");
+            return CommandResult.message("No saved timing numbered " + timingNumber + ".");
         }
         var timing = timings.get(timingNumber - 1);
         model.removeFixedCommute(timing);
-        return CommandResult.message("Removed fixed timing from " + timing.origin() + " to " + timing.destination() + ".");
+        return CommandResult.message("Removed saved timing from " + timing.origin() + " to " + timing.destination() + ".");
     }
 }
