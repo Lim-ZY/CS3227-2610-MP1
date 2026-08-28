@@ -21,7 +21,6 @@ import javafx.scene.control.Label;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuButton;
 import javafx.scene.control.MenuItem;
-import javafx.scene.control.TextArea;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
@@ -42,7 +41,7 @@ public final class TimeyDashboardApp extends Application {
         StringWriter output = new StringWriter();
         CommandLineApp commandLineApp = ApplicationFactory.createCommandLineApp(
                 new ConsoleUi(new BufferedReader(new StringReader("")), new PrintWriter(output, true)));
-        TextArea commandOutput = createCommandOutput();
+        CommandOutput commandOutput = new CommandOutput();
         DashboardContent dashboard = createDashboard(commandOutput);
         CommandBar commandBar = new CommandBar();
         commandBar.setCommandExecutor(input -> executeCommand(commandLineApp, output, commandOutput, commandBar,
@@ -95,7 +94,7 @@ public final class TimeyDashboardApp extends Application {
         return timeline;
     }
 
-    private DashboardContent createDashboard(TextArea commandOutput) {
+    private DashboardContent createDashboard(CommandOutput commandOutput) {
         Label heading = new Label("Your day, on track.");
         heading.getStyleClass().add("page-heading");
         Label introduction = new Label("Plan a commute in the command bar to see your next event and departure plan here.");
@@ -111,7 +110,7 @@ public final class TimeyDashboardApp extends Application {
         Label commandHeading = new Label("COMMAND OUTPUT");
         commandHeading.getStyleClass().add("card-label");
         VBox content = new VBox(18, heading, introduction, nextEvent.container(), lowerCards, alternatives,
-                commandHeading, commandOutput);
+                commandHeading, commandOutput.getRoot());
         content.setPadding(new Insets(40, 56, 32, 56));
         return new DashboardContent(content, nextEvent, commute, reminders, alternatives);
     }
@@ -195,16 +194,6 @@ public final class TimeyDashboardApp extends Application {
         return new Card(card, cardTitle, cardMessage);
     }
 
-    private TextArea createCommandOutput() {
-        TextArea commandOutput = new TextArea("Use the command bar below, for example:\n"
-                + "plan /from \"COM3\" /to \"VivoCity\" /by 1830 /buf 10m");
-        commandOutput.setEditable(false);
-        commandOutput.setWrapText(true);
-        commandOutput.setPrefRowCount(8);
-        commandOutput.getStyleClass().add("command-output");
-        return commandOutput;
-    }
-
     private VBox createAlternativesPanel() {
         Label heading = new Label("ROUTE ALTERNATIVES");
         heading.getStyleClass().add("card-label");
@@ -215,7 +204,7 @@ public final class TimeyDashboardApp extends Application {
         return alternatives;
     }
 
-    private void executeCommand(CommandLineApp commandLineApp, StringWriter output, TextArea commandOutput,
+    private void executeCommand(CommandLineApp commandLineApp, StringWriter output, CommandOutput commandOutput,
             CommandBar commandBar, String input, DashboardContent dashboard, Header header) {
         showLoading(dashboard);
         Task<DashboardCommandResponse> task = new Task<>() {
@@ -228,7 +217,7 @@ public final class TimeyDashboardApp extends Application {
         };
         task.setOnSucceeded(event -> {
             DashboardCommandResponse response = task.getValue();
-            commandOutput.appendText("\n> " + input + "\n" + response.output());
+            commandOutput.appendCommandResult(input, response.output());
             refreshDashboard(dashboard, header, response.result().dashboardState());
             if (response.result().sessionEnded()) {
                 commandBar.showSessionEnded();
@@ -238,7 +227,7 @@ public final class TimeyDashboardApp extends Application {
         });
         task.setOnFailed(event -> {
             Throwable failure = task.getException();
-            commandOutput.appendText("\n> " + input + "\nI could not complete that command. Please try again.");
+            commandOutput.appendCommandFailure(input);
             showFailure(dashboard, failure);
             commandBar.showReadyAfterFailure();
         });
