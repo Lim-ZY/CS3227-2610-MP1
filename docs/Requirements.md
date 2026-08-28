@@ -56,7 +56,7 @@ users transition between virtual and physical commitments.
 | NFR-4 | Performance | Timey shall start quickly enough for normal desk-side use. | The primary dashboard should render within 2.5 seconds on standard student hardware. |
 | NFR-5 | Performance | Timey should maintain smooth visual updates during normal use. | The UI should target 60 FPS without freezing; this is a performance target rather than a hard cross-platform guarantee. |
 | NFR-6 | Reliability | Timeouts, malformed responses, unavailable APIs, invalid calendar files, and invalid user input shall be handled without crashing the application. | The user receives a clear error or fallback message and unsaved local data is preserved. |
-| NFR-7 | Reliability | Time-dependent calculations shall use an explicit timezone and injectable clock. | Automated tests cover Asia/Singapore timezone behaviour and produce deterministic results. |
+| NFR-7 | Reliability | Time-dependent calculations shall use the fixed Singapore timezone and an injectable clock. | Automated tests cover Asia/Singapore timezone behaviour and produce deterministic results. |
 | NFR-8 | Reliability | Timey shall remain useful when external services are unavailable. | Saved places, imported events, cached routes, local calculations, and supported mock routes remain accessible offline. |
 | NFR-9 | Reliability | The system shall fall back to cached or internal mock transit data when OneMap or LTA is unreachable, rate-limited, or unavailable during peer testing. | The application does not crash and deterministic route workflows remain testable without internet access. |
 | NFR-10 | Reliability | Local persistence shall minimise the risk of data loss and recover gracefully from malformed files. | Storage uses atomic write-and-replace behaviour; valid records load even when an individual entry is malformed. |
@@ -86,7 +86,7 @@ users transition between virtual and physical commitments.
 4. API-dependent functionality shall have offline test fixtures or mock
    providers so that automated tests do not require live network access.
 5. All times used by the application shall be interpreted consistently using
-   the configured timezone, with `Asia/Singapore` as the default.
+   the fixed `Asia/Singapore` timezone.
 
 ## Assumptions and Open Questions
 

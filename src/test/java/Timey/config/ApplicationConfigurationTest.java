@@ -53,7 +53,7 @@ class ApplicationConfigurationTest {
 
             var preferences = ApplicationConfiguration.load(propertiesFile).getUserPreferences();
 
-            assertEquals(ZoneId.of("Europe/London"), preferences.timeZone());
+            assertEquals(ZoneId.of("Asia/Singapore"), preferences.timeZone());
             assertEquals(Duration.ofMinutes(15), preferences.defaultDepartureBuffer());
             assertEquals(java.util.List.of("COM3", "Home"), preferences.savedLocations());
         } finally {

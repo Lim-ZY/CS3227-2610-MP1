@@ -21,7 +21,7 @@ will be added in later iterations.
 ## Local preferences
 
 Copy `config/application.example.properties` to `config/application.properties` to configure settings that persist
-between launches. `timezone`, `departure-buffer-minutes`, and comma-separated `saved-locations` are loaded by both
+between launches. `departure-buffer-minutes` and comma-separated `saved-locations` are loaded by both
 the terminal CLI and JavaFX dashboard. The default buffer applies when a `plan` command omits `/buf`; an explicit
 `/buf` always takes precedence. The application includes the deployed Cloudflare Worker endpoint, and the Worker
 holds the OneMap credentials, so users do not need to configure a URL, token, or OneMap account.

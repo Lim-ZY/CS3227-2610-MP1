@@ -7,7 +7,6 @@ import java.nio.file.Path;
 import java.net.URI;
 import java.time.Duration;
 import java.time.ZoneId;
-import java.time.DateTimeException;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
@@ -18,7 +17,7 @@ public final class ApplicationConfiguration {
     private static final Path DEFAULT_PATH = Path.of("config", "application.properties");
     private static final ZoneId DEFAULT_TIME_ZONE = ZoneId.of("Asia/Singapore");
     private static final Duration DEFAULT_DEPARTURE_BUFFER = Duration.ofMinutes(10);
-    private static final URI LIVE_DATA_BASE_URI = URI.create(
+    private static final URI LIVE_DATABASE_URI = URI.create(
             "https://cs3227-mp1-worker.tcmpiano03.workers.dev");
 
     private final Properties properties;
@@ -45,7 +44,7 @@ public final class ApplicationConfiguration {
 
     /** Returns the application-owned HTTPS endpoint for server-held live data. */
     public Optional<URI> getLiveDataBaseUri() {
-        return Optional.of(LIVE_DATA_BASE_URI);
+        return Optional.of(LIVE_DATABASE_URI);
     }
 
     /** Loads local preferences, falling back safely when a value is absent or invalid. */
@@ -54,15 +53,7 @@ public final class ApplicationConfiguration {
     }
 
     private ZoneId timeZone() {
-        String configured = properties.getProperty("timezone");
-        if (configured == null || configured.isBlank()) {
-            return DEFAULT_TIME_ZONE;
-        }
-        try {
-            return ZoneId.of(configured.trim());
-        } catch (DateTimeException exception) {
-            return DEFAULT_TIME_ZONE;
-        }
+        return DEFAULT_TIME_ZONE;
     }
 
     private Duration defaultDepartureBuffer() {
