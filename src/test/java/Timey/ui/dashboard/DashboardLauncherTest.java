@@ -14,4 +14,9 @@ class DashboardLauncherTest {
     void mainWindowLayout_packagedWithApplication_isAvailable() {
         assertNotNull(MainWindow.class.getResource("/Timey/ui/dashboard/view/MainWindow.fxml"));
     }
+
+    @Test
+    void commandBarLayout_packagedWithApplication_isAvailable() {
+        assertNotNull(CommandBar.class.getResource("/Timey/ui/dashboard/view/CommandBar.fxml"));
+    }
 }

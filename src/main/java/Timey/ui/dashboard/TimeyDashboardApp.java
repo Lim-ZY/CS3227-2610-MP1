@@ -21,7 +21,6 @@ import javafx.scene.control.Label;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuButton;
 import javafx.scene.control.MenuItem;
-import javafx.scene.control.TextField;
 import javafx.scene.control.TextArea;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
@@ -45,10 +44,13 @@ public final class TimeyDashboardApp extends Application {
                 new ConsoleUi(new BufferedReader(new StringReader("")), new PrintWriter(output, true)));
         TextArea commandOutput = createCommandOutput();
         DashboardContent dashboard = createDashboard(commandOutput);
+        CommandBar commandBar = new CommandBar();
+        commandBar.setCommandExecutor(input -> executeCommand(commandLineApp, output, commandOutput, commandBar,
+                input, dashboard, header));
         MainWindow mainWindow = new MainWindow(stage);
         mainWindow.setHeader(header.container());
         mainWindow.setDashboardContent(dashboard.content());
-        mainWindow.setCommandBar(createCommandBar(commandLineApp, output, commandOutput, dashboard, header));
+        mainWindow.setCommandBar(commandBar.getRoot());
         mainWindow.show();
         Timeline clockTimer = startClock(header.clock(), ApplicationConfiguration.TIME_ZONE);
         mainWindow.setOnHidden(event -> clockTimer.stop());
@@ -213,30 +215,8 @@ public final class TimeyDashboardApp extends Application {
         return alternatives;
     }
 
-    private HBox createCommandBar(CommandLineApp commandLineApp, StringWriter output, TextArea commandOutput,
-            DashboardContent dashboard, Header header) {
-        Label prompt = new Label(">");
-        prompt.getStyleClass().add("command-prompt");
-        TextField command = new TextField();
-        command.setPromptText("Enter a Timey command, for example: plan /from \"COM3\" /to \"VivoCity\" /by 1830");
-        command.setOnAction(event -> executeCommand(commandLineApp, output, commandOutput, command, dashboard, header));
-        HBox.setHgrow(command, javafx.scene.layout.Priority.ALWAYS);
-        HBox commandBar = new HBox(12, prompt, command);
-        commandBar.setAlignment(Pos.CENTER_LEFT);
-        commandBar.setPadding(new Insets(18, 56, 24, 56));
-        commandBar.getStyleClass().add("command-bar");
-        return commandBar;
-    }
-
     private void executeCommand(CommandLineApp commandLineApp, StringWriter output, TextArea commandOutput,
-            TextField command, DashboardContent dashboard, Header header) {
-        String input = command.getText();
-        if (input.isBlank()) {
-            return;
-        }
-        command.clear();
-        command.setDisable(true);
-        command.setPromptText("Updating your commute…");
+            CommandBar commandBar, String input, DashboardContent dashboard, Header header) {
         showLoading(dashboard);
         Task<DashboardCommandResponse> task = new Task<>() {
             @Override
@@ -251,18 +231,16 @@ public final class TimeyDashboardApp extends Application {
             commandOutput.appendText("\n> " + input + "\n" + response.output());
             refreshDashboard(dashboard, header, response.result().dashboardState());
             if (response.result().sessionEnded()) {
-                command.setPromptText("This command session has ended");
+                commandBar.showSessionEnded();
             } else {
-                command.setDisable(false);
-                command.setPromptText("Enter a Timey command, for example: choose 1");
+                commandBar.showReadyAfterSuccess();
             }
         });
         task.setOnFailed(event -> {
             Throwable failure = task.getException();
             commandOutput.appendText("\n> " + input + "\nI could not complete that command. Please try again.");
             showFailure(dashboard, failure);
-            command.setDisable(false);
-            command.setPromptText("Enter a Timey command, for example: plan /from \"COM3\" /to \"VivoCity\" /by 1830");
+            commandBar.showReadyAfterFailure();
         });
         Thread worker = new Thread(task, "timey-dashboard-command");
         worker.setDaemon(true);
