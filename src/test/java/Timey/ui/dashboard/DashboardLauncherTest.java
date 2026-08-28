@@ -36,4 +36,9 @@ class DashboardLauncherTest {
         assertNotNull(CommuteStatusCard.class.getResource("/Timey/ui/dashboard/view/CommuteStatusCard.fxml"));
         assertNotNull(ReminderStatusCard.class.getResource("/Timey/ui/dashboard/view/ReminderStatusCard.fxml"));
     }
+
+    @Test
+    void routeAlternativesLayout_packagedWithApplication_isAvailable() {
+        assertNotNull(RouteAlternativesPanel.class.getResource("/Timey/ui/dashboard/view/RouteAlternativesPanel.fxml"));
+    }
 }

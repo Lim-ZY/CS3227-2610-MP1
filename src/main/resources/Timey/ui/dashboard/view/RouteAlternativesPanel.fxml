@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox fx:id="alternatives" spacing="12.0" styleClass="card"
+      xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1">
+  <children>
+    <Label styleClass="card-label" text="ROUTE ALTERNATIVES" />
+    <Label styleClass="muted" text="Plan a commute to compare routes. Select one from the command bar with choose &lt;number&gt;." />
+  </children>
+</VBox>
