@@ -48,8 +48,8 @@ class ParserTest {
     @Test
     void parse_nonArgumentCommands_classifiesActions() {
         assertInstanceOf(Timey.command.ThanksCommand.class, parser.parse("thx"));
+        assertInstanceOf(Timey.command.HelpCommand.class, parser.parse("help"));
         assertInstanceOf(Timey.command.RemindersCommand.class, parser.parse("reminders"));
-        assertInstanceOf(Timey.command.ListFixedTimingsCommand.class, parser.parse("ls"));
-        assertInstanceOf(Timey.command.UnknownCommand.class, parser.parse("help"));
+        assertInstanceOf(Timey.command.ListCommand.class, parser.parse("ls"));
     }
 }

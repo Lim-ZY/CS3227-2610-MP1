@@ -3,8 +3,9 @@ package Timey.parser;
 import Timey.command.CancelCommand;
 import Timey.command.ChooseCommand;
 import Timey.command.Command;
+import Timey.command.HelpCommand;
 import Timey.command.RemindersCommand;
-import Timey.command.ListFixedTimingsCommand;
+import Timey.command.ListCommand;
 import Timey.command.RemoveFixedTimingCommand;
 import Timey.command.ThanksCommand;
 import Timey.command.UnknownCommand;
@@ -35,6 +36,9 @@ public final class Parser {
         if (command.equalsIgnoreCase("thx")) {
             return new ThanksCommand();
         }
+        if (command.equalsIgnoreCase("help")) {
+            return new HelpCommand();
+        }
         if (command.startsWith("plan")) {
             return planCommandParser.parse(command);
         }
@@ -42,7 +46,7 @@ public final class Parser {
             return addCommandParser.parse(command);
         }
         if (command.equalsIgnoreCase("ls")) {
-            return new ListFixedTimingsCommand();
+            return new ListCommand();
         }
         if (command.equalsIgnoreCase("rm") || command.startsWith("rm ")) {
             return new RemoveFixedTimingCommand(parseNumberArgument(command));
