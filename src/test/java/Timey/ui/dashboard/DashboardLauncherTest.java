@@ -24,4 +24,9 @@ class DashboardLauncherTest {
     void commandOutputLayout_packagedWithApplication_isAvailable() {
         assertNotNull(CommandOutput.class.getResource("/Timey/ui/dashboard/view/CommandOutput.fxml"));
     }
+
+    @Test
+    void dashboardHeaderLayout_packagedWithApplication_isAvailable() {
+        assertNotNull(DashboardHeader.class.getResource("/Timey/ui/dashboard/view/DashboardHeader.fxml"));
+    }
 }

@@ -7,7 +7,6 @@ import java.io.StringWriter;
 import java.time.Clock;
 
 import Timey.ApplicationFactory;
-import Timey.config.UserPreferences;
 import Timey.config.ApplicationConfiguration;
 import Timey.ui.CommandLineApp;
 import Timey.ui.CommandExecutionResult;
@@ -18,15 +17,10 @@ import javafx.concurrent.Task;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
-import javafx.scene.control.Menu;
-import javafx.scene.control.MenuButton;
-import javafx.scene.control.MenuItem;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
-import javafx.animation.KeyFrame;
-import javafx.animation.Timeline;
 
 import java.time.format.DateTimeFormatter;
 
@@ -36,8 +30,7 @@ public final class TimeyDashboardApp extends Application {
 
     @Override
     public void start(Stage stage) {
-        UserPreferences preferences = ApplicationFactory.loadUserPreferences();
-        Header header = createHeader(preferences);
+        DashboardHeader header = new DashboardHeader(ApplicationFactory.loadUserPreferences());
         StringWriter output = new StringWriter();
         CommandLineApp commandLineApp = ApplicationFactory.createCommandLineApp(
                 new ConsoleUi(new BufferedReader(new StringReader("")), new PrintWriter(output, true)));
@@ -47,51 +40,12 @@ public final class TimeyDashboardApp extends Application {
         commandBar.setCommandExecutor(input -> executeCommand(commandLineApp, output, commandOutput, commandBar,
                 input, dashboard, header));
         MainWindow mainWindow = new MainWindow(stage);
-        mainWindow.setHeader(header.container());
+        mainWindow.setHeader(header.getRoot());
         mainWindow.setDashboardContent(dashboard.content());
         mainWindow.setCommandBar(commandBar.getRoot());
         mainWindow.show();
-        Timeline clockTimer = startClock(header.clock(), ApplicationConfiguration.TIME_ZONE);
-        mainWindow.setOnHidden(event -> clockTimer.stop());
-    }
-
-    private Header createHeader(UserPreferences preferences) {
-        MenuButton timey = new MenuButton("Timey");
-        timey.getStyleClass().add("brand");
-        Menu savedLocations = new Menu("Saved locations");
-        if (preferences.savedLocations().isEmpty()) {
-            savedLocations.getItems().add(new MenuItem("No saved locations yet"));
-        } else {
-            preferences.savedLocations().forEach(location -> savedLocations.getItems().add(new MenuItem(location)));
-        }
-        MenuItem recentLocations = new MenuItem("No recent plan");
-        Menu recent = new Menu("Recent locations");
-        recent.getItems().add(recentLocations);
-        MenuItem personalBuffer = new MenuItem("Set per plan");
-        MenuItem timeZone = new MenuItem(ApplicationConfiguration.TIME_ZONE.getId());
-        Menu preferenceMenu = new Menu("Preferences");
-        preferenceMenu.getItems().addAll(new Menu("Personal buffer", null, personalBuffer),
-                new Menu("Time zone", null, timeZone));
-        timey.getItems().addAll(savedLocations, recent, preferenceMenu);
-
-        Region spacer = new Region();
-        HBox.setHgrow(spacer, javafx.scene.layout.Priority.ALWAYS);
-        Label clock = new Label();
-        clock.getStyleClass().add("dashboard-clock");
-        HBox header = new HBox(16, timey, spacer, clock);
-        header.setAlignment(Pos.CENTER_LEFT);
-        header.getStyleClass().add("header");
-        return new Header(header, recentLocations, personalBuffer, preferences, clock);
-    }
-
-    private Timeline startClock(Label clockLabel, java.time.ZoneId timeZone) {
-        Clock clock = Clock.system(timeZone);
-        Timeline timeline = new Timeline(new KeyFrame(javafx.util.Duration.ZERO,
-                event -> clockLabel.setText(DashboardClockText.now(clock))),
-                new KeyFrame(javafx.util.Duration.seconds(1)));
-        timeline.setCycleCount(Timeline.INDEFINITE);
-        timeline.play();
-        return timeline;
+        header.startClock(ApplicationConfiguration.TIME_ZONE);
+        mainWindow.setOnHidden(event -> header.stopClock());
     }
 
     private DashboardContent createDashboard(CommandOutput commandOutput) {
@@ -205,7 +159,7 @@ public final class TimeyDashboardApp extends Application {
     }
 
     private void executeCommand(CommandLineApp commandLineApp, StringWriter output, CommandOutput commandOutput,
-            CommandBar commandBar, String input, DashboardContent dashboard, Header header) {
+            CommandBar commandBar, String input, DashboardContent dashboard, DashboardHeader header) {
         showLoading(dashboard);
         Task<DashboardCommandResponse> task = new Task<>() {
             @Override
@@ -236,7 +190,7 @@ public final class TimeyDashboardApp extends Application {
         worker.start();
     }
 
-    private void refreshDashboard(DashboardContent dashboard, Header header, DashboardState state) {
+    private void refreshDashboard(DashboardContent dashboard, DashboardHeader header, DashboardState state) {
         state.plan().ifPresentOrElse(plan -> {
             dashboard.nextEvent().title().setText("Commute to " + plan.getDestination());
             dashboard.nextEvent().origin().setText(plan.getOrigin());
@@ -278,8 +232,7 @@ public final class TimeyDashboardApp extends Application {
                 : "Next reminder: " + state.reminders().getFirst().triggerAt().atZone(ApplicationConfiguration.TIME_ZONE)
                         .format(DateTimeFormatter.ofPattern("uuuu-MM-dd HH:mm")));
         refreshAlternatives(dashboard.alternatives(), state);
-        header.recentLocations().setText(DashboardMenuSummary.recentLocations(state));
-        header.personalBuffer().setText(DashboardMenuSummary.personalBuffer(state, header.preferences()));
+        header.refresh(state);
     }
 
     private void showLoading(DashboardContent dashboard) {
@@ -350,10 +303,6 @@ public final class TimeyDashboardApp extends Application {
 
     private record NextEventCard(VBox container, Label title, Label origin, Label destination, Label departure,
             Label arrival, Label countdown, Label reminder) {
-    }
-
-    private record Header(HBox container, MenuItem recentLocations, MenuItem personalBuffer, UserPreferences preferences,
-            Label clock) {
     }
 
     private record DashboardCommandResponse(CommandExecutionResult result, String output) {

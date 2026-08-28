@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.MenuButton?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+
+<HBox alignment="CENTER_LEFT" spacing="16.0" styleClass="header"
+      xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1">
+  <children>
+    <MenuButton fx:id="timeyMenu" styleClass="brand" text="Timey" />
+    <Region HBox.hgrow="ALWAYS" />
+    <Label fx:id="clockLabel" styleClass="dashboard-clock" />
+  </children>
+</HBox>
