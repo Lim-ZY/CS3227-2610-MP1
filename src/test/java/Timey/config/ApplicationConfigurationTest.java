@@ -5,7 +5,6 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
 import java.nio.file.Files;
 import java.time.Duration;
-import java.time.ZoneId;
 
 import org.junit.jupiter.api.Test;
 
@@ -53,7 +52,6 @@ class ApplicationConfigurationTest {
 
             var preferences = ApplicationConfiguration.load(propertiesFile).getUserPreferences();
 
-            assertEquals(ZoneId.of("Asia/Singapore"), preferences.timeZone());
             assertEquals(Duration.ofMinutes(15), preferences.defaultDepartureBuffer());
             assertEquals(java.util.List.of("COM3", "Home"), preferences.savedLocations());
         } finally {
@@ -69,7 +67,6 @@ class ApplicationConfigurationTest {
 
             var preferences = ApplicationConfiguration.load(propertiesFile).getUserPreferences();
 
-            assertEquals(ZoneId.of("Asia/Singapore"), preferences.timeZone());
             assertEquals(Duration.ofMinutes(10), preferences.defaultDepartureBuffer());
             assertEquals(java.util.List.of(), preferences.savedLocations());
         } finally {

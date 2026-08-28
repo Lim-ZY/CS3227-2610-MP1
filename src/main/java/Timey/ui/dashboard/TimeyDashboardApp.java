@@ -8,6 +8,7 @@ import java.time.Clock;
 
 import Timey.ApplicationFactory;
 import Timey.config.UserPreferences;
+import Timey.config.ApplicationConfiguration;
 import Timey.ui.CommandLineApp;
 import Timey.ui.CommandExecutionResult;
 import Timey.ui.DashboardState;
@@ -58,7 +59,7 @@ public final class TimeyDashboardApp extends Application {
         stage.setMinHeight(600);
         stage.setScene(scene);
         stage.show();
-        Timeline clockTimer = startClock(header.clock(), preferences.timeZone());
+        Timeline clockTimer = startClock(header.clock(), ApplicationConfiguration.TIME_ZONE);
         stage.setOnHidden(event -> clockTimer.stop());
     }
 
@@ -75,7 +76,7 @@ public final class TimeyDashboardApp extends Application {
         Menu recent = new Menu("Recent locations");
         recent.getItems().add(recentLocations);
         MenuItem personalBuffer = new MenuItem("Set per plan");
-        MenuItem timeZone = new MenuItem(preferences.timeZone().getId());
+        MenuItem timeZone = new MenuItem(ApplicationConfiguration.TIME_ZONE.getId());
         Menu preferenceMenu = new Menu("Preferences");
         preferenceMenu.getItems().addAll(new Menu("Personal buffer", null, personalBuffer),
                 new Menu("Time zone", null, timeZone));
@@ -286,7 +287,7 @@ public final class TimeyDashboardApp extends Application {
             state.recommendation().ifPresentOrElse(recommendation -> {
                 dashboard.nextEvent().departure().setText(TIME_FORMAT.format(recommendation.departureTime()));
                 dashboard.nextEvent().countdown().setText(DashboardDepartureText.until(recommendation.departureTime(),
-                        Clock.system(header.preferences().timeZone())));
+                        Clock.system(ApplicationConfiguration.TIME_ZONE)));
                 dashboard.nextEvent().reminder().setText(state.reminders().isEmpty()
                         ? "Departure reminder will be set shortly" : "Reminder scheduled");
             }, () -> {
@@ -316,7 +317,7 @@ public final class TimeyDashboardApp extends Application {
                 : state.reminders().size() + " active departure reminder");
         dashboard.reminders().message().setText(state.reminders().isEmpty()
                 ? "Timey will automatically schedule a departure reminder after you choose a route."
-                : "Next reminder: " + state.reminders().getFirst().triggerAt().atZone(java.time.ZoneId.systemDefault())
+                : "Next reminder: " + state.reminders().getFirst().triggerAt().atZone(ApplicationConfiguration.TIME_ZONE)
                         .format(DateTimeFormatter.ofPattern("uuuu-MM-dd HH:mm")));
         refreshAlternatives(dashboard.alternatives(), state);
         header.recentLocations().setText(DashboardMenuSummary.recentLocations(state));

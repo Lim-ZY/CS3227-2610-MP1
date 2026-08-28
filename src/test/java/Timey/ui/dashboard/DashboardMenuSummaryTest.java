@@ -33,6 +33,6 @@ class DashboardMenuSummaryTest {
     }
 
     private UserPreferences preferences() {
-        return new UserPreferences(java.time.ZoneId.of("Asia/Singapore"), Duration.ofMinutes(12), List.of());
+        return new UserPreferences(Duration.ofMinutes(12), List.of());
     }
 }

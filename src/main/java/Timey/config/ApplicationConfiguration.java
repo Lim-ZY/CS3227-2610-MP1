@@ -15,7 +15,7 @@ import java.util.Properties;
 /** Loads optional user-specific settings without placing credentials in source control. */
 public final class ApplicationConfiguration {
     private static final Path DEFAULT_PATH = Path.of("config", "application.properties");
-    private static final ZoneId DEFAULT_TIME_ZONE = ZoneId.of("Asia/Singapore");
+    public static final ZoneId TIME_ZONE = ZoneId.of("Asia/Singapore");
     private static final Duration DEFAULT_DEPARTURE_BUFFER = Duration.ofMinutes(10);
     private static final URI LIVE_DATABASE_URI = URI.create(
             "https://cs3227-mp1-worker.tcmpiano03.workers.dev");
@@ -49,11 +49,7 @@ public final class ApplicationConfiguration {
 
     /** Loads local preferences, falling back safely when a value is absent or invalid. */
     public UserPreferences getUserPreferences() {
-        return new UserPreferences(timeZone(), defaultDepartureBuffer(), savedLocations());
-    }
-
-    private ZoneId timeZone() {
-        return DEFAULT_TIME_ZONE;
+        return new UserPreferences(defaultDepartureBuffer(), savedLocations());
     }
 
     private Duration defaultDepartureBuffer() {

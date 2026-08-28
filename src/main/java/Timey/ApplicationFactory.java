@@ -2,7 +2,6 @@ package Timey;
 
 import java.time.Clock;
 import java.time.Duration;
-import java.time.ZoneId;
 import java.nio.file.Path;
 
 import Timey.config.ApplicationConfiguration;
@@ -36,7 +35,7 @@ public final class ApplicationFactory {
                 configuration.getLiveDataBaseUri());
         return new CommandLineApp(ui, new PlanCommandParser(preferences.defaultDepartureBuffer()),
                 new CommutePlanningService(new MockTransitPlanner()), locationResolver, railTransitPlanner,
-                Clock.system(preferences.timeZone()),
+                Clock.system(ApplicationConfiguration.TIME_ZONE),
                 new ScheduledExecutorReminderScheduler(),
                 new FileFixedCommuteStore(Path.of("data", "fixed-commutes.properties")));
     }
