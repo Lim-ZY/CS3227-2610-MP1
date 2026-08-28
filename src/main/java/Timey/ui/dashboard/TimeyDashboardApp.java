@@ -12,7 +12,7 @@ import Timey.config.ApplicationConfiguration;
 import Timey.ui.CommandLineApp;
 import Timey.ui.CommandExecutionResult;
 import Timey.ui.DashboardState;
-import Timey.ui.Ui;
+import Timey.ui.ConsoleUi;
 import javafx.application.Application;
 import javafx.concurrent.Task;
 import javafx.geometry.Insets;
@@ -46,7 +46,7 @@ public final class TimeyDashboardApp extends Application {
         root.setTop(header.container());
         StringWriter output = new StringWriter();
         CommandLineApp commandLineApp = ApplicationFactory.createCommandLineApp(
-                new Ui(new BufferedReader(new StringReader("")), new PrintWriter(output, true)));
+                new ConsoleUi(new BufferedReader(new StringReader("")), new PrintWriter(output, true)));
         TextArea commandOutput = createCommandOutput();
         DashboardContent dashboard = createDashboard(commandOutput);
         root.setCenter(dashboard.content());

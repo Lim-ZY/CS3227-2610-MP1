@@ -9,18 +9,18 @@ import java.nio.charset.StandardCharsets;
 import Timey.command.CommandResult;
 
 /** Handles all console input and output for the Timey command-line interface. */
-public final class Ui {
+public final class ConsoleUi {
     private static final String DIVIDER = "_______________________________________________________";
 
     private final BufferedReader input;
     private final PrintWriter output;
 
     /** Creates a UI connected to the standard console streams. */
-    public Ui() {
+    public ConsoleUi() {
         this(new BufferedReader(new InputStreamReader(System.in, StandardCharsets.UTF_8)), new PrintWriter(System.out, true));
     }
 
-    public Ui(BufferedReader input, PrintWriter output) {
+    public ConsoleUi(BufferedReader input, PrintWriter output) {
         this.input = input;
         this.output = output;
     }

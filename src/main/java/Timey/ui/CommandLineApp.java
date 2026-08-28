@@ -24,7 +24,7 @@ import Timey.ports.ReminderScheduler;
 
 /** Interactive command-line presentation for Timey. */
 public final class CommandLineApp {
-    private final Ui ui;
+    private final ConsoleUi ui;
     private final Parser parser;
     private final TimeyModel model;
 
@@ -36,7 +36,7 @@ public final class CommandLineApp {
 
     public CommandLineApp(BufferedReader input, PrintWriter output, PlanCommandParser planCommandParser,
             CommutePlanningService commutePlanningService, LocationResolver locationResolver) {
-        this(new Ui(input, output), planCommandParser, commutePlanningService, locationResolver,
+        this(new ConsoleUi(input, output), planCommandParser, commutePlanningService, locationResolver,
                 (origin, destination, date, time) -> LiveRouteLookup.available(List.of()),
                 Clock.systemDefaultZone(), (triggerAt, action) -> () -> { }, new InMemoryFixedCommuteStore());
     }
@@ -44,14 +44,14 @@ public final class CommandLineApp {
     public CommandLineApp(BufferedReader input, PrintWriter output, PlanCommandParser planCommandParser,
             CommutePlanningService commutePlanningService, LocationResolver locationResolver,
             RailTransitPlanner railTransitPlanner, Clock clock) {
-        this(new Ui(input, output), planCommandParser, commutePlanningService, locationResolver, railTransitPlanner, clock,
+        this(new ConsoleUi(input, output), planCommandParser, commutePlanningService, locationResolver, railTransitPlanner, clock,
                 (triggerAt, action) -> () -> { });
     }
 
     public CommandLineApp(BufferedReader input, PrintWriter output, PlanCommandParser planCommandParser,
             CommutePlanningService commutePlanningService, LocationResolver locationResolver,
             RailTransitPlanner railTransitPlanner, Clock clock, ReminderScheduler reminderScheduler) {
-        this(new Ui(input, output), planCommandParser, commutePlanningService, locationResolver, railTransitPlanner, clock,
+        this(new ConsoleUi(input, output), planCommandParser, commutePlanningService, locationResolver, railTransitPlanner, clock,
                 reminderScheduler);
     }
 
@@ -59,18 +59,18 @@ public final class CommandLineApp {
             CommutePlanningService commutePlanningService, LocationResolver locationResolver,
             RailTransitPlanner railTransitPlanner, Clock clock, ReminderScheduler reminderScheduler,
             FixedCommuteStore fixedCommuteStore) {
-        this(new Ui(input, output), planCommandParser, commutePlanningService, locationResolver, railTransitPlanner, clock,
+        this(new ConsoleUi(input, output), planCommandParser, commutePlanningService, locationResolver, railTransitPlanner, clock,
                 reminderScheduler, fixedCommuteStore);
     }
 
-    public CommandLineApp(Ui ui, PlanCommandParser planCommandParser,
+    public CommandLineApp(ConsoleUi ui, PlanCommandParser planCommandParser,
             CommutePlanningService commutePlanningService, LocationResolver locationResolver,
             RailTransitPlanner railTransitPlanner, Clock clock, ReminderScheduler reminderScheduler) {
         this(ui, planCommandParser, commutePlanningService, locationResolver, railTransitPlanner, clock,
                 reminderScheduler, new InMemoryFixedCommuteStore());
     }
 
-    public CommandLineApp(Ui ui, PlanCommandParser planCommandParser,
+    public CommandLineApp(ConsoleUi ui, PlanCommandParser planCommandParser,
             CommutePlanningService commutePlanningService, LocationResolver locationResolver,
             RailTransitPlanner railTransitPlanner, Clock clock, ReminderScheduler reminderScheduler,
             FixedCommuteStore fixedCommuteStore) {

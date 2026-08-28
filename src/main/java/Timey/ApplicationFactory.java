@@ -16,7 +16,7 @@ import Timey.infrastructure.transit.OneMapRailTransitPlanner;
 import Timey.parser.PlanCommandParser;
 import Timey.planner.CommutePlanningService;
 import Timey.ui.CommandLineApp;
-import Timey.ui.Ui;
+import Timey.ui.ConsoleUi;
 
 /** Composes Timey's shared command handler for terminal and JavaFX presentations. */
 public final class ApplicationFactory {
@@ -25,7 +25,7 @@ public final class ApplicationFactory {
     private ApplicationFactory() {
     }
 
-    public static CommandLineApp createCommandLineApp(Ui ui) {
+    public static CommandLineApp createCommandLineApp(ConsoleUi ui) {
         var configuration = ApplicationConfiguration.loadDefault();
         var preferences = configuration.getUserPreferences();
         var locationResolver = new OneMapLocationResolver(new RetryingHttpRequester(new JdkHttpRequester()),

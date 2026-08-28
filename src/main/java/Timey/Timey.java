@@ -1,6 +1,6 @@
 package Timey;
 
-import Timey.ui.Ui;
+import Timey.ui.ConsoleUi;
 
 /** Entry point for the Timey application. */
 public final class Timey {
@@ -8,6 +8,6 @@ public final class Timey {
     }
 
     public static void main(String[] args) {
-        ApplicationFactory.createCommandLineApp(new Ui()).run();
+        ApplicationFactory.createCommandLineApp(new ConsoleUi()).run();
     }
 }
