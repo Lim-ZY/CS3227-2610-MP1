@@ -23,8 +23,8 @@ will be added in later iterations.
 Copy `config/application.example.properties` to `config/application.properties` to configure settings that persist
 between launches. `timezone`, `departure-buffer-minutes`, and comma-separated `saved-locations` are loaded by both
 the terminal CLI and JavaFX dashboard. The default buffer applies when a `plan` command omits `/buf`; an explicit
-`/buf` always takes precedence. Set `timey.live-data-url` to the deployed Cloudflare Worker once when preparing a
-release. The Worker holds the OneMap credentials, so users do not need a OneMap token or account.
+`/buf` always takes precedence. The application includes the deployed Cloudflare Worker endpoint, and the Worker
+holds the OneMap credentials, so users do not need to configure a URL, token, or OneMap account.
 
 ## Fixed commute timings
 

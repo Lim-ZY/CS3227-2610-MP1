@@ -11,14 +11,14 @@ import org.junit.jupiter.api.Test;
 
 class ApplicationConfigurationTest {
     @Test
-    void load_liveDataUrlProperty_httpsUriReturned() throws Exception {
+    void load_liveDataUrl_isApplicationOwned() throws Exception {
         var propertiesFile = Files.createTempFile("timey", ".properties");
         try {
-            Files.writeString(propertiesFile, "timey.live-data-url=https://timey.example.workers.dev ");
+            Files.writeString(propertiesFile, "timey.live-data-url=https://ignored.example");
 
             var configuration = ApplicationConfiguration.load(propertiesFile);
 
-            assertEquals(java.net.URI.create("https://timey.example.workers.dev"),
+            assertEquals(java.net.URI.create("https://cs3227-mp1-worker.tcmpiano03.workers.dev"),
                     configuration.getLiveDataBaseUri().orElseThrow());
         } finally {
             Files.deleteIfExists(propertiesFile);
@@ -26,12 +26,13 @@ class ApplicationConfigurationTest {
     }
 
     @Test
-    void load_nonHttpsLiveDataUrl_notConfigured() throws Exception {
+    void load_preferencesDoNotDisableLiveData() throws Exception {
         var propertiesFile = Files.createTempFile("timey", ".properties");
         try {
             Files.writeString(propertiesFile, "timey.live-data-url=http://localhost:8787");
 
-            assertEquals(java.util.Optional.empty(), ApplicationConfiguration.load(propertiesFile).getLiveDataBaseUri());
+            assertEquals(java.net.URI.create("https://cs3227-mp1-worker.tcmpiano03.workers.dev"),
+                    ApplicationConfiguration.load(propertiesFile).getLiveDataBaseUri().orElseThrow());
         } finally {
             Files.deleteIfExists(propertiesFile);
         }

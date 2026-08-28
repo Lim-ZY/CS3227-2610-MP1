@@ -18,6 +18,8 @@ public final class ApplicationConfiguration {
     private static final Path DEFAULT_PATH = Path.of("config", "application.properties");
     private static final ZoneId DEFAULT_TIME_ZONE = ZoneId.of("Asia/Singapore");
     private static final Duration DEFAULT_DEPARTURE_BUFFER = Duration.ofMinutes(10);
+    private static final URI LIVE_DATA_BASE_URI = URI.create(
+            "https://cs3227-mp1-worker.tcmpiano03.workers.dev");
 
     private final Properties properties;
 
@@ -41,10 +43,9 @@ public final class ApplicationConfiguration {
         return new ApplicationConfiguration(properties);
     }
 
-    /** Returns the HTTPS base URL of Timey's server-held live-data service, if configured. */
+    /** Returns the application-owned HTTPS endpoint for server-held live data. */
     public Optional<URI> getLiveDataBaseUri() {
-        return firstNonBlank(System.getenv("TIMEY_LIVE_DATA_URL"), properties.getProperty("timey.live-data-url"))
-                .flatMap(this::httpsUri);
+        return Optional.of(LIVE_DATA_BASE_URI);
     }
 
     /** Loads local preferences, falling back safely when a value is absent or invalid. */
@@ -86,26 +87,4 @@ public final class ApplicationConfiguration {
                 .toList()).stream().toList();
     }
 
-    private Optional<String> firstNonBlank(String first, String second) {
-        if (first != null && !first.isBlank()) {
-            return Optional.of(first.trim());
-        }
-        if (second != null && !second.isBlank()) {
-            return Optional.of(second.trim());
-        }
-        return Optional.empty();
-    }
-
-    private Optional<URI> httpsUri(String value) {
-        try {
-            URI uri = URI.create(value);
-            if (!"https".equalsIgnoreCase(uri.getScheme()) || uri.getHost() == null
-                    || uri.getRawQuery() != null || uri.getRawFragment() != null) {
-                return Optional.empty();
-            }
-            return Optional.of(uri);
-        } catch (IllegalArgumentException exception) {
-            return Optional.empty();
-        }
-    }
 }
