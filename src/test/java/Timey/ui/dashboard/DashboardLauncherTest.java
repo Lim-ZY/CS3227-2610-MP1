@@ -1,6 +1,13 @@
 package Timey.ui.dashboard;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
@@ -40,5 +47,22 @@ class DashboardLauncherTest {
     @Test
     void routeAlternativesLayout_packagedWithApplication_isAvailable() {
         assertNotNull(RouteAlternativesPanel.class.getResource("/Timey/ui/dashboard/view/RouteAlternativesPanel.fxml"));
+    }
+
+    @Test
+    void dashboardLayouts_delegateControllerOwnershipToTheirUiParts() throws IOException {
+        for (String layout : List.of("MainWindow.fxml", "CommandBar.fxml", "CommandOutput.fxml",
+                "DashboardHeader.fxml", "NextEventCard.fxml", "CommuteStatusCard.fxml", "ReminderStatusCard.fxml",
+                "RouteAlternativesPanel.fxml")) {
+            assertFalse(fxmlContents(layout).contains("fx:controller"), layout);
+        }
+    }
+
+    private String fxmlContents(String layout) throws IOException {
+        URL resource = DashboardLauncherTest.class.getResource("/Timey/ui/dashboard/view/" + layout);
+        assertNotNull(resource);
+        try (InputStream input = resource.openStream()) {
+            return new String(input.readAllBytes(), StandardCharsets.UTF_8);
+        }
     }
 }

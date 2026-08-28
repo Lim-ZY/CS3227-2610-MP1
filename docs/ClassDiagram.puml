@@ -12,6 +12,21 @@ package "Timey" {
 package "ui" {
   class CommandLineApp
   class ConsoleUi
+  class DashboardState <<record>>
+  abstract class UiPart
+}
+
+package "ui.dashboard" {
+  class DashboardLauncher
+  class TimeyDashboardApp
+  class MainWindow
+  class DashboardHeader
+  class CommandBar
+  class CommandOutput
+  class NextEventCard
+  class CommuteStatusCard
+  class ReminderStatusCard
+  class RouteAlternativesPanel
 }
 
 package "parser" {
@@ -117,6 +132,26 @@ Timey *--> MockTransitPlanner
 Timey *--> ScheduledExecutorReminderScheduler
 
 CommandLineApp --> ConsoleUi
+CommandLineApp --> DashboardState : produces
+DashboardLauncher --> TimeyDashboardApp : launches
+TimeyDashboardApp --> MainWindow : creates
+TimeyDashboardApp --> CommandLineApp : composes
+MainWindow --|> UiPart
+DashboardHeader --|> UiPart
+CommandBar --|> UiPart
+CommandOutput --|> UiPart
+NextEventCard --|> UiPart
+CommuteStatusCard --|> UiPart
+ReminderStatusCard --|> UiPart
+RouteAlternativesPanel --|> UiPart
+MainWindow *--> DashboardHeader
+MainWindow *--> CommandBar
+MainWindow *--> CommandOutput
+MainWindow *--> NextEventCard
+MainWindow *--> CommuteStatusCard
+MainWindow *--> ReminderStatusCard
+MainWindow *--> RouteAlternativesPanel
+MainWindow --> DashboardState : renders
 CommandLineApp *--> TimeyModel
 CommandLineApp --> Command
 CommandLineApp *--> Parser
