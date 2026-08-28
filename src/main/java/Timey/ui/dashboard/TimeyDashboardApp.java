@@ -17,14 +17,12 @@ import javafx.application.Application;
 import javafx.concurrent.Task;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuButton;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TextArea;
-import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
@@ -37,30 +35,23 @@ import java.time.format.DateTimeFormatter;
 /** JavaFX presentation shell for Timey's dashboard. */
 public final class TimeyDashboardApp extends Application {
     private static final DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern("HH:mm");
+
     @Override
     public void start(Stage stage) {
-        BorderPane root = new BorderPane();
-        root.getStyleClass().add("dashboard");
         UserPreferences preferences = ApplicationFactory.loadUserPreferences();
         Header header = createHeader(preferences);
-        root.setTop(header.container());
         StringWriter output = new StringWriter();
         CommandLineApp commandLineApp = ApplicationFactory.createCommandLineApp(
                 new ConsoleUi(new BufferedReader(new StringReader("")), new PrintWriter(output, true)));
         TextArea commandOutput = createCommandOutput();
         DashboardContent dashboard = createDashboard(commandOutput);
-        root.setCenter(dashboard.content());
-        root.setBottom(createCommandBar(commandLineApp, output, commandOutput, dashboard, header));
-
-        Scene scene = new Scene(root, 1120, 760);
-        scene.getStylesheets().add(getClass().getResource("/Timey/ui/dashboard/dashboard.css").toExternalForm());
-        stage.setTitle("Timey");
-        stage.setMinWidth(880);
-        stage.setMinHeight(600);
-        stage.setScene(scene);
-        stage.show();
+        MainWindow mainWindow = new MainWindow(stage);
+        mainWindow.setHeader(header.container());
+        mainWindow.setDashboardContent(dashboard.content());
+        mainWindow.setCommandBar(createCommandBar(commandLineApp, output, commandOutput, dashboard, header));
+        mainWindow.show();
         Timeline clockTimer = startClock(header.clock(), ApplicationConfiguration.TIME_ZONE);
-        stage.setOnHidden(event -> clockTimer.stop());
+        mainWindow.setOnHidden(event -> clockTimer.stop());
     }
 
     private Header createHeader(UserPreferences preferences) {

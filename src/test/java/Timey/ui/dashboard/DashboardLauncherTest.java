@@ -9,4 +9,9 @@ class DashboardLauncherTest {
     void dashboardStylesheet_packagedWithApplication_isAvailable() {
         assertNotNull(TimeyDashboardApp.class.getResource("/Timey/ui/dashboard/dashboard.css"));
     }
+
+    @Test
+    void mainWindowLayout_packagedWithApplication_isAvailable() {
+        assertNotNull(MainWindow.class.getResource("/Timey/ui/dashboard/view/MainWindow.fxml"));
+    }
 }

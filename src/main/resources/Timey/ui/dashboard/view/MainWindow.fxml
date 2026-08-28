@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.net.URL?>
+<?import javafx.scene.Scene?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.stage.Stage?>
+
+<fx:root type="Stage" minHeight="600.0" minWidth="880.0" title="Timey"
+         xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1">
+  <scene>
+    <Scene height="760.0" width="1120.0">
+      <stylesheets>
+        <URL value="@../dashboard.css" />
+      </stylesheets>
+      <root>
+        <BorderPane styleClass="dashboard">
+          <top>
+            <StackPane fx:id="headerPlaceholder" />
+          </top>
+          <center>
+            <StackPane fx:id="dashboardPlaceholder" />
+          </center>
+          <bottom>
+            <StackPane fx:id="commandBarPlaceholder" />
+          </bottom>
+        </BorderPane>
+      </root>
+    </Scene>
+  </scene>
+</fx:root>
