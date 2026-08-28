@@ -4,7 +4,6 @@ import java.io.BufferedReader;
 import java.io.PrintWriter;
 import java.io.StringReader;
 import java.io.StringWriter;
-import java.time.Clock;
 
 import Timey.ApplicationFactory;
 import Timey.config.ApplicationConfiguration;
@@ -15,19 +14,13 @@ import Timey.ui.ConsoleUi;
 import javafx.application.Application;
 import javafx.concurrent.Task;
 import javafx.geometry.Insets;
-import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
-import java.time.format.DateTimeFormatter;
-
 /** JavaFX presentation shell for Timey's dashboard. */
 public final class TimeyDashboardApp extends Application {
-    private static final DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern("HH:mm");
-
     @Override
     public void start(Stage stage) {
         DashboardHeader header = new DashboardHeader(ApplicationFactory.loadUserPreferences());
@@ -54,98 +47,19 @@ public final class TimeyDashboardApp extends Application {
         Label introduction = new Label("Plan a commute in the command bar to see your next event and departure plan here.");
         introduction.getStyleClass().add("muted");
 
-        NextEventCard nextEvent = createNextEventCard();
-        Card commute = card("COMMUTE STATUS", "Waiting for a plan", "Live rail alternatives are requested only after you plan a commute.");
-        Card reminders = card("REMINDER STATUS", "No active reminders", "Timey will automatically schedule a departure reminder after you choose a route.");
-        HBox lowerCards = new HBox(18, commute.container(), reminders.container());
+        NextEventCard nextEvent = new NextEventCard();
+        CommuteStatusCard commute = new CommuteStatusCard();
+        ReminderStatusCard reminders = new ReminderStatusCard();
+        HBox lowerCards = new HBox(18, commute.getRoot(), reminders.getRoot());
         lowerCards.getChildren().forEach(card -> HBox.setHgrow(card, javafx.scene.layout.Priority.ALWAYS));
         VBox alternatives = createAlternativesPanel();
 
         Label commandHeading = new Label("COMMAND OUTPUT");
         commandHeading.getStyleClass().add("card-label");
-        VBox content = new VBox(18, heading, introduction, nextEvent.container(), lowerCards, alternatives,
+        VBox content = new VBox(18, heading, introduction, nextEvent.getRoot(), lowerCards, alternatives,
                 commandHeading, commandOutput.getRoot());
         content.setPadding(new Insets(40, 56, 32, 56));
         return new DashboardContent(content, nextEvent, commute, reminders, alternatives);
-    }
-
-    private NextEventCard createNextEventCard() {
-        Label eventType = new Label("Physical");
-        eventType.getStyleClass().add("event-type");
-        Label title = new Label("No commute planned");
-        title.getStyleClass().add("next-event-title");
-        Label origin = locationLabel("—");
-        Label destination = locationLabel("—");
-        Region journeyLine = new Region();
-        journeyLine.getStyleClass().add("journey-line");
-        HBox.setHgrow(journeyLine, javafx.scene.layout.Priority.ALWAYS);
-        HBox journey = new HBox(10, locationPin(origin), journeyLine, locationPin(destination));
-        journey.setAlignment(Pos.CENTER_LEFT);
-        VBox journeyDetails = new VBox(10, title, journey);
-        HBox.setHgrow(journeyDetails, javafx.scene.layout.Priority.ALWAYS);
-
-        Label countdown = new Label("Plan a commute");
-        countdown.getStyleClass().add("departure-countdown");
-        Label countdownCaption = new Label("time until\ndeparture");
-        countdownCaption.getStyleClass().add("departure-caption");
-        VBox countdownDetails = new VBox(4, countdown, countdownCaption);
-        countdownDetails.setAlignment(Pos.CENTER_RIGHT);
-        Label departure = new Label("—");
-        Label arrival = new Label("—");
-        Region timeLine = new Region();
-        timeLine.getStyleClass().add("event-time-line");
-        VBox schedule = new VBox(2, timePoint(departure), timeLine, timePoint(arrival));
-        HBox timing = new HBox(12, countdownDetails, schedule);
-        timing.setAlignment(Pos.CENTER_RIGHT);
-        HBox body = new HBox(28, journeyDetails, timing);
-        body.setAlignment(Pos.CENTER_LEFT);
-
-        Label reminder = new Label("Plan a route to set a reminder");
-        reminder.getStyleClass().add("reminder-text");
-        Label reminderDot = new Label("●");
-        reminderDot.getStyleClass().add("reminder-dot");
-        HBox reminderStatus = new HBox(8, reminderDot, reminder);
-        reminderStatus.setAlignment(Pos.CENTER_LEFT);
-        VBox card = new VBox(12, eventType, body, reminderStatus);
-        card.getStyleClass().addAll("card", "next-event-card");
-        return new NextEventCard(card, title, origin, destination, departure, arrival, countdown, reminder);
-    }
-
-    private Label locationLabel(String text) {
-        Label label = new Label(text);
-        label.getStyleClass().add("location-label");
-        return label;
-    }
-
-    private VBox locationPin(Label location) {
-        Label pin = new Label("⌖");
-        pin.getStyleClass().add("location-pin");
-        VBox endpoint = new VBox(-2, pin, location);
-        endpoint.setAlignment(Pos.CENTER);
-        return endpoint;
-    }
-
-    private HBox timePoint(Label time) {
-        Label dot = new Label("●");
-        dot.getStyleClass().add("time-dot");
-        time.getStyleClass().add("event-time");
-        HBox point = new HBox(6, dot, time);
-        point.setAlignment(Pos.CENTER_LEFT);
-        return point;
-    }
-
-    private Card card(String label, String title, String message) {
-        Label cardLabel = new Label(label);
-        cardLabel.getStyleClass().add("card-label");
-        Label cardTitle = new Label(title);
-        cardTitle.getStyleClass().add("card-title");
-        Label cardMessage = new Label(message);
-        cardMessage.getStyleClass().add("muted");
-        cardMessage.setWrapText(true);
-        VBox card = new VBox(10, cardLabel, cardTitle, cardMessage);
-        card.getStyleClass().add("card");
-        card.setMinHeight(136);
-        return new Card(card, cardTitle, cardMessage);
     }
 
     private VBox createAlternativesPanel() {
@@ -191,61 +105,21 @@ public final class TimeyDashboardApp extends Application {
     }
 
     private void refreshDashboard(DashboardContent dashboard, DashboardHeader header, DashboardState state) {
-        state.plan().ifPresentOrElse(plan -> {
-            dashboard.nextEvent().title().setText("Commute to " + plan.getDestination());
-            dashboard.nextEvent().origin().setText(plan.getOrigin());
-            dashboard.nextEvent().destination().setText(plan.getDestination());
-            dashboard.nextEvent().arrival().setText(TIME_FORMAT.format(plan.getArrivalTime()));
-            state.recommendation().ifPresentOrElse(recommendation -> {
-                dashboard.nextEvent().departure().setText(TIME_FORMAT.format(recommendation.departureTime()));
-                dashboard.nextEvent().countdown().setText(DashboardDepartureText.until(recommendation.departureTime(),
-                        Clock.system(ApplicationConfiguration.TIME_ZONE)));
-                dashboard.nextEvent().reminder().setText(state.reminders().isEmpty()
-                        ? "Departure reminder will be set shortly" : "Reminder scheduled");
-            }, () -> {
-                dashboard.nextEvent().departure().setText("—");
-                dashboard.nextEvent().countdown().setText("Choose a route");
-                dashboard.nextEvent().reminder().setText("Choose a route to set a reminder");
-            });
-        }, () -> {
-            dashboard.nextEvent().title().setText("No commute planned");
-            dashboard.nextEvent().origin().setText("—");
-            dashboard.nextEvent().destination().setText("—");
-            dashboard.nextEvent().departure().setText("—");
-            dashboard.nextEvent().arrival().setText("—");
-            dashboard.nextEvent().countdown().setText("Plan a commute");
-            dashboard.nextEvent().reminder().setText("Plan a route to set a reminder");
-        });
-        state.recommendation().ifPresentOrElse(recommendation -> {
-            dashboard.commute().title().setText("Leave by " + TIME_FORMAT.format(recommendation.departureTime()));
-            dashboard.commute().message().setText(recommendation.routeName() + " · "
-                    + recommendation.travelDuration().toMinutes() + " minute commute");
-        }, () -> {
-            DashboardCommuteStatus status = DashboardCommuteStatus.from(state);
-            dashboard.commute().title().setText(status.title());
-            dashboard.commute().message().setText(status.message());
-        });
-        dashboard.reminders().title().setText(state.reminders().isEmpty() ? "No active reminders"
-                : state.reminders().size() + " active departure reminder");
-        dashboard.reminders().message().setText(state.reminders().isEmpty()
-                ? "Timey will automatically schedule a departure reminder after you choose a route."
-                : "Next reminder: " + state.reminders().getFirst().triggerAt().atZone(ApplicationConfiguration.TIME_ZONE)
-                        .format(DateTimeFormatter.ofPattern("uuuu-MM-dd HH:mm")));
+        dashboard.nextEvent().render(state);
+        dashboard.commute().render(state);
+        dashboard.reminders().render(state);
         refreshAlternatives(dashboard.alternatives(), state);
         header.refresh(state);
     }
 
     private void showLoading(DashboardContent dashboard) {
-        dashboard.commute().title().setText("Updating commute…");
-        dashboard.commute().message().setText("Looking up locations and live rail alternatives. Please wait.");
+        dashboard.commute().showLoading();
         dashboard.alternatives().getChildren().setAll(routePanelLabel("ROUTE ALTERNATIVES"),
                 routePanelMessage("Loading route alternatives…"));
     }
 
     private void showFailure(DashboardContent dashboard, Throwable failure) {
-        dashboard.commute().title().setText("Could not update commute");
-        dashboard.commute().message().setText("Your previous plan is unchanged. "
-                + (failure.getMessage() == null ? "Please try again." : failure.getMessage()));
+        dashboard.commute().showFailure(failure);
         dashboard.alternatives().getChildren().setAll(routePanelLabel("ROUTE ALTERNATIVES"),
                 routePanelMessage("Route lookup failed. Try the command again."));
     }
@@ -294,15 +168,9 @@ public final class TimeyDashboardApp extends Application {
         return label;
     }
 
-    private record Card(VBox container, Label title, Label message) {
-    }
-
-    private record DashboardContent(VBox content, NextEventCard nextEvent, Card commute, Card reminders,
+    private record DashboardContent(VBox content, NextEventCard nextEvent, CommuteStatusCard commute,
+            ReminderStatusCard reminders,
             VBox alternatives) {
-    }
-
-    private record NextEventCard(VBox container, Label title, Label origin, Label destination, Label departure,
-            Label arrival, Label countdown, Label reminder) {
     }
 
     private record DashboardCommandResponse(CommandExecutionResult result, String output) {

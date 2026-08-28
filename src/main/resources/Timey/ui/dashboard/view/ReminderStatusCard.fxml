@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox minHeight="136.0" spacing="10.0" styleClass="card"
+      xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1">
+  <children>
+    <Label styleClass="card-label" text="REMINDER STATUS" />
+    <Label fx:id="title" styleClass="card-title" text="No active reminders" />
+    <Label fx:id="message" styleClass="muted"
+           text="Timey will automatically schedule a departure reminder after you choose a route." wrapText="true" />
+  </children>
+</VBox>

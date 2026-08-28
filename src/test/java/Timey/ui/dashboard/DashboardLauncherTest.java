@@ -29,4 +29,11 @@ class DashboardLauncherTest {
     void dashboardHeaderLayout_packagedWithApplication_isAvailable() {
         assertNotNull(DashboardHeader.class.getResource("/Timey/ui/dashboard/view/DashboardHeader.fxml"));
     }
+
+    @Test
+    void dashboardCardLayouts_packagedWithApplication_areAvailable() {
+        assertNotNull(NextEventCard.class.getResource("/Timey/ui/dashboard/view/NextEventCard.fxml"));
+        assertNotNull(CommuteStatusCard.class.getResource("/Timey/ui/dashboard/view/CommuteStatusCard.fxml"));
+        assertNotNull(ReminderStatusCard.class.getResource("/Timey/ui/dashboard/view/ReminderStatusCard.fxml"));
+    }
 }

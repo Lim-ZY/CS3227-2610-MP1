@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox spacing="12.0" styleClass="card" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1">
+  <children>
+    <Label styleClass="event-type" text="Physical" />
+    <HBox alignment="CENTER_LEFT" spacing="28.0">
+      <children>
+        <VBox spacing="10.0" HBox.hgrow="ALWAYS">
+          <children>
+            <Label fx:id="title" styleClass="next-event-title" text="No commute planned" />
+            <HBox alignment="CENTER_LEFT" spacing="10.0">
+              <children>
+                <VBox alignment="CENTER" spacing="-2.0">
+                  <children>
+                    <Label styleClass="location-pin" text="⌖" />
+                    <Label fx:id="origin" styleClass="location-label" text="—" />
+                  </children>
+                </VBox>
+                <Region styleClass="journey-line" HBox.hgrow="ALWAYS" />
+                <VBox alignment="CENTER" spacing="-2.0">
+                  <children>
+                    <Label styleClass="location-pin" text="⌖" />
+                    <Label fx:id="destination" styleClass="location-label" text="—" />
+                  </children>
+                </VBox>
+              </children>
+            </HBox>
+          </children>
+        </VBox>
+        <HBox alignment="CENTER_RIGHT" spacing="12.0">
+          <children>
+            <VBox alignment="CENTER_RIGHT" spacing="4.0">
+              <children>
+                <Label fx:id="countdown" styleClass="departure-countdown" text="Plan a commute" />
+                <Label styleClass="departure-caption" text="time until&#10;departure" />
+              </children>
+            </VBox>
+            <VBox spacing="2.0">
+              <children>
+                <HBox alignment="CENTER_LEFT" spacing="6.0">
+                  <children>
+                    <Label styleClass="time-dot" text="●" />
+                    <Label fx:id="departure" styleClass="event-time" text="—" />
+                  </children>
+                </HBox>
+                <Region styleClass="event-time-line" />
+                <HBox alignment="CENTER_LEFT" spacing="6.0">
+                  <children>
+                    <Label styleClass="time-dot" text="●" />
+                    <Label fx:id="arrival" styleClass="event-time" text="—" />
+                  </children>
+                </HBox>
+              </children>
+            </VBox>
+          </children>
+        </HBox>
+      </children>
+    </HBox>
+    <HBox alignment="CENTER_LEFT" spacing="8.0">
+      <children>
+        <Label styleClass="reminder-dot" text="●" />
+        <Label fx:id="reminder" styleClass="reminder-text" text="Plan a route to set a reminder" />
+      </children>
+    </HBox>
+  </children>
+</VBox>
