@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
@@ -77,7 +78,8 @@ class PlannerTest {
 
         assertEquals(List.of("COM3"), resolvedQueries);
         assertEquals("Offline estimate", result.alternatives().getFirst().name());
-        assertTrue(result.messages().contains("Internet connection is required for an accurate travel-time estimation."));
+        assertTrue(result.messages().contains(
+                "Internet connection is required for an accurate travel-time estimation."));
     }
 
     @Test
@@ -93,5 +95,21 @@ class PlannerTest {
         assertEquals("Offline estimate", result.alternatives().getFirst().name());
         assertEquals("Using a default 1-hour buffer before your target arrival time instead of live estimates.",
                 result.messages().getLast());
+    }
+
+    @Test
+    void recommendFallbackDeparture_targetAlreadyPassed_usesNextSingaporeDay() {
+        Clock afterMidnightInSingapore = Clock.fixed(Instant.parse("2026-08-20T16:30:00Z"),
+                ZoneId.of("Asia/Singapore"));
+        RailTransitPlanner railPlanner = (origin, destination, date, time) -> LiveRouteLookup.available(List.of());
+        var planner = new Planner(new CommutePlanningService(new MockTransitPlanner()),
+                query -> LocationResolution.unavailable("Offline"), railPlanner, afterMidnightInSingapore);
+        var plan = new PlanCommand("COM3", "VivoCity", LocalTime.of(0, 15), Duration.ZERO);
+        var fallbackRoute = new RouteAlternative("Offline estimate", Duration.ZERO, Duration.ZERO, 0);
+
+        var recommendation = planner.recommendFallbackDeparture(plan, fallbackRoute);
+
+        assertEquals(LocalDateTime.of(2026, 8, 22, 0, 15), recommendation.arrivalAt());
+        assertEquals(LocalDateTime.of(2026, 8, 21, 23, 15), recommendation.departureAt());
     }
 }

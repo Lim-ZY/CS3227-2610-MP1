@@ -58,7 +58,7 @@ class TimeyModelTest {
         model.selectRoute(1);
 
         SavedPlan expected = new SavedPlan(LocalDate.of(2026, 8, 29), LocalTime.of(17, 0), "Admiralty MRT", "COM3",
-        LocalTime.of(16, 0));
+                LocalTime.of(16, 0));
         assertEquals(List.of(expected), model.getSavedPlans());
         assertEquals(List.of(List.of(expected)), savedPlanLists);
     }
@@ -74,7 +74,7 @@ class TimeyModelTest {
         RouteSelectionResult result = model.selectRoute(1);
 
         SavedPlan expected = new SavedPlan(LocalDate.of(2026, 8, 30), LocalTime.of(17, 0), "Admiralty MRT", "COM3",
-        LocalTime.of(16, 0));
+                LocalTime.of(16, 0));
         assertEquals(RouteSelectionResult.Status.REMINDER_SCHEDULED, result.status());
         assertEquals(List.of(expected), model.getSavedPlans());
         assertEquals(List.of(List.of(expected)), savedPlanLists);
