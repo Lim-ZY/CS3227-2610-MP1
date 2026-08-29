@@ -88,8 +88,8 @@ public final class FileFixedCommuteStore implements FixedCommuteStore {
         try (InputStream input = Files.newInputStream(path)) {
             timings.load(input);
             return timings;
-        } catch (IOException exception) {
-            throw new IllegalStateException("Could not load fixed commute timings.", exception);
+        } catch (IOException | IllegalArgumentException exception) {
+            return timings;
         }
     }
 

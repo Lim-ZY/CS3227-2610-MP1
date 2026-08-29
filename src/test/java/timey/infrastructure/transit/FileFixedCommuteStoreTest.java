@@ -37,4 +37,43 @@ class FileFixedCommuteStoreTest {
             });
         }
     }
+
+    @Test
+    void save_caseOrWhitespaceVariant_replacesExistingTiming() throws Exception {
+        var directory = Files.createTempDirectory("timey-fixed-commute");
+        try {
+            var path = directory.resolve("fixed-commutes.properties");
+            var store = new FileFixedCommuteStore(path);
+            store.save(new FixedCommute("COM3", "VivoCity", Duration.ofMinutes(90)));
+            store.save(new FixedCommute("  com3  ", "  vivocity  ", Duration.ofMinutes(75)));
+
+            assertEquals(1, store.findAll().size());
+            assertEquals(Duration.ofMinutes(75), store.find("COM3", "VivoCity").orElseThrow().duration());
+        } finally {
+            deleteDirectory(directory);
+        }
+    }
+
+    @Test
+    void findAll_malformedPropertiesFile_returnsEmptyList() throws Exception {
+        var directory = Files.createTempDirectory("timey-fixed-commute");
+        try {
+            var path = directory.resolve("fixed-commutes.properties");
+            Files.writeString(path, "malformed=\\u12G4");
+
+            assertEquals(java.util.List.of(), new FileFixedCommuteStore(path).findAll());
+        } finally {
+            deleteDirectory(directory);
+        }
+    }
+
+    private void deleteDirectory(java.nio.file.Path directory) throws Exception {
+        Files.walk(directory).sorted(java.util.Comparator.reverseOrder()).forEach(path -> {
+            try {
+                Files.deleteIfExists(path);
+            } catch (java.io.IOException exception) {
+                throw new IllegalStateException(exception);
+            }
+        });
+    }
 }

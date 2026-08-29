@@ -34,4 +34,16 @@ class RemoveCommandTest {
                 new RemoveCommand(2).execute(model).messages().getFirst());
         assertEquals(1, store.findAll().size());
     }
+
+    @Test
+    void execute_secondSortedTiming_removesOnlyThatTiming() {
+        var store = new InMemoryFixedCommuteStore();
+        store.save(new FixedCommute("COM3", "VivoCity", Duration.ofMinutes(90)));
+        store.save(new FixedCommute("Home", "COM3", Duration.ofMinutes(25)));
+        var model = TestTimeyModelFactory.create(store);
+
+        new RemoveCommand(2).execute(model);
+
+        assertEquals(java.util.List.of("COM3"), store.findAll().stream().map(FixedCommute::origin).toList());
+    }
 }
