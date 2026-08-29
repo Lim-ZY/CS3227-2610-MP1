@@ -4,7 +4,6 @@ import java.time.Duration;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -38,37 +37,13 @@ public final class PlanCommandParser {
      * @throws IllegalArgumentException when the command is not a valid plan request
      */
     public PlanCommand parse(String input) {
-        if (input == null || !input.startsWith("plan")) {
-            throw new IllegalArgumentException("Command must start with 'plan'.");
-        }
-
-        String optionsText = input.substring("plan".length());
-        Matcher matcher = OPTION.matcher(optionsText);
-        Map<String, String> options = new HashMap<>();
-        int nextExpectedIndex = 0;
-        while (matcher.find()) {
-            if (!optionsText.substring(nextExpectedIndex, matcher.start()).isBlank()) {
-                throw new IllegalArgumentException("Could not understand part of the plan command.");
-            }
-            String optionName = matcher.group(1);
-            if (options.put(optionName, valueOf(matcher)) != null) {
-                throw new IllegalArgumentException("Option /" + optionName + " was provided more than once.");
-            }
-            nextExpectedIndex = matcher.end();
-        }
-        if (!optionsText.substring(nextExpectedIndex).isBlank()) {
-            throw new IllegalArgumentException("Could not understand part of the plan command.");
-        }
+        Map<String, String> options = CommandOptionParser.parse(input, "plan", OPTION);
 
         String origin = requiredOption(options, "from");
         String destination = requiredOption(options, "to");
         LocalTime arrivalTime = parseTime(requiredOption(options, "by"));
         Duration buffer = options.containsKey("buf") ? parseBuffer(options.get("buf")) : defaultBuffer;
         return new PlanCommand(origin, destination, arrivalTime, buffer);
-    }
-
-    private String valueOf(Matcher matcher) {
-        return matcher.group(2) != null ? matcher.group(2) : matcher.group(3);
     }
 
     private String requiredOption(Map<String, String> options, String name) {
