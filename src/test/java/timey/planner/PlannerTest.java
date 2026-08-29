@@ -1,6 +1,7 @@
 package timey.planner;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.Clock;
 import java.time.Duration;
@@ -50,8 +51,11 @@ class PlannerTest {
 
         var result = planner.findAlternatives(PLAN);
 
-        assertEquals("Fastest Transit", result.alternatives().getFirst().name());
-        assertEquals(List.of("Using fixed sample routes: Offline"), result.messages());
+        assertEquals("Offline estimate", result.alternatives().getFirst().name());
+        assertEquals(List.of("Using offline estimate: Offline",
+                "Internet connection is required for an accurate travel-time estimation.",
+                "Using a default 1-hour buffer before your target arrival time instead of live estimates."),
+                result.messages());
     }
 
     @Test
@@ -72,8 +76,8 @@ class PlannerTest {
         var result = planner.findAlternatives(PLAN);
 
         assertEquals(List.of("COM3"), resolvedQueries);
-        assertEquals("Fastest Transit", result.alternatives().getFirst().name());
-        assertEquals(List.of("Using fixed sample routes: Live location lookup is unavailable."), result.messages());
+        assertEquals("Offline estimate", result.alternatives().getFirst().name());
+        assertTrue(result.messages().contains("Internet connection is required for an accurate travel-time estimation."));
     }
 
     @Test
@@ -86,7 +90,8 @@ class PlannerTest {
 
         var result = planner.findAlternatives(PLAN);
 
-        assertEquals("Fastest Transit", result.alternatives().getFirst().name());
-        assertEquals("OneMap is unavailable. Using fixed sample routes.", result.messages().getLast());
+        assertEquals("Offline estimate", result.alternatives().getFirst().name());
+        assertEquals("Using a default 1-hour buffer before your target arrival time instead of live estimates.",
+                result.messages().getLast());
     }
 }

@@ -1,6 +1,7 @@
 package timey.planner;
 
 import java.time.Clock;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -17,7 +18,8 @@ import timey.ports.RailTransitPlanner;
 
 /** Coordinates live and deterministic route planning for a commute request. */
 public final class Planner {
-    private static final String FALLBACK_ROUTE_DESCRIPTION = "fixed sample routes";
+    private static final String FALLBACK_ROUTE_NAME = "Offline estimate";
+    private static final Duration FALLBACK_BUFFER = Duration.ofHours(1);
 
     private final CommutePlanningService commutePlanningService;
     private final LocationResolver locationResolver;
@@ -51,7 +53,7 @@ public final class Planner {
     }
 
     private PlanningResult unavailableLocationResult(PlanCommand plan, LocationResolution unavailableLocation) {
-        return deterministicResult(plan, List.of("Using " + FALLBACK_ROUTE_DESCRIPTION + ": "
+        return deterministicResult(plan, List.of("Using offline estimate: "
                 + unavailableLocation.reason()));
     }
 
@@ -63,24 +65,35 @@ public final class Planner {
         var liveRoutes = liveRailPlanningService.findAlignedRoutes(plan, origin, destination);
         if (liveRoutes.isAvailable() && !liveRoutes.routes().isEmpty()) {
             messages.add("Live rail routes were aligned with your target arrival time.");
-            return new PlanningResult(liveRoutes.routes(), messages);
+            return new PlanningResult(liveRoutes.routes(), messages, false);
         }
 
         if (liveRoutes.isAvailable()) {
-            messages.add("OneMap returned no live rail routes; using " + FALLBACK_ROUTE_DESCRIPTION + ".");
+            messages.add("OneMap returned no live rail routes; using offline estimate.");
         } else {
-            messages.add(liveRoutes.unavailableReason().orElseThrow() + " Using " + FALLBACK_ROUTE_DESCRIPTION + ".");
+            messages.add(liveRoutes.unavailableReason().orElseThrow() + " Using offline estimate.");
         }
         return deterministicResult(plan, messages);
     }
 
     private PlanningResult deterministicResult(PlanCommand plan, List<String> messages) {
-        return new PlanningResult(commutePlanningService.findAlternatives(plan), messages);
+        messages = new ArrayList<>(messages);
+        messages.add("Internet connection is required for an accurate travel-time estimation.");
+        messages.add("Using a default 1-hour buffer before your target arrival time instead of live estimates.");
+        return new PlanningResult(List.of(new RouteAlternative(FALLBACK_ROUTE_NAME, Duration.ZERO, Duration.ZERO, 0)),
+                messages, true);
     }
 
     /** Calculates the leave-by recommendation for a selected route alternative. */
     public DepartureRecommendation recommendDeparture(PlanCommand plan, RouteAlternative route) {
         return commutePlanningService.recommendDeparture(plan, route, nextTargetArrival(plan));
+    }
+
+    /** Calculates the fallback recommendation using the default one-hour buffer. */
+    public DepartureRecommendation recommendFallbackDeparture(PlanCommand plan, RouteAlternative route) {
+        LocalDateTime arrivalAt = nextTargetArrival(plan);
+        return new DepartureRecommendation(route.name(), arrivalAt, arrivalAt.minus(FALLBACK_BUFFER),
+                Duration.ZERO, FALLBACK_BUFFER);
     }
 
     private LocalDateTime nextTargetArrival(PlanCommand plan) {
@@ -90,7 +103,8 @@ public final class Planner {
     }
 
     /** The planned alternatives and explanation of the selected planning source. */
-    public record PlanningResult(List<RouteAlternative> alternatives, List<String> messages) {
+    public record PlanningResult(List<RouteAlternative> alternatives, List<String> messages,
+            boolean usesFallbackEstimate) {
         /** Performs this operation. */
         public PlanningResult {
             alternatives = List.copyOf(alternatives);

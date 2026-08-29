@@ -37,7 +37,7 @@ class PlanCommandTest {
         var result = command.execute(model);
 
         assertEquals(command, model.getPendingPlan().orElseThrow());
-        assertEquals(2, model.getPendingAlternatives().size());
+        assertEquals(1, model.getPendingAlternatives().size());
         assertTrue(result.messages().contains("From: COM3"));
         assertTrue(result.messages().contains("Choose a route with: choose 1"));
     }

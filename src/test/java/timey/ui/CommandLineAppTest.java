@@ -83,12 +83,12 @@ class CommandLineAppTest {
         assertTrue(!planResult.sessionEnded());
         assertTrue(!chooseResult.sessionEnded());
         assertEquals("COM3", planResult.dashboardState().plan().orElseThrow().getOrigin());
-        assertEquals(2, planResult.dashboardState().alternatives().size());
-        assertEquals("Fastest Transit", chooseResult.dashboardState().recommendation().orElseThrow().routeName());
-        assertEquals("Direct Bus", planResult.dashboardState().alternatives().get(1).name());
-        assertEquals(2, chooseResult.dashboardState().alternatives().size());
-        assertTrue(outputText.toString().contains("1. Fastest Transit"));
-        assertTrue(outputText.toString().contains("Chosen route: Fastest Transit"));
+        assertEquals(1, planResult.dashboardState().alternatives().size());
+        assertEquals("Offline estimate", chooseResult.dashboardState().recommendation().orElseThrow().routeName());
+        assertEquals(1, planResult.dashboardState().alternatives().size());
+        assertEquals(1, chooseResult.dashboardState().alternatives().size());
+        assertTrue(outputText.toString().contains("1. Offline estimate"));
+        assertTrue(outputText.toString().contains("Chosen route: Offline estimate"));
     }
 
     @Test
@@ -108,10 +108,9 @@ class CommandLineAppTest {
         assertTrue(output.contains("To: VivoCity"));
         assertTrue(output.contains("Target arrival: 18:30"));
         assertTrue(output.contains("Personal buffer: 5 minutes"));
-        assertTrue(output.contains("1. Fastest Transit — 43 minutes total"));
-        assertTrue(output.contains("2. Direct Bus — 59 minutes total"));
-        assertTrue(output.contains("Chosen route: Fastest Transit"));
-        assertTrue(output.contains("Recommended departure: 17:42"));
+        assertTrue(output.contains("1. Offline estimate — 0 minutes total"));
+        assertTrue(output.contains("Chosen route: Offline estimate"));
+        assertTrue(output.contains("Recommended departure: 17:30"));
         assertTrue(output.contains("Alrighty, hope you'll have a nice day ahead!"));
     }
 
@@ -120,13 +119,13 @@ class CommandLineAppTest {
         var outputText = new StringWriter();
         var app = new CommandLineApp(new BufferedReader(new StringReader(
                 "plan /from \"COM3\" /to \"VivoCity\" /by 1830\n"
-                        + "plan /from \"COM3\" /to \"VivoCity\" /by 18x0\nchoose 2\nthx\n")),
+                        + "plan /from \"COM3\" /to \"VivoCity\" /by 18x0\nchoose 1\nthx\n")),
                 new PrintWriter(outputText, true));
 
         app.run();
 
         assertTrue(outputText.toString().contains("I could not create that plan:"));
-        assertTrue(outputText.toString().contains("Chosen route: Direct Bus"));
+        assertTrue(outputText.toString().contains("Chosen route: Offline estimate"));
     }
 
     @Test
@@ -139,9 +138,9 @@ class CommandLineAppTest {
         app.run();
 
         String output = outputText.toString();
-        assertTrue(output.contains("Please choose a route between 1 and 2."));
+        assertTrue(output.contains("Please choose a route between 1 and 1."));
         assertTrue(output.contains("Choose a route by number, for example: choose 1"));
-        assertTrue(output.contains("Chosen route: Fastest Transit"));
+        assertTrue(output.contains("Chosen route: Offline estimate"));
     }
 
     @Test
@@ -154,7 +153,7 @@ class CommandLineAppTest {
         app.run();
 
         assertTrue(outputText.toString().contains("I did not understand that."));
-        assertTrue(outputText.toString().contains("Chosen route: Fastest Transit"));
+        assertTrue(outputText.toString().contains("Chosen route: Offline estimate"));
     }
 
     @Test
@@ -185,8 +184,8 @@ class CommandLineAppTest {
 
         app.run();
 
-        assertTrue(outputText.toString().contains("Using fixed sample routes: OneMap could not find \"VivoCity\"."));
-        assertTrue(outputText.toString().contains("1. Fastest Transit"));
+        assertTrue(outputText.toString().contains("Using offline estimate: OneMap could not find \"VivoCity\"."));
+        assertTrue(outputText.toString().contains("1. Offline estimate"));
     }
 
     @Test
@@ -253,10 +252,10 @@ class CommandLineAppTest {
 
         app.run();
 
-        assertEquals(Instant.parse("2026-08-21T09:37:00Z"), scheduledAt.get());
-        assertTrue(outputText.toString().contains("Departure reminder automatically set for 2026-08-21 17:37."));
+        assertEquals(Instant.parse("2026-08-21T09:30:00Z"), scheduledAt.get());
+        assertTrue(outputText.toString().contains("Departure reminder automatically set for 2026-08-21 17:30."));
         assertTrue(outputText.toString().contains("Active departure reminders:"));
-        assertTrue(outputText.toString().contains("1. 2026-08-21 17:37 — Timey reminder: Please leave your desk now."));
+        assertTrue(outputText.toString().contains("1. 2026-08-21 17:30 — Timey reminder: Please leave your desk now."));
     }
 
     @Test

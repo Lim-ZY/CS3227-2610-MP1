@@ -58,7 +58,7 @@ class TimeyModelTest {
         model.selectRoute(1);
 
         SavedPlan expected = new SavedPlan(LocalDate.of(2026, 8, 29), LocalTime.of(17, 0), "Admiralty MRT", "COM3",
-                LocalTime.of(16, 17));
+        LocalTime.of(16, 0));
         assertEquals(List.of(expected), model.getSavedPlans());
         assertEquals(List.of(List.of(expected)), savedPlanLists);
     }
@@ -74,11 +74,11 @@ class TimeyModelTest {
         RouteSelectionResult result = model.selectRoute(1);
 
         SavedPlan expected = new SavedPlan(LocalDate.of(2026, 8, 30), LocalTime.of(17, 0), "Admiralty MRT", "COM3",
-                LocalTime.of(16, 17));
+        LocalTime.of(16, 0));
         assertEquals(RouteSelectionResult.Status.REMINDER_SCHEDULED, result.status());
         assertEquals(List.of(expected), model.getSavedPlans());
         assertEquals(List.of(List.of(expected)), savedPlanLists);
-        assertEquals(Instant.parse("2026-08-30T08:17:00Z"), model.getScheduledReminders().getFirst().triggerAt());
+        assertEquals(Instant.parse("2026-08-30T08:00:00Z"), model.getScheduledReminders().getFirst().triggerAt());
     }
 
     @Test
@@ -107,11 +107,11 @@ class TimeyModelTest {
         RouteSelectionResult result = model.selectRoute(1);
 
         SavedPlan expected = new SavedPlan(LocalDate.of(2026, 8, 30), LocalTime.of(0, 10), "Admiralty MRT", "COM3",
-                LocalTime.of(23, 17));
+                LocalTime.of(23, 10));
         assertEquals(RouteSelectionResult.Status.REMINDER_SCHEDULED, result.status());
         assertEquals(List.of(expected), model.getSavedPlans());
         assertEquals(List.of(List.of(expected)), savedPlanLists);
-        assertEquals(Instant.parse("2026-08-29T15:17:00Z"), model.getScheduledReminders().getFirst().triggerAt());
+        assertEquals(Instant.parse("2026-08-29T15:10:00Z"), model.getScheduledReminders().getFirst().triggerAt());
     }
 
     @Test
@@ -182,8 +182,8 @@ class TimeyModelTest {
 
         assertEquals(2, liveLookupCalls.get());
         assertTrue(model.getSelectedRecommendation().isEmpty());
-        assertEquals("Fastest Transit", model.getPendingAlternatives().getFirst().name());
-        assertEquals("Live routing is unavailable. Using fixed sample routes.",
+        assertEquals("Offline estimate", model.getPendingAlternatives().getFirst().name());
+        assertEquals("Using a default 1-hour buffer before your target arrival time instead of live estimates.",
                 model.getPlanningMessages().getLast());
     }
 

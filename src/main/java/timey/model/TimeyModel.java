@@ -28,6 +28,7 @@ public final class TimeyModel {
     private PlanCommand pendingPlan;
     private List<RouteAlternative> pendingAlternatives = List.of();
     private List<String> planningMessages = List.of();
+    private boolean pendingUsesFallbackEstimate;
     private DepartureRecommendation selectedRecommendation;
     private List<SavedPlan> savedPlans = List.of();
 
@@ -47,6 +48,7 @@ public final class TimeyModel {
     public void plan(PlanCommand plan) {
         Planner.PlanningResult result = planner.findAlternatives(plan);
         replacePlan(plan, result.alternatives(), result.messages());
+        pendingUsesFallbackEstimate = result.usesFallbackEstimate();
         addSavedTimingAlternative(plan);
     }
 
@@ -77,6 +79,7 @@ public final class TimeyModel {
         this.pendingPlan = Objects.requireNonNull(plan);
         this.pendingAlternatives = List.copyOf(alternatives);
         this.planningMessages = List.copyOf(messages);
+        this.pendingUsesFallbackEstimate = false;
         this.selectedRecommendation = null;
     }
 
@@ -167,7 +170,9 @@ public final class TimeyModel {
         }
 
         RouteAlternative route = pendingAlternatives.get(routeNumber - 1);
-        DepartureRecommendation recommendation = planner.recommendDeparture(pendingPlan, route);
+        DepartureRecommendation recommendation = pendingUsesFallbackEstimate && route.name().equals("Offline estimate")
+                ? planner.recommendFallbackDeparture(pendingPlan, route)
+                : planner.recommendDeparture(pendingPlan, route);
         selectRecommendation(recommendation);
         saveSelectedPlan(recommendation);
         if (!recommendation.departureAt().isAfter(LocalDateTime.now(clock))) {

@@ -26,7 +26,7 @@ class DashboardCommuteStatusTest {
     @Test
     void from_fallbackResult_showsFallbackStatus() {
         DashboardState state = new DashboardState(Optional.empty(), List.of(ROUTE),
-                List.of("Using fixed sample routes: OneMap is unavailable."), Optional.empty(), List.of());
+                List.of("Using offline estimate: OneMap is unavailable."), Optional.empty(), List.of());
 
         assertEquals("Using deterministic fallback", DashboardCommuteStatus.from(state).title());
     }

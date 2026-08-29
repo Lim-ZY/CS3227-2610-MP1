@@ -29,10 +29,10 @@ class ChooseCommandTest {
 
         var result = new ChooseCommand(1).execute(model);
 
-        assertTrue(result.messages().contains("Chosen route: Fastest Transit"));
+        assertTrue(result.messages().contains("Chosen route: Offline estimate"));
         assertTrue(result.messages().stream()
                 .anyMatch(message -> message.startsWith("Departure reminder automatically set")));
-        assertEquals("Fastest Transit", model.getSelectedRecommendation().orElseThrow().routeName());
+        assertEquals("Offline estimate", model.getSelectedRecommendation().orElseThrow().routeName());
         assertEquals(1, model.getScheduledReminders().size());
     }
 
