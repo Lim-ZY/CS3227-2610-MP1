@@ -13,6 +13,7 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.time.Duration;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
@@ -27,10 +28,31 @@ import Timey.domain.transit.RouteStep;
 import Timey.domain.transit.RouteStepMode;
 import Timey.infrastructure.transit.MockTransitPlanner;
 import Timey.infrastructure.transit.InMemoryFixedCommuteStore;
+import Timey.domain.alert.SavedPlan;
 import Timey.ports.RailTransitPlanner;
 import Timey.ports.ReminderScheduler;
 
 class CommandLineAppTest {
+    @Test
+    void executeCommand_selectedFutureRoute_savesPlanThroughInjectedStore() {
+        var outputText = new StringWriter();
+        var savedPlanLists = new ArrayList<List<SavedPlan>>();
+        var app = new CommandLineApp(new ConsoleUi(new BufferedReader(new StringReader("")), new PrintWriter(outputText, true)),
+                new PlanCommandParser(), new CommutePlanningService(new MockTransitPlanner()),
+                query -> LocationResolution.unavailable("Offline"),
+                (origin, destination, date, time) -> LiveRouteLookup.available(List.of()),
+                Clock.fixed(Instant.parse("2026-08-21T01:30:00Z"), ZoneId.of("Asia/Singapore")),
+                (triggerAt, action) -> () -> { }, new InMemoryFixedCommuteStore(),
+                plans -> savedPlanLists.add(List.copyOf(plans)));
+
+        app.executeCommand("plan /from \"COM3\" /to \"VivoCity\" /by 1830");
+        app.executeCommand("choose 1");
+
+        assertEquals(1, savedPlanLists.size());
+        assertEquals("COM3", savedPlanLists.getFirst().getFirst().origin());
+        assertEquals("VivoCity", savedPlanLists.getFirst().getFirst().destination());
+    }
+
     @Test
     void executeCommand_addThenPlan_matchingFixedTimingIsFirstAlternative() {
         var outputText = new StringWriter();

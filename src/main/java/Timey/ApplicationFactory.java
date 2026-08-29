@@ -8,6 +8,7 @@ import Timey.config.ApplicationConfiguration;
 import Timey.config.UserPreferences;
 import Timey.infrastructure.http.JdkHttpRequester;
 import Timey.infrastructure.http.RetryingHttpRequester;
+import Timey.infrastructure.alert.FilePlanStore;
 import Timey.infrastructure.location.OneMapLocationResolver;
 import Timey.infrastructure.notification.ScheduledExecutorReminderScheduler;
 import Timey.infrastructure.transit.MockTransitPlanner;
@@ -37,7 +38,8 @@ public final class ApplicationFactory {
                 new CommutePlanningService(new MockTransitPlanner()), locationResolver, railTransitPlanner,
                 Clock.system(ApplicationConfiguration.TIME_ZONE),
                 new ScheduledExecutorReminderScheduler(),
-                new FileFixedCommuteStore(Path.of("data", "fixed-commutes.properties")));
+                new FileFixedCommuteStore(Path.of("data", "fixed-commutes.properties")),
+                new FilePlanStore(Path.of("data", "plans.txt")));
     }
 
     /** Loads the local preferences displayed by the JavaFX dashboard. */
