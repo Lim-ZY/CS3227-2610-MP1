@@ -105,7 +105,7 @@ class TimeyModelTest {
     }
 
     @Test
-    void selectRoute_sameRouteSelectedTwice_savesOnePlanOnly() {
+    void selectRoute_sameRouteSelectedTwice_rejectsSecondSelection() {
         var savedPlanLists = new ArrayList<List<SavedPlan>>();
         Clock clock = Clock.fixed(Instant.parse("2026-08-29T01:00:00Z"), ZoneId.of("Asia/Singapore"));
         var model = TestTimeyModelFactory.create(new InMemoryFixedCommuteStore(), clock,
@@ -113,10 +113,42 @@ class TimeyModelTest {
         new PlanCommand("Admiralty MRT", "COM3", LocalTime.of(17, 0), Duration.ZERO).execute(model);
 
         model.selectRoute(1);
-        model.selectRoute(1);
+        RouteSelectionResult secondResult = model.selectRoute(1);
 
+        assertEquals(RouteSelectionResult.Status.ALREADY_SELECTED, secondResult.status());
         assertEquals(1, model.getSavedPlans().size());
         assertEquals(1, savedPlanLists.size());
+        assertEquals(1, model.getScheduledReminders().size());
+    }
+
+    @Test
+    void selectRoute_planHasNoAlternatives_reportsNoAlternatives() {
+        var model = TestTimeyModelFactory.create(new InMemoryFixedCommuteStore());
+        var plan = new PlanCommand("COM3", "VivoCity", LocalTime.of(18, 30), Duration.ZERO);
+        model.replacePlan(plan, List.of(), List.of("No routes found."));
+
+        RouteSelectionResult result = model.selectRoute(1);
+
+        assertEquals(RouteSelectionResult.Status.NO_ALTERNATIVES, result.status());
+        assertTrue(model.getSelectedRecommendation().isEmpty());
+    }
+
+    @Test
+    void replacePlan_afterRouteSelection_allowsSelectionFromFreshAlternatives() {
+        Clock clock = Clock.fixed(Instant.parse("2026-08-29T01:00:00Z"), ZoneId.of("Asia/Singapore"));
+        var model = TestTimeyModelFactory.create(new InMemoryFixedCommuteStore(), clock);
+        var firstPlan = new PlanCommand("COM3", "VivoCity", LocalTime.of(18, 30), Duration.ZERO);
+        var secondPlan = new PlanCommand("COM3", "HarbourFront", LocalTime.of(19, 0), Duration.ZERO);
+        var firstRoute = new RouteAlternative("First route", Duration.ofMinutes(5), Duration.ofMinutes(30), 0);
+        var secondRoute = new RouteAlternative("Second route", Duration.ofMinutes(5), Duration.ofMinutes(35), 0);
+        model.replacePlan(firstPlan, List.of(firstRoute), List.of());
+        model.selectRoute(1);
+
+        model.replacePlan(secondPlan, List.of(secondRoute), List.of());
+        RouteSelectionResult result = model.selectRoute(1);
+
+        assertEquals(RouteSelectionResult.Status.REMINDER_SCHEDULED, result.status());
+        assertEquals("Second route", result.recommendation().orElseThrow().routeName());
     }
 
     @Test

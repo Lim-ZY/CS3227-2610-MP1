@@ -153,6 +153,12 @@ public final class TimeyModel {
         if (pendingPlan == null) {
             return RouteSelectionResult.noPlan();
         }
+        if (pendingAlternatives.isEmpty()) {
+            return RouteSelectionResult.noAlternatives();
+        }
+        if (selectedRecommendation != null) {
+            return RouteSelectionResult.alreadySelected();
+        }
         if (routeNumber == null) {
             return RouteSelectionResult.missingNumber(pendingAlternatives.size());
         }

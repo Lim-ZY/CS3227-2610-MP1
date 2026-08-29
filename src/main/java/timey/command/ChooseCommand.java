@@ -32,6 +32,10 @@ public final class ChooseCommand extends Command {
             case MISSING_NUMBER -> CommandResult.message("Choose a route by number, for example: choose 1");
             case INVALID_NUMBER -> CommandResult.message("Please choose a route between 1 and "
                     + result.alternativeCount() + ".");
+            case NO_ALTERNATIVES -> CommandResult.message("No routes are available for the current plan. "
+                    + "Please create a new plan.");
+            case ALREADY_SELECTED -> CommandResult.message("A route is already selected for the current plan. "
+                    + "Please create a new plan before choosing another route.");
             case LEAVE_NOW -> recommendationResult(result.recommendation().orElseThrow(), null, model);
             case REMINDER_SCHEDULED -> recommendationResult(result.recommendation().orElseThrow(),
                     result.reminder().orElseThrow(), model);

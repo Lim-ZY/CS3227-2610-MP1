@@ -31,6 +31,14 @@ public record RouteSelectionResult(Status status, int alternativeCount,
         return new RouteSelectionResult(Status.INVALID_NUMBER, alternativeCount, Optional.empty(), Optional.empty());
     }
 
+    public static RouteSelectionResult noAlternatives() {
+        return new RouteSelectionResult(Status.NO_ALTERNATIVES, 0, Optional.empty(), Optional.empty());
+    }
+
+    public static RouteSelectionResult alreadySelected() {
+        return new RouteSelectionResult(Status.ALREADY_SELECTED, 0, Optional.empty(), Optional.empty());
+    }
+
     public static RouteSelectionResult leaveNow(DepartureRecommendation recommendation) {
         return new RouteSelectionResult(Status.LEAVE_NOW, 0, Optional.of(recommendation), Optional.empty());
     }
@@ -47,6 +55,8 @@ public record RouteSelectionResult(Status status, int alternativeCount,
         NO_PLAN,
         MISSING_NUMBER,
         INVALID_NUMBER,
+        NO_ALTERNATIVES,
+        ALREADY_SELECTED,
         LEAVE_NOW,
         REMINDER_SCHEDULED
     }

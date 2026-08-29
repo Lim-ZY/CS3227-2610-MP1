@@ -35,4 +35,18 @@ class ChooseCommandTest {
         assertEquals("Fastest Transit", model.getSelectedRecommendation().orElseThrow().routeName());
         assertEquals(1, model.getScheduledReminders().size());
     }
+
+    @Test
+    void execute_routeAlreadySelected_requestsNewPlanWithoutAnotherReminder() {
+        var model = TestTimeyModelFactory.create(new InMemoryFixedCommuteStore(),
+                Clock.fixed(Instant.parse("2026-08-21T01:30:00Z"), ZoneId.of("Asia/Singapore")));
+        new PlanCommand("COM3", "VivoCity", LocalTime.of(18, 30), java.time.Duration.ZERO).execute(model);
+        new ChooseCommand(1).execute(model);
+
+        var result = new ChooseCommand(2).execute(model);
+
+        assertEquals(java.util.List.of("A route is already selected for the current plan. "
+                + "Please create a new plan before choosing another route."), result.messages());
+        assertEquals(1, model.getScheduledReminders().size());
+    }
 }
