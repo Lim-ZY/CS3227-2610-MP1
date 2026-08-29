@@ -68,25 +68,35 @@ public final class MainWindow extends UiPart<Stage> {
     }
 
     private DashboardContent createDashboard() {
+        NextEventCard nextEvent = new NextEventCard();
+        CommuteStatusCard commute = new CommuteStatusCard();
+        ReminderStatusCard reminders = new ReminderStatusCard();
+        RouteAlternativesPanel alternatives = new RouteAlternativesPanel();
+        VBox content = createDashboardContent(nextEvent, commute, reminders, alternatives);
+        return new DashboardContent(content, nextEvent, commute, reminders, alternatives);
+    }
+
+    private VBox createDashboardContent(NextEventCard nextEvent, CommuteStatusCard commute,
+            ReminderStatusCard reminders, RouteAlternativesPanel alternatives) {
         Label heading = new Label("Your day, on track.");
         heading.getStyleClass().add("page-heading");
         Label introduction = new Label(
                 "Plan a commute in the command bar to see your next event and departure plan here.");
         introduction.getStyleClass().add("muted");
 
-        NextEventCard nextEvent = new NextEventCard();
-        CommuteStatusCard commute = new CommuteStatusCard();
-        ReminderStatusCard reminders = new ReminderStatusCard();
-        HBox lowerCards = new HBox(18, commute.getRoot(), reminders.getRoot());
-        lowerCards.getChildren().forEach(card -> HBox.setHgrow(card, Priority.ALWAYS));
-        RouteAlternativesPanel alternatives = new RouteAlternativesPanel();
-
         Label commandHeading = new Label("COMMAND OUTPUT");
         commandHeading.getStyleClass().add("card-label");
-        VBox content = new VBox(18, heading, introduction, nextEvent.getRoot(), lowerCards, alternatives.getRoot(),
+        VBox content = new VBox(18, heading, introduction, nextEvent.getRoot(), createLowerCards(commute, reminders),
+                alternatives.getRoot(),
                 commandHeading, commandOutput.getRoot());
         content.setPadding(new Insets(40, 56, 32, 56));
-        return new DashboardContent(content, nextEvent, commute, reminders, alternatives);
+        return content;
+    }
+
+    private HBox createLowerCards(CommuteStatusCard commute, ReminderStatusCard reminders) {
+        HBox lowerCards = new HBox(18, commute.getRoot(), reminders.getRoot());
+        lowerCards.getChildren().forEach(card -> HBox.setHgrow(card, Priority.ALWAYS));
+        return lowerCards;
     }
 
     private void executeCommand(String input) {
