@@ -9,3 +9,4 @@ config/application.properties
 data/*.json
 !data/.gitkeep
 _temp/
+data/

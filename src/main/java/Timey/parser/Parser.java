@@ -45,8 +45,11 @@ public final class Parser {
         if (command.startsWith("add")) {
             return addCommandParser.parse(command);
         }
-        if (command.equalsIgnoreCase("ls")) {
-            return new ListCommand();
+        if (command.equalsIgnoreCase("ls saved")) {
+            return new ListCommand(ListCommand.ListType.SAVED);
+        }
+        if (command.equalsIgnoreCase("ls plans")) {
+            return new ListCommand(ListCommand.ListType.PLANS);
         }
         if (command.equalsIgnoreCase("rm") || command.startsWith("rm ")) {
             return new RemoveCommand(parseNumberArgument(command));

@@ -50,6 +50,7 @@ class ParserTest {
         assertInstanceOf(Timey.command.ThanksCommand.class, parser.parse("thx"));
         assertInstanceOf(Timey.command.HelpCommand.class, parser.parse("help"));
         assertInstanceOf(Timey.command.RemindersCommand.class, parser.parse("reminders"));
-        assertInstanceOf(Timey.command.ListCommand.class, parser.parse("ls"));
+        assertInstanceOf(Timey.command.ListCommand.class, parser.parse("ls saved"));
+        assertInstanceOf(Timey.command.ListCommand.class, parser.parse("ls plans"));
     }
 }

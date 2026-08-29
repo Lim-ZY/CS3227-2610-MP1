@@ -7,6 +7,6 @@ public final class UnknownCommand extends Command {
     @Override
     public CommandResult execute(TimeyModel model) {
         return CommandResult.message(
-                "I did not understand that. Try: plan /from \"COM3\" /to \"VivoCity\" /by 1830 /buf 10m");
+                "Sorry I did not understand that... Use `help` for the list of commands I understand.");
     }
 }

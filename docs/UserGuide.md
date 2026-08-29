@@ -37,4 +37,6 @@ add /from "COM3" /to "VivoCity" /dur 1h30m
 The timing is stored locally and appears as the first route alternative for later matching `plan` commands. Durations
 may use hours, minutes, or both: `1h`, `30m`, and `1h30m`.
 
-Review saved timings with `ls`. Remove one by its list number with `rm 1`.
+Review saved timings with `ls saved`. Use `ls plans` to review saved plans whose
+departure time is still in the future. Remove a saved timing by its list number
+with `rm 1`.
