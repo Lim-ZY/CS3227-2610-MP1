@@ -56,15 +56,28 @@ public final class OneMapLocationResolver implements LocationResolver {
     }
 
     private Optional<ResolvedLocation> parseFirstResult(String body) {
-        return first(SEARCH_VALUE, body).flatMap(displayName -> first(ADDRESS, body).flatMap(address ->
-                first(LATITUDE, body).flatMap(latitude -> first(LONGITUDE, body).flatMap(longitude -> {
-                    try {
-                        return Optional.of(new ResolvedLocation(displayName, address,
-                                Double.parseDouble(latitude), Double.parseDouble(longitude)));
-                    } catch (IllegalArgumentException exception) {
-                        return Optional.empty();
-                    }
-                }))));
+        Optional<String> displayName = first(SEARCH_VALUE, body);
+        if (displayName.isEmpty()) {
+            return Optional.empty();
+        }
+        Optional<String> address = first(ADDRESS, body);
+        if (address.isEmpty()) {
+            return Optional.empty();
+        }
+        Optional<String> latitude = first(LATITUDE, body);
+        if (latitude.isEmpty()) {
+            return Optional.empty();
+        }
+        Optional<String> longitude = first(LONGITUDE, body);
+        if (longitude.isEmpty()) {
+            return Optional.empty();
+        }
+        try {
+            return Optional.of(new ResolvedLocation(displayName.orElseThrow(), address.orElseThrow(),
+                    Double.parseDouble(latitude.orElseThrow()), Double.parseDouble(longitude.orElseThrow())));
+        } catch (IllegalArgumentException exception) {
+            return Optional.empty();
+        }
     }
 
     private Optional<String> first(Pattern pattern, String body) {
