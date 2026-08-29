@@ -125,7 +125,7 @@ public final class TimeyModel {
 
     /** Removes plans whose leave-by time is no longer in the future. */
     public void pruneExpiredPlans() {
-        List<SavedPlan> remainingPlans = savedPlans.stream().filter(this::isFuture).toList();
+        List<SavedPlan> remainingPlans = savedPlans.stream().filter(this::isFuture).distinct().toList();
         if (!remainingPlans.equals(savedPlans)) {
             savedPlans = remainingPlans;
             planStore.saveAll(savedPlans);
@@ -182,8 +182,10 @@ public final class TimeyModel {
         if (!isFuture(savedPlan)) {
             return;
         }
-        savedPlans = java.util.stream.Stream.concat(savedPlans.stream(), java.util.stream.Stream.of(savedPlan)).toList();
-        planStore.saveAll(savedPlans);
+        if (!savedPlans.contains(savedPlan)) {
+            savedPlans = java.util.stream.Stream.concat(savedPlans.stream(), java.util.stream.Stream.of(savedPlan)).toList();
+            planStore.saveAll(savedPlans);
+        }
     }
 
     private boolean isFuture(SavedPlan plan) {

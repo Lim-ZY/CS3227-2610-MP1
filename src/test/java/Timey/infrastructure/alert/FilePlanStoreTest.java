@@ -69,6 +69,23 @@ class FilePlanStoreTest {
         }
     }
 
+    @Test
+    void loadAll_malformedAndBlankLines_keepsValidPlans() throws Exception {
+        var directory = Files.createTempDirectory("timey-plans");
+        try {
+            var path = directory.resolve("plans.txt");
+            Files.writeString(path, "not a plan\n\n29-08-2026 | 1700 | Admiralty MRT -> COM3 | leave by 1550\n"
+                    + "30-02-2026 | 0900 | Home -> NUS | leave by 0800\n");
+
+            var result = new FilePlanStore(path).loadAll();
+
+            assertEquals(List.of(new SavedPlan(LocalDate.of(2026, 8, 29), LocalTime.of(17, 0), "Admiralty MRT",
+                    "COM3", LocalTime.of(15, 50))), result);
+        } finally {
+            deleteDirectory(directory);
+        }
+    }
+
     private void deleteDirectory(java.nio.file.Path directory) throws Exception {
         Files.walk(directory).sorted(java.util.Comparator.reverseOrder()).forEach(path -> {
             try {

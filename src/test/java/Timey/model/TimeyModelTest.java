@@ -82,6 +82,21 @@ class TimeyModelTest {
     }
 
     @Test
+    void selectRoute_sameRouteSelectedTwice_savesOnePlanOnly() {
+        var savedPlanLists = new ArrayList<List<SavedPlan>>();
+        Clock clock = Clock.fixed(Instant.parse("2026-08-29T01:00:00Z"), ZoneId.of("Asia/Singapore"));
+        var model = TestTimeyModelFactory.create(new InMemoryFixedCommuteStore(), clock,
+                plans -> savedPlanLists.add(List.copyOf(plans)));
+        new PlanCommand("Admiralty MRT", "COM3", LocalTime.of(17, 0), Duration.ZERO).execute(model);
+
+        model.selectRoute(1);
+        model.selectRoute(1);
+
+        assertEquals(1, model.getSavedPlans().size());
+        assertEquals(1, savedPlanLists.size());
+    }
+
+    @Test
     void constructor_loadedPlansContainExpiredEntry_removesItFromStore() {
         var savedPlanLists = new ArrayList<List<SavedPlan>>();
         Clock clock = Clock.fixed(Instant.parse("2026-08-29T01:00:00Z"), ZoneId.of("Asia/Singapore"));
@@ -129,6 +144,30 @@ class TimeyModelTest {
 
         assertTrue(model.getSavedPlans().isEmpty());
         assertEquals(List.of(List.of()), savedPlanLists);
+    }
+
+    @Test
+    void constructor_loadedDuplicatePlans_removesDuplicatesFromStore() {
+        var savedPlanLists = new ArrayList<List<SavedPlan>>();
+        Clock clock = Clock.fixed(Instant.parse("2026-08-29T01:00:00Z"), ZoneId.of("Asia/Singapore"));
+        SavedPlan future = new SavedPlan(LocalDate.of(2026, 8, 29), LocalTime.of(17, 0), "Home", "NUS",
+                LocalTime.of(16, 0));
+        PlanStore planStore = new PlanStore() {
+            @Override
+            public List<SavedPlan> loadAll() {
+                return List.of(future, future);
+            }
+
+            @Override
+            public void saveAll(List<SavedPlan> plans) {
+                savedPlanLists.add(List.copyOf(plans));
+            }
+        };
+
+        var model = TestTimeyModelFactory.create(new InMemoryFixedCommuteStore(), clock, planStore);
+
+        assertEquals(List.of(future), model.getSavedPlans());
+        assertEquals(List.of(List.of(future)), savedPlanLists);
     }
 
     @Test

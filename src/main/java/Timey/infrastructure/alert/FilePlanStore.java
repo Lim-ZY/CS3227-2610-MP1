@@ -2,10 +2,13 @@ package Timey.infrastructure.alert;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.time.format.DateTimeFormatter;
 import java.time.format.ResolverStyle;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -27,7 +30,8 @@ public final class FilePlanStore implements PlanStore {
     @Override
     public synchronized void saveAll(List<SavedPlan> plans) {
         Objects.requireNonNull(plans);
-        String content = plans.stream()
+        List<SavedPlan> plansToSave = List.copyOf(plans);
+        String content = plansToSave.stream()
                 .map(this::format)
                 .collect(java.util.stream.Collectors.joining(System.lineSeparator()));
         if (!content.isEmpty()) {
@@ -38,7 +42,13 @@ public final class FilePlanStore implements PlanStore {
             if (parent != null) {
                 Files.createDirectories(parent);
             }
-            Files.writeString(path, content, StandardCharsets.UTF_8);
+            Path temporaryFile = Files.createTempFile(path.toAbsolutePath().getParent(), "plans-", ".tmp");
+            try {
+                Files.writeString(temporaryFile, content, StandardCharsets.UTF_8);
+                moveIntoPlace(temporaryFile);
+            } finally {
+                Files.deleteIfExists(temporaryFile);
+            }
         } catch (IOException exception) {
             throw new IllegalStateException("Could not save plans.", exception);
         }
@@ -50,12 +60,31 @@ public final class FilePlanStore implements PlanStore {
             return List.of();
         }
         try {
-            return Files.readAllLines(path, StandardCharsets.UTF_8).stream()
-                    .filter(line -> !line.isBlank())
-                    .map(this::parse)
-                    .toList();
-        } catch (IOException | IllegalArgumentException exception) {
+            List<SavedPlan> plans = new ArrayList<>();
+            for (String line : Files.readAllLines(path, StandardCharsets.UTF_8)) {
+                if (!line.isBlank()) {
+                    parseSafely(line).ifPresent(plans::add);
+                }
+            }
+            return List.copyOf(plans);
+        } catch (IOException exception) {
             throw new IllegalStateException("Could not load plans.", exception);
+        }
+    }
+
+    private void moveIntoPlace(Path temporaryFile) throws IOException {
+        try {
+            Files.move(temporaryFile, path, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
+        } catch (AtomicMoveNotSupportedException exception) {
+            Files.move(temporaryFile, path, StandardCopyOption.REPLACE_EXISTING);
+        }
+    }
+
+    private java.util.Optional<SavedPlan> parseSafely(String line) {
+        try {
+            return java.util.Optional.of(parse(line));
+        } catch (java.time.DateTimeException | IllegalArgumentException exception) {
+            return java.util.Optional.empty();
         }
     }
 

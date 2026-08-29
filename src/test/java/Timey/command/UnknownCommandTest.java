@@ -12,7 +12,7 @@ class UnknownCommandTest {
     void execute_returnsUsageGuidance() {
         var result = new UnknownCommand().execute(TestTimeyModelFactory.create(new InMemoryFixedCommuteStore()));
 
-        assertEquals("I did not understand that. Try: plan /from \"COM3\" /to \"VivoCity\" /by 1830 /buf 10m",
+        assertEquals("Sorry I did not understand that... Use `help` for the list of commands I understand.",
                 result.messages().getFirst());
     }
 }
