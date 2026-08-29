@@ -86,6 +86,36 @@ class FilePlanStoreTest {
         }
     }
 
+    @Test
+    void saveAll_duplicatePlans_writesOnePlan() throws Exception {
+        var directory = Files.createTempDirectory("timey-plans");
+        try {
+            var path = directory.resolve("plans.txt");
+            SavedPlan plan = new SavedPlan(LocalDate.of(2026, 8, 29), LocalTime.of(17, 0), "Home", "NUS",
+                    LocalTime.of(16, 0));
+
+            new FilePlanStore(path).saveAll(List.of(plan, plan));
+
+            assertEquals("29-08-2026 | 1700 | Home -> NUS | leave by 1600\n", Files.readString(path));
+        } finally {
+            deleteDirectory(directory);
+        }
+    }
+
+    @Test
+    void loadAll_duplicatePlans_returnsOnePlan() throws Exception {
+        var directory = Files.createTempDirectory("timey-plans");
+        try {
+            var path = directory.resolve("plans.txt");
+            Files.writeString(path, "29-08-2026 | 1700 | Home -> NUS | leave by 1600\n"
+                    + "29-08-2026 | 1700 | Home -> NUS | leave by 1600\n");
+
+            assertEquals(1, new FilePlanStore(path).loadAll().size());
+        } finally {
+            deleteDirectory(directory);
+        }
+    }
+
     private void deleteDirectory(java.nio.file.Path directory) throws Exception {
         Files.walk(directory).sorted(java.util.Comparator.reverseOrder()).forEach(path -> {
             try {

@@ -11,11 +11,17 @@ public record SavedPlan(LocalDate date, LocalTime arrivalTime, String origin, St
         Objects.requireNonNull(date, "Date must be provided.");
         Objects.requireNonNull(arrivalTime, "Arrival time must be provided.");
         Objects.requireNonNull(leaveBy, "Leave-by time must be provided.");
-        if (origin == null || origin.isBlank()) {
-            throw new IllegalArgumentException("Origin must not be blank.");
+        origin = normalizeLocation(origin, "Origin");
+        destination = normalizeLocation(destination, "Destination");
+    }
+
+    private static String normalizeLocation(String location, String locationType) {
+        if (location == null || location.isBlank()) {
+            throw new IllegalArgumentException(locationType + " must not be blank.");
         }
-        if (destination == null || destination.isBlank()) {
-            throw new IllegalArgumentException("Destination must not be blank.");
+        if (location.chars().anyMatch(Character::isISOControl)) {
+            throw new IllegalArgumentException(locationType + " must not contain control characters.");
         }
+        return location.strip();
     }
 }

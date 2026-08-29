@@ -49,7 +49,7 @@ public final class FilePlanStore implements PlanStore {
                     parseSafely(line).ifPresent(plans::add);
                 }
             }
-            return List.copyOf(plans);
+            return plans.stream().distinct().toList();
         } catch (IOException exception) {
             throw new IllegalStateException("Could not load plans.", exception);
         }
@@ -64,7 +64,7 @@ public final class FilePlanStore implements PlanStore {
     }
 
     private String serialize(List<SavedPlan> plans) {
-        String content = List.copyOf(plans).stream()
+        String content = List.copyOf(plans).stream().distinct()
                 .map(this::format)
                 .collect(java.util.stream.Collectors.joining(System.lineSeparator()));
         return content.isEmpty() ? content : content + System.lineSeparator();
