@@ -8,6 +8,7 @@ import java.util.List;
 
 import timey.command.Command;
 import timey.command.CommandResult;
+import timey.config.ApplicationConfiguration;
 import timey.domain.transit.LiveRouteLookup;
 import timey.infrastructure.http.HttpResult;
 import timey.infrastructure.location.OneMapLocationResolver;
@@ -39,7 +40,8 @@ public final class CommandLineApp {
     public CommandLineApp(BufferedReader input, PrintWriter output, PlanCommandParser planCommandParser,
             CommutePlanningService commutePlanningService, LocationResolver locationResolver) {
         this(new ConsoleUi(input, output), planCommandParser, commutePlanningService, locationResolver,
-                noLiveRoutes(), Clock.systemDefaultZone(), noOpReminderScheduler(), new InMemoryFixedCommuteStore());
+                noLiveRoutes(), Clock.system(ApplicationConfiguration.TIME_ZONE), noOpReminderScheduler(),
+                new InMemoryFixedCommuteStore());
     }
 
     /** Creates a new CommandLineApp. */

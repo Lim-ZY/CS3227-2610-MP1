@@ -1,6 +1,7 @@
 package timey.domain.transit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.time.Duration;
 import java.util.List;
@@ -25,5 +26,13 @@ class RouteAlternativeTest {
 
         assertEquals("Walk from COM3 to Kent Ridge MRT", route.steps().getFirst().description());
         assertEquals(1, route.steps().size());
+    }
+
+    @Test
+    void constructor_negativeDuration_validationErrorThrown() {
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
+                new RouteAlternative("Invalid", Duration.ofMinutes(-1), Duration.ZERO, 0));
+
+        assertEquals("Walking duration must not be negative.", exception.getMessage());
     }
 }

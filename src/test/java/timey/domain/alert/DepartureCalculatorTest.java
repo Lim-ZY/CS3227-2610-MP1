@@ -39,4 +39,16 @@ class DepartureCalculatorTest {
         assertEquals(LocalDateTime.of(2026, 8, 29, 23, 45), result.departureAt());
         assertEquals(LocalTime.of(23, 45), result.departureTime());
     }
+
+    @Test
+    void calculate_zeroTravelTimeAndBuffer_departureMatchesArrival() {
+        PlanCommand plan = new PlanCommand("COM3", "VivoCity", LocalTime.of(18, 30), Duration.ZERO);
+        RouteAlternative route = new RouteAlternative("Already there", Duration.ZERO, Duration.ZERO, 0);
+        LocalDateTime arrivalAt = LocalDateTime.of(2026, 8, 29, 18, 30);
+
+        DepartureRecommendation result = calculator.calculate(plan, route, arrivalAt);
+
+        assertEquals(arrivalAt, result.departureAt());
+        assertEquals(Duration.ZERO, result.travelDuration());
+    }
 }
