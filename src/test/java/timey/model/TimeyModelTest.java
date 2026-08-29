@@ -1,6 +1,7 @@
 package timey.model;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.Clock;
@@ -11,6 +12,7 @@ import java.time.LocalTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.jupiter.api.Test;
@@ -20,12 +22,14 @@ import timey.command.PlanCommand;
 import timey.domain.alert.SavedPlan;
 import timey.domain.location.LocationResolution;
 import timey.domain.location.ResolvedLocation;
+import timey.domain.transit.FixedCommute;
 import timey.domain.transit.LiveRouteLookup;
 import timey.domain.transit.RouteAlternative;
 import timey.infrastructure.transit.InMemoryFixedCommuteStore;
 import timey.infrastructure.transit.MockTransitPlanner;
 import timey.planner.CommutePlanningService;
 import timey.planner.Planner;
+import timey.ports.FixedCommuteStore;
 import timey.ports.LocationResolver;
 import timey.ports.PlanStore;
 import timey.ports.RailTransitPlanner;
@@ -185,6 +189,43 @@ class TimeyModelTest {
         assertEquals("Offline estimate", model.getPendingAlternatives().getFirst().name());
         assertEquals("Using a default 1-hour buffer before your target arrival time instead of live estimates.",
                 model.getPlanningMessages().getLast());
+    }
+
+    @Test
+    void plan_savedTimingLookupFails_preservesPreviousPlanState() {
+        FixedCommuteStore failingStore = new FixedCommuteStore() {
+            @Override
+            public void save(FixedCommute commute) {
+            }
+
+            @Override
+            public Optional<FixedCommute> find(String origin, String destination) {
+                throw new IllegalStateException("Saved commute storage is unavailable.");
+            }
+
+            @Override
+            public List<FixedCommute> findAll() {
+                return List.of();
+            }
+
+            @Override
+            public boolean remove(String origin, String destination) {
+                return false;
+            }
+        };
+        var model = TestTimeyModelFactory.create(failingStore);
+        PlanCommand previousPlan = new PlanCommand("COM3", "VivoCity", LocalTime.of(18, 30), Duration.ZERO);
+        RouteAlternative previousRoute = new RouteAlternative("Previous route", Duration.ofMinutes(5),
+                Duration.ofMinutes(30), 0);
+        model.replacePlan(previousPlan, List.of(previousRoute), List.of("Previous route remains available."));
+
+        PlanCommand replacementPlan = new PlanCommand("Home", "NUS", LocalTime.of(9, 0), Duration.ZERO);
+
+        assertThrows(IllegalStateException.class, () -> model.plan(replacementPlan));
+        assertEquals(previousPlan, model.getPendingPlan().orElseThrow());
+        assertEquals(List.of(previousRoute), model.getPendingAlternatives());
+        assertEquals(List.of("Previous route remains available."), model.getPlanningMessages());
+        assertTrue(model.getSelectedRecommendation().isEmpty());
     }
 
     @Test

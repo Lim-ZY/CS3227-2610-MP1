@@ -47,9 +47,21 @@ public final class TimeyModel {
     /** Finds routes, adds a matching fixed timing, and records the resulting plan state. */
     public void plan(PlanCommand plan) {
         Planner.PlanningResult result = planner.findAlternatives(plan);
-        replacePlan(plan, result.alternatives(), result.messages());
+        Optional<FixedCommute> savedCommute = findFixedCommute(plan.getOrigin(), plan.getDestination());
+        List<RouteAlternative> alternatives = result.alternatives();
+        List<String> messages = result.messages();
+        if (savedCommute.isPresent()) {
+            RouteAlternative savedTiming = new RouteAlternative("Saved timing", java.time.Duration.ZERO,
+                    savedCommute.orElseThrow().duration(), 0);
+            alternatives = java.util.stream.Stream
+                    .concat(java.util.stream.Stream.of(savedTiming), alternatives.stream())
+                    .toList();
+            messages = java.util.stream.Stream.concat(messages.stream(),
+                    java.util.stream.Stream.of("Your saved fixed timing is available as route 1.")).toList();
+        }
+
+        replacePlan(plan, alternatives, messages);
         pendingUsesFallbackEstimate = result.usesFallbackEstimate();
-        addSavedTimingAlternative(plan);
     }
 
     /** Saves a fixed commute duration for later route planning. */
@@ -97,18 +109,6 @@ public final class TimeyModel {
     /** Records the departure recommendation selected for the current plan. */
     private void selectRecommendation(DepartureRecommendation recommendation) {
         this.selectedRecommendation = Objects.requireNonNull(recommendation);
-    }
-
-    private void addSavedTimingAlternative(PlanCommand plan) {
-        Optional<FixedCommute> savedCommute = findFixedCommute(plan.getOrigin(), plan.getDestination());
-        if (savedCommute.isEmpty()) {
-            return;
-        }
-        RouteAlternative savedTiming = new RouteAlternative("Saved timing", java.time.Duration.ZERO,
-                savedCommute.orElseThrow().duration(), 0);
-        replaceAlternatives(java.util.stream.Stream.concat(java.util.stream.Stream.of(savedTiming),
-                getPendingAlternatives().stream()).toList());
-        addPlanningMessage("Your saved fixed timing is available as route 1.");
     }
 
     public Optional<PlanCommand> getPendingPlan() {
