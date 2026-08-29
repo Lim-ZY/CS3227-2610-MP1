@@ -200,7 +200,8 @@ class CommandLineAppTest {
         var result = app.executeCommand("plan /from \"COM3\" /to \"VivoCity\" /by 1830");
 
         assertTrue(!result.sessionEnded());
-        assertTrue(outputText.toString().contains("Timey could not complete that command. Please try again."));
+        assertTrue(outputText.toString().contains("Your current plan has not changed."));
+        assertTrue(outputText.toString().contains("Check your internet connection or saved data"));
         assertTrue(!outputText.toString().contains("Provider secret failure"));
         assertTrue(result.dashboardState().plan().isEmpty());
         assertTrue(result.dashboardState().alternatives().isEmpty());

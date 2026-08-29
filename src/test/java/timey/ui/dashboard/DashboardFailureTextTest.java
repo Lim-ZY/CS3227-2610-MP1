@@ -10,7 +10,8 @@ class DashboardFailureTextTest {
     void commuteUpdate_internalFailure_returnsSafeUserMessage() {
         String message = DashboardFailureText.commuteUpdate(new IllegalStateException("Provider secret failure"));
 
-        assertEquals("Your previous plan is unchanged. Please try again.", message);
+        assertEquals("Timey could not complete that command. Your current plan has not changed. "
+                + "Check your internet connection or saved data, then try again.", message);
         assertFalse(message.contains("Provider secret failure"));
     }
 }

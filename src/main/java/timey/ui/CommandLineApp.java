@@ -142,7 +142,7 @@ public final class CommandLineApp {
             ui.println("I could not create that plan: " + exception.getMessage());
             sessionEnded = false;
         } catch (RuntimeException exception) {
-            ui.println("Timey could not complete that command. Please try again.");
+            ui.println(CommandFailureText.runtimeFailure());
             sessionEnded = false;
         }
         return new CommandExecutionResult(sessionEnded, getDashboardState());

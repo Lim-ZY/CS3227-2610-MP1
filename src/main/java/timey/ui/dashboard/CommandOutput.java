@@ -2,6 +2,7 @@ package timey.ui.dashboard;
 
 import javafx.fxml.FXML;
 import javafx.scene.control.TextArea;
+import timey.ui.CommandFailureText;
 import timey.ui.UiPart;
 
 /** FXML-backed transcript display for dashboard command results. */
@@ -26,6 +27,6 @@ public final class CommandOutput extends UiPart<TextArea> {
 
     /** Appends the dashboard's fallback message for a failed command execution. */
     public void appendCommandFailure(String commandText) {
-        commandOutput.appendText("\n> " + commandText + "\nI could not complete that command. Please try again.");
+        commandOutput.appendText("\n> " + commandText + "\n" + CommandFailureText.runtimeFailure());
     }
 }
