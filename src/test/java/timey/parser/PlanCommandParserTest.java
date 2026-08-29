@@ -24,6 +24,13 @@ class PlanCommandParserTest {
     }
 
     @Test
+    void parse_uppercaseCommandName_planCreated() {
+        PlanCommand result = parser.parse("PLAN /from \"COM3\" /to \"VivoCity\" /by 1830");
+
+        assertEquals("COM3", result.getOrigin());
+    }
+
+    @Test
     void parse_bufferOmitted_defaultBufferUsed() {
         PlanCommand result = parser.parse("plan /from \"COM3\" /to \"VivoCity\" /by 1830");
 
@@ -82,6 +89,14 @@ class PlanCommandParserTest {
         assertEquals("Could not understand part of the plan command.",
                 assertThrows(IllegalArgumentException.class, () ->
                         parser.parse("plan /from \"COM3 /to \"VivoCity\" /by 1830")).getMessage());
+    }
+
+    @Test
+    void parse_commandNamePrefix_validationErrorThrown() {
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
+                parser.parse("planx /from \"COM3\" /to \"VivoCity\" /by 1830"));
+
+        assertEquals("Command must start with 'plan'.", exception.getMessage());
     }
 
     @Test

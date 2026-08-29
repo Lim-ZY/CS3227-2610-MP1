@@ -11,7 +11,7 @@ final class CommandOptionParser {
     }
 
     static Map<String, String> parse(String input, String commandName, Pattern optionPattern) {
-        if (input == null || !input.startsWith(commandName)) {
+        if (!startsWithCommandName(input, commandName)) {
             throw new IllegalArgumentException("Command must start with '" + commandName + "'.");
         }
 
@@ -33,6 +33,14 @@ final class CommandOptionParser {
             throw new IllegalArgumentException("Could not understand part of the " + commandName + " command.");
         }
         return options;
+    }
+
+    private static boolean startsWithCommandName(String input, String commandName) {
+        if (input == null || !input.regionMatches(true, 0, commandName, 0, commandName.length())) {
+            return false;
+        }
+        return input.length() == commandName.length()
+                || Character.isWhitespace(input.charAt(commandName.length()));
     }
 
     private static String valueOf(Matcher matcher) {

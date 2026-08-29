@@ -33,6 +33,9 @@ public final class Parser {
      * @throws IllegalArgumentException when a plan command is invalid
      */
     public Command parse(String input) {
+        if (input == null) {
+            return new UnknownCommand();
+        }
         String command = input.trim();
         if (command.equalsIgnoreCase("thx")) {
             return new ThanksCommand();
@@ -40,10 +43,10 @@ public final class Parser {
         if (command.equalsIgnoreCase("help")) {
             return new HelpCommand();
         }
-        if (command.startsWith("plan")) {
+        if (startsWithCommandName(command, "plan")) {
             return planCommandParser.parse(command);
         }
-        if (command.startsWith("add")) {
+        if (startsWithCommandName(command, "add")) {
             return addCommandParser.parse(command);
         }
         if (command.equalsIgnoreCase("ls saved")) {
@@ -52,19 +55,27 @@ public final class Parser {
         if (command.equalsIgnoreCase("ls plans")) {
             return new ListCommand(ListCommand.ListType.PLANS);
         }
-        if (command.equalsIgnoreCase("rm") || command.startsWith("rm ")) {
+        if (startsWithCommandName(command, "rm")) {
             return new RemoveCommand(parseNumberArgument(command));
         }
-        if (command.startsWith("choose")) {
+        if (startsWithCommandName(command, "choose")) {
             return new ChooseCommand(parseNumberArgument(command));
         }
         if (command.equalsIgnoreCase("reminders")) {
             return new RemindersCommand();
         }
-        if (command.startsWith("cancel")) {
+        if (startsWithCommandName(command, "cancel")) {
             return new CancelCommand(parseNumberArgument(command));
         }
         return new UnknownCommand();
+    }
+
+    private boolean startsWithCommandName(String input, String commandName) {
+        if (!input.regionMatches(true, 0, commandName, 0, commandName.length())) {
+            return false;
+        }
+        return input.length() == commandName.length()
+                || Character.isWhitespace(input.charAt(commandName.length()));
     }
 
     private Integer parseNumberArgument(String command) {
