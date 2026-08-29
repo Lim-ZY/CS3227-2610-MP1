@@ -109,7 +109,14 @@ public final class CommandLineApp {
             }
         } catch (IOException exception) {
             ui.showReadingError();
+        } finally {
+            close();
         }
+    }
+
+    /** Prunes expired saved plans before the command session ends. */
+    public void close() {
+        model.close();
     }
 
     /** Executes one command while retaining the same command state as the terminal session. */

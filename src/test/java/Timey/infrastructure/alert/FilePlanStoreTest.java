@@ -49,6 +49,26 @@ class FilePlanStoreTest {
         }
     }
 
+    @Test
+    void loadAll_formattedPlans_returnsSavedPlansInFileOrder() throws Exception {
+        var directory = Files.createTempDirectory("timey-plans");
+        try {
+            var path = directory.resolve("plans.txt");
+            Files.writeString(path, "29-08-2026 | 1700 | Admiralty MRT -> COM3 | leave by 1550\n"
+                    + "30-08-2026 | 0905 | Home -> NUS | leave by 0820\n");
+
+            var result = new FilePlanStore(path).loadAll();
+
+            assertEquals(List.of(
+                    new SavedPlan(LocalDate.of(2026, 8, 29), LocalTime.of(17, 0), "Admiralty MRT", "COM3",
+                            LocalTime.of(15, 50)),
+                    new SavedPlan(LocalDate.of(2026, 8, 30), LocalTime.of(9, 5), "Home", "NUS",
+                            LocalTime.of(8, 20))), result);
+        } finally {
+            deleteDirectory(directory);
+        }
+    }
+
     private void deleteDirectory(java.nio.file.Path directory) throws Exception {
         Files.walk(directory).sorted(java.util.Comparator.reverseOrder()).forEach(path -> {
             try {

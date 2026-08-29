@@ -48,7 +48,10 @@ public final class MainWindow extends UiPart<Stage> {
         this.dashboard = createDashboard();
         commandBar.setCommandExecutor(this::executeCommand);
         fillInnerParts();
-        getRoot().setOnHidden(event -> header.stopClock());
+        getRoot().setOnHidden(event -> {
+            commandLineApp.close();
+            header.stopClock();
+        });
     }
 
     /** Displays the window and starts the header clock. */

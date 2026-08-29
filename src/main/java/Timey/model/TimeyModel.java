@@ -2,6 +2,7 @@ package Timey.model;
 
 import java.time.Clock;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.Objects;
@@ -38,6 +39,8 @@ public final class TimeyModel {
         this.planStore = Objects.requireNonNull(planStore);
         this.departureReminderService = Objects.requireNonNull(departureReminderService);
         this.clock = Objects.requireNonNull(clock);
+        this.savedPlans = planStore.loadAll();
+        pruneExpiredPlans();
     }
 
     /** Finds routes, adds a matching fixed timing, and records the resulting plan state. */
@@ -120,6 +123,15 @@ public final class TimeyModel {
         return savedPlans;
     }
 
+    /** Removes plans whose target arrival is no longer in the future. */
+    public void pruneExpiredPlans() {
+        List<SavedPlan> remainingPlans = savedPlans.stream().filter(this::isFuture).toList();
+        if (!remainingPlans.equals(savedPlans)) {
+            savedPlans = remainingPlans;
+            planStore.saveAll(savedPlans);
+        }
+    }
+
     /** Returns the currently active departure reminders for this command session. */
     public List<ScheduledDepartureReminder> getScheduledReminders() {
         return departureReminderService.scheduledReminders();
@@ -158,14 +170,23 @@ public final class TimeyModel {
         return clock;
     }
 
+    /** Prunes plans before the command session is discarded. */
+    public void close() {
+        pruneExpiredPlans();
+    }
+
     private void saveSelectedPlan(DepartureRecommendation recommendation) {
         LocalDate date = LocalDate.now(clock);
-        if (!pendingPlan.getArrivalTime().isAfter(LocalTime.now(clock))) {
-            return;
-        }
         SavedPlan savedPlan = new SavedPlan(date, pendingPlan.getArrivalTime(), pendingPlan.getOrigin(),
                 pendingPlan.getDestination(), recommendation.departureTime());
+        if (!isFuture(savedPlan)) {
+            return;
+        }
         savedPlans = java.util.stream.Stream.concat(savedPlans.stream(), java.util.stream.Stream.of(savedPlan)).toList();
         planStore.saveAll(savedPlans);
+    }
+
+    private boolean isFuture(SavedPlan plan) {
+        return LocalDateTime.of(plan.date(), plan.arrivalTime()).isAfter(LocalDateTime.now(clock));
     }
 }

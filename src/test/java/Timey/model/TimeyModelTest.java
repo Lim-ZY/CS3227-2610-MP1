@@ -17,6 +17,7 @@ import org.junit.jupiter.api.Test;
 import Timey.TestTimeyModelFactory;
 import Timey.domain.transit.RouteAlternative;
 import Timey.domain.alert.SavedPlan;
+import Timey.ports.PlanStore;
 import Timey.infrastructure.transit.InMemoryFixedCommuteStore;
 import Timey.command.PlanCommand;
 
@@ -64,5 +65,86 @@ class TimeyModelTest {
 
         assertTrue(model.getSavedPlans().isEmpty());
         assertTrue(savedPlanLists.isEmpty());
+    }
+
+    @Test
+    void constructor_loadedPlansContainExpiredEntry_removesItFromStore() {
+        var savedPlanLists = new ArrayList<List<SavedPlan>>();
+        Clock clock = Clock.fixed(Instant.parse("2026-08-29T01:00:00Z"), ZoneId.of("Asia/Singapore"));
+        SavedPlan expired = new SavedPlan(LocalDate.of(2026, 8, 28), LocalTime.of(17, 0), "Home", "NUS",
+                LocalTime.of(16, 0));
+        SavedPlan future = new SavedPlan(LocalDate.of(2026, 8, 29), LocalTime.of(17, 0), "Home", "NUS",
+                LocalTime.of(16, 0));
+        PlanStore planStore = new PlanStore() {
+            @Override
+            public List<SavedPlan> loadAll() {
+                return List.of(expired, future);
+            }
+
+            @Override
+            public void saveAll(List<SavedPlan> plans) {
+                savedPlanLists.add(List.copyOf(plans));
+            }
+        };
+
+        var model = TestTimeyModelFactory.create(new InMemoryFixedCommuteStore(), clock, planStore);
+
+        assertEquals(List.of(future), model.getSavedPlans());
+        assertEquals(List.of(List.of(future)), savedPlanLists);
+    }
+
+    @Test
+    void close_planExpiresDuringSession_removesItFromStore() {
+        var savedPlanLists = new ArrayList<List<SavedPlan>>();
+        var clock = new MutableClock(Instant.parse("2026-08-29T01:00:00Z"), ZoneId.of("Asia/Singapore"));
+        SavedPlan future = new SavedPlan(LocalDate.of(2026, 8, 29), LocalTime.of(17, 0), "Home", "NUS",
+                LocalTime.of(16, 0));
+        PlanStore planStore = new PlanStore() {
+            @Override
+            public List<SavedPlan> loadAll() {
+                return List.of(future);
+            }
+
+            @Override
+            public void saveAll(List<SavedPlan> plans) {
+                savedPlanLists.add(List.copyOf(plans));
+            }
+        };
+        var model = TestTimeyModelFactory.create(new InMemoryFixedCommuteStore(), clock, planStore);
+
+        clock.setInstant(Instant.parse("2026-08-29T12:00:00Z"));
+        model.close();
+
+        assertTrue(model.getSavedPlans().isEmpty());
+        assertEquals(List.of(List.of()), savedPlanLists);
+    }
+
+    private static final class MutableClock extends Clock {
+        private Instant instant;
+        private final ZoneId zone;
+
+        MutableClock(Instant instant, ZoneId zone) {
+            this.instant = instant;
+            this.zone = zone;
+        }
+
+        void setInstant(Instant instant) {
+            this.instant = instant;
+        }
+
+        @Override
+        public ZoneId getZone() {
+            return zone;
+        }
+
+        @Override
+        public Clock withZone(ZoneId newZone) {
+            return new MutableClock(instant, newZone);
+        }
+
+        @Override
+        public Instant instant() {
+            return instant;
+        }
     }
 }
