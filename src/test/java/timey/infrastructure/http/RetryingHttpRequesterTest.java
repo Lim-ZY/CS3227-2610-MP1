@@ -2,6 +2,7 @@ package timey.infrastructure.http;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.net.URI;
 import java.time.Duration;
@@ -67,6 +68,50 @@ class RetryingHttpRequesterTest {
 
         assertThrows(IllegalStateException.class, () -> retryingRequester.get(URI));
         assertEquals(3, calls.get());
+    }
+
+    @Test
+    void get_interruptedBeforeRequest_doesNotInvokeDelegate() {
+        var calls = new AtomicInteger();
+        var retryingRequester = new RetryingHttpRequester(uri -> {
+            calls.incrementAndGet();
+            return new HttpResult(200, "ok");
+        }, 2, duration -> { });
+
+        Thread.currentThread().interrupt();
+        try {
+            IllegalStateException exception =
+                    assertThrows(IllegalStateException.class, () -> retryingRequester.get(URI));
+
+            assertEquals("HTTP request was interrupted.", exception.getMessage());
+            assertEquals(0, calls.get());
+            assertTrue(Thread.currentThread().isInterrupted());
+        } finally {
+            Thread.interrupted();
+        }
+    }
+
+    @Test
+    void get_interruptedConnectionFailure_doesNotRetry() {
+        var calls = new AtomicInteger();
+        var retryingRequester = new RetryingHttpRequester(uri -> {
+            calls.incrementAndGet();
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException("Interrupted connection");
+        }, 2, duration -> {
+            throw new AssertionError("Interrupted failures should not pause.");
+        });
+
+        try {
+            IllegalStateException exception =
+                    assertThrows(IllegalStateException.class, () -> retryingRequester.get(URI));
+
+            assertEquals("HTTP request was interrupted.", exception.getMessage());
+            assertEquals(1, calls.get());
+            assertTrue(Thread.currentThread().isInterrupted());
+        } finally {
+            Thread.interrupted();
+        }
     }
 
     @Test

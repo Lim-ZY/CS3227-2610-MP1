@@ -28,6 +28,9 @@ public final class RetryingHttpRequester implements HttpRequester {
 
     @Override
     public HttpResult get(URI uri) {
+        if (Thread.currentThread().isInterrupted()) {
+            throw new IllegalStateException("HTTP request was interrupted.");
+        }
         IllegalStateException lastFailure = null;
         for (int attempt = 0; attempt <= maxRetries; attempt++) {
             try {
@@ -37,6 +40,9 @@ public final class RetryingHttpRequester implements HttpRequester {
                 }
             } catch (IllegalStateException exception) {
                 lastFailure = exception;
+                if (Thread.currentThread().isInterrupted()) {
+                    throw new IllegalStateException("HTTP request was interrupted.", exception);
+                }
                 if (attempt == maxRetries) {
                     throw exception;
                 }
