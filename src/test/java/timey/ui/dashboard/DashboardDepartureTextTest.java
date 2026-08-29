@@ -24,6 +24,11 @@ class DashboardDepartureTextTest {
     }
 
     @Test
+    void until_departureWithinOneMinute_showsLessThanOneMinute() {
+        assertEquals("<1m", DashboardDepartureText.until(LocalDateTime.of(2026, 8, 21, 9, 42, 30), CLOCK));
+    }
+
+    @Test
     void until_tomorrowDeparture_includesRemainingDay() {
         assertEquals("22h 18m", DashboardDepartureText.until(LocalDateTime.of(2026, 8, 22, 8, 0), CLOCK));
     }

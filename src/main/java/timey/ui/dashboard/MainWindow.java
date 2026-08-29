@@ -3,6 +3,8 @@ package timey.ui.dashboard;
 import java.io.StringWriter;
 import java.util.Objects;
 
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
@@ -22,6 +24,7 @@ import timey.ui.UiPart;
 /** Main FXML-backed window that hosts and coordinates Timey's dashboard UI parts. */
 public final class MainWindow extends UiPart<Stage> {
     private static final String FXML = "MainWindow.fxml";
+    private static final javafx.util.Duration DASHBOARD_REFRESH_INTERVAL = javafx.util.Duration.seconds(30);
 
     @FXML
     private StackPane headerPlaceholder;
@@ -38,6 +41,8 @@ public final class MainWindow extends UiPart<Stage> {
     private final DashboardContent dashboard;
     private final DashboardCommandTracker commandTracker = new DashboardCommandTracker();
     private Task<DashboardCommandResponse> activeCommandTask;
+    private DashboardState latestDashboardState;
+    private Timeline dashboardRefreshTimer;
 
     /** Creates a new MainWindow. */
     public MainWindow(Stage primaryStage, CommandLineApp commandLineApp, StringWriter output,
@@ -56,13 +61,16 @@ public final class MainWindow extends UiPart<Stage> {
             cancelActiveCommand();
             commandLineApp.close();
             header.stopClock();
+            stopDashboardRefresh();
         });
     }
 
     /** Displays the window and starts the header clock. */
     public void show() {
         getRoot().show();
+        refreshDashboard(commandLineApp.getDashboardState());
         header.startClock(ApplicationConfiguration.TIME_ZONE);
+        startDashboardRefresh();
     }
 
     private void fillInnerParts() {
@@ -149,6 +157,7 @@ public final class MainWindow extends UiPart<Stage> {
     }
 
     private void refreshDashboard(DashboardState state) {
+        latestDashboardState = Objects.requireNonNull(state);
         dashboard.nextEvent().render(state);
         dashboard.commute().render(state);
         dashboard.reminders().render(state);
@@ -159,6 +168,26 @@ public final class MainWindow extends UiPart<Stage> {
     private void showLoading() {
         dashboard.commute().showLoading();
         dashboard.alternatives().showLoading();
+    }
+
+    private void startDashboardRefresh() {
+        stopDashboardRefresh();
+        dashboardRefreshTimer = new Timeline(new KeyFrame(DASHBOARD_REFRESH_INTERVAL,
+                event -> refreshNextEventCard()));
+        dashboardRefreshTimer.setCycleCount(Timeline.INDEFINITE);
+        dashboardRefreshTimer.play();
+    }
+
+    private void stopDashboardRefresh() {
+        if (dashboardRefreshTimer != null) {
+            dashboardRefreshTimer.stop();
+        }
+    }
+
+    private void refreshNextEventCard() {
+        if (latestDashboardState != null) {
+            dashboard.nextEvent().render(latestDashboardState);
+        }
     }
 
     private void cancelActiveCommand() {

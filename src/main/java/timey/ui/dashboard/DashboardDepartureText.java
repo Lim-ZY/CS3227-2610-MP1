@@ -15,6 +15,9 @@ public final class DashboardDepartureText {
         if (remaining.isZero() || remaining.isNegative()) {
             return "Leave now";
         }
+        if (remaining.compareTo(Duration.ofMinutes(1)) < 0) {
+            return "<1m";
+        }
         long hours = remaining.toHours();
         long minutes = remaining.toMinutesPart();
         return hours == 0 ? minutes + "m" : hours + "h " + minutes + "m";
