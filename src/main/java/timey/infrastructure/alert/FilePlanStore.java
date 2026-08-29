@@ -30,25 +30,8 @@ public final class FilePlanStore implements PlanStore {
     @Override
     public synchronized void saveAll(List<SavedPlan> plans) {
         Objects.requireNonNull(plans);
-        List<SavedPlan> plansToSave = List.copyOf(plans);
-        String content = plansToSave.stream()
-                .map(this::format)
-                .collect(java.util.stream.Collectors.joining(System.lineSeparator()));
-        if (!content.isEmpty()) {
-            content += System.lineSeparator();
-        }
         try {
-            Path parent = path.getParent();
-            if (parent != null) {
-                Files.createDirectories(parent);
-            }
-            Path temporaryFile = Files.createTempFile(path.toAbsolutePath().getParent(), "plans-", ".tmp");
-            try {
-                Files.writeString(temporaryFile, content, StandardCharsets.UTF_8);
-                moveIntoPlace(temporaryFile);
-            } finally {
-                Files.deleteIfExists(temporaryFile);
-            }
+            writeAtomically(serialize(plans));
         } catch (IOException exception) {
             throw new IllegalStateException("Could not save plans.", exception);
         }
@@ -77,6 +60,27 @@ public final class FilePlanStore implements PlanStore {
             Files.move(temporaryFile, path, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
         } catch (AtomicMoveNotSupportedException exception) {
             Files.move(temporaryFile, path, StandardCopyOption.REPLACE_EXISTING);
+        }
+    }
+
+    private String serialize(List<SavedPlan> plans) {
+        String content = List.copyOf(plans).stream()
+                .map(this::format)
+                .collect(java.util.stream.Collectors.joining(System.lineSeparator()));
+        return content.isEmpty() ? content : content + System.lineSeparator();
+    }
+
+    private void writeAtomically(String content) throws IOException {
+        Path parent = path.getParent();
+        if (parent != null) {
+            Files.createDirectories(parent);
+        }
+        Path temporaryFile = Files.createTempFile(path.toAbsolutePath().getParent(), "plans-", ".tmp");
+        try {
+            Files.writeString(temporaryFile, content, StandardCharsets.UTF_8);
+            moveIntoPlace(temporaryFile);
+        } finally {
+            Files.deleteIfExists(temporaryFile);
         }
     }
 
