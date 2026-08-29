@@ -95,6 +95,17 @@ class OneMapRailTransitPlannerTest {
     }
 
     @Test
+    void findRoutes_nullResponseBody_returnsUnreadableResponseReason() {
+        var planner = new OneMapRailTransitPlanner(uri -> new HttpResult(200, null),
+                Optional.of(URI.create("https://timey.example.workers.dev")));
+
+        var lookup = planner.findRoutes(COM3, VIVOCITY, LocalDate.of(2026, 8, 21), LocalTime.NOON);
+
+        assertTrue(!lookup.isAvailable());
+        assertEquals("OneMap routing returned an unreadable response.", lookup.unavailableReason().orElseThrow());
+    }
+
+    @Test
     void findRoutes_railLegUsesRouteField_mapsItemisedRailStep() {
         var planner = new OneMapRailTransitPlanner(uri -> new HttpResult(200, """
                 {"plan":{"itineraries":[{"walkTime":0,"transitTime":1800,"transfers":0,

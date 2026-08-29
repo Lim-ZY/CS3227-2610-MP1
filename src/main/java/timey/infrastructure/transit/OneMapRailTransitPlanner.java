@@ -84,7 +84,7 @@ public final class OneMapRailTransitPlanner implements RailTransitPlanner {
                 routes.add(route.orElseThrow());
             }
             return LiveRouteLookup.available(routes);
-        } catch (JsonProcessingException exception) {
+        } catch (JsonProcessingException | IllegalArgumentException exception) {
             return LiveRouteLookup.unavailable("OneMap routing returned an unreadable response.");
         }
     }
