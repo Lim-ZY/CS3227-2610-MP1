@@ -67,11 +67,13 @@ public final class ApplicationConfiguration {
 
     private List<String> savedLocations() {
         String configured = properties.getProperty("saved-locations", "");
-        return new LinkedHashSet<>(configured.lines()
+        var locations = new LinkedHashSet<String>();
+        configured.lines()
                 .flatMap(line -> java.util.Arrays.stream(line.split(",")))
                 .map(String::trim)
                 .filter(location -> !location.isEmpty())
-                .toList()).stream().toList();
+                .forEach(locations::add);
+        return List.copyOf(locations);
     }
 
 }
