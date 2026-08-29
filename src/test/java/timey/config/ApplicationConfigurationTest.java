@@ -73,4 +73,35 @@ class ApplicationConfigurationTest {
             Files.deleteIfExists(propertiesFile);
         }
     }
+
+    @Test
+    void load_malformedPropertiesFile_safeDefaultsReturned() throws Exception {
+        var propertiesFile = Files.createTempFile("timey", ".properties");
+        try {
+            Files.writeString(propertiesFile, "departure-buffer-minutes=20\nmalformed=\\u12G4");
+
+            var preferences = ApplicationConfiguration.load(propertiesFile).getUserPreferences();
+
+            assertEquals(Duration.ofMinutes(10), preferences.defaultDepartureBuffer());
+            assertEquals(java.util.List.of(), preferences.savedLocations());
+        } finally {
+            Files.deleteIfExists(propertiesFile);
+        }
+    }
+
+    @Test
+    void load_oversizedOrDuplicatePreferences_usesSafeValues() throws Exception {
+        var propertiesFile = Files.createTempFile("timey", ".properties");
+        try {
+            Files.writeString(propertiesFile, "departure-buffer-minutes=721\n"
+                    + "saved-locations=COM3, com3, Home, " + "x".repeat(201) + ", Bad\u0001Location");
+
+            var preferences = ApplicationConfiguration.load(propertiesFile).getUserPreferences();
+
+            assertEquals(Duration.ofMinutes(10), preferences.defaultDepartureBuffer());
+            assertEquals(java.util.List.of("COM3", "Home"), preferences.savedLocations());
+        } finally {
+            Files.deleteIfExists(propertiesFile);
+        }
+    }
 }

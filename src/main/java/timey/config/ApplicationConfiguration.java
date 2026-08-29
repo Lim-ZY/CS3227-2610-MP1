@@ -7,8 +7,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.time.ZoneId;
-import java.util.LinkedHashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.Properties;
 
@@ -17,6 +18,8 @@ public final class ApplicationConfiguration {
     public static final ZoneId TIME_ZONE = ZoneId.of("Asia/Singapore");
     private static final Path DEFAULT_PATH = Path.of("config", "application.properties");
     private static final Duration DEFAULT_DEPARTURE_BUFFER = Duration.ofMinutes(10);
+    private static final Duration MAX_DEPARTURE_BUFFER = Duration.ofHours(12);
+    private static final int MAX_SAVED_LOCATION_LENGTH = 200;
     private static final URI LIVE_DATABASE_URI = URI.create(
             "https://cs3227-mp1-worker.tcmpiano03.workers.dev");
 
@@ -35,8 +38,8 @@ public final class ApplicationConfiguration {
         if (Files.isRegularFile(path)) {
             try (InputStream input = Files.newInputStream(path)) {
                 properties.load(input);
-            } catch (IOException exception) {
-                throw new IllegalStateException("Could not load " + path + ".", exception);
+            } catch (IOException | IllegalArgumentException exception) {
+                return new ApplicationConfiguration(new Properties());
             }
         }
         return new ApplicationConfiguration(properties);
@@ -59,7 +62,11 @@ public final class ApplicationConfiguration {
         }
         try {
             long minutes = Long.parseLong(configured.trim());
-            return minutes < 0 ? DEFAULT_DEPARTURE_BUFFER : Duration.ofMinutes(minutes);
+            Duration buffer = Duration.ofMinutes(minutes);
+            if (minutes < 0 || buffer.compareTo(MAX_DEPARTURE_BUFFER) > 0) {
+                return DEFAULT_DEPARTURE_BUFFER;
+            }
+            return buffer;
         } catch (NumberFormatException | ArithmeticException exception) {
             return DEFAULT_DEPARTURE_BUFFER;
         }
@@ -67,13 +74,19 @@ public final class ApplicationConfiguration {
 
     private List<String> savedLocations() {
         String configured = properties.getProperty("saved-locations", "");
-        var locations = new LinkedHashSet<String>();
-        configured.lines()
-                .flatMap(line -> java.util.Arrays.stream(line.split(",")))
-                .map(String::trim)
-                .filter(location -> !location.isEmpty())
-                .forEach(locations::add);
-        return List.copyOf(locations);
+        var locations = new LinkedHashMap<String, String>();
+        for (String configuredLocation : configured.split(",", -1)) {
+            String location = configuredLocation.strip();
+            if (isValidLocation(location)) {
+                locations.putIfAbsent(location.toLowerCase(Locale.ROOT), location);
+            }
+        }
+        return List.copyOf(locations.values());
+    }
+
+    private boolean isValidLocation(String location) {
+        return !location.isEmpty() && location.length() <= MAX_SAVED_LOCATION_LENGTH
+                && location.chars().noneMatch(Character::isISOControl);
     }
 
 }
