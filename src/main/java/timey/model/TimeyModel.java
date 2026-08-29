@@ -173,12 +173,13 @@ public final class TimeyModel {
         DepartureRecommendation recommendation = pendingUsesFallbackEstimate && route.name().equals("Offline estimate")
                 ? planner.recommendFallbackDeparture(pendingPlan, route)
                 : planner.recommendDeparture(pendingPlan, route);
-        selectRecommendation(recommendation);
         saveSelectedPlan(recommendation);
         if (!recommendation.departureAt().isAfter(LocalDateTime.now(clock))) {
+            selectRecommendation(recommendation);
             return RouteSelectionResult.leaveNow(recommendation);
         }
         ScheduledDepartureReminder reminder = departureReminderService.schedule(recommendation);
+        selectRecommendation(recommendation);
         return RouteSelectionResult.reminderScheduled(recommendation, reminder);
     }
 
@@ -202,9 +203,11 @@ public final class TimeyModel {
         if (savedPlans.contains(savedPlan)) {
             return;
         }
-        savedPlans = java.util.stream.Stream.concat(savedPlans.stream(), java.util.stream.Stream.of(savedPlan))
+        List<SavedPlan> updatedPlans = java.util.stream.Stream
+                .concat(savedPlans.stream(), java.util.stream.Stream.of(savedPlan))
                 .toList();
-        planStore.saveAll(savedPlans);
+        planStore.saveAll(updatedPlans);
+        savedPlans = updatedPlans;
     }
 
     private boolean isFuture(SavedPlan plan) {

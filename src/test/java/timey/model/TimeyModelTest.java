@@ -101,6 +101,27 @@ class TimeyModelTest {
     }
 
     @Test
+    void selectRoute_planSaveFails_preservesUnselectedPlanState() {
+        Clock clock = Clock.fixed(Instant.parse("2026-08-29T01:00:00Z"), ZoneId.of("Asia/Singapore"));
+        PlanStore failingPlanStore = new PlanStore() {
+            @Override
+            public void saveAll(List<SavedPlan> plans) {
+                throw new IllegalStateException("Saved plan storage is unavailable.");
+            }
+        };
+        var model = TestTimeyModelFactory.create(new InMemoryFixedCommuteStore(), clock, failingPlanStore);
+        PlanCommand plan = new PlanCommand("Admiralty MRT", "COM3", LocalTime.of(17, 0), Duration.ZERO);
+        plan.execute(model);
+
+        assertThrows(IllegalStateException.class, () -> model.selectRoute(1));
+        assertEquals(plan, model.getPendingPlan().orElseThrow());
+        assertEquals("Offline estimate", model.getPendingAlternatives().getFirst().name());
+        assertTrue(model.getSelectedRecommendation().isEmpty());
+        assertTrue(model.getSavedPlans().isEmpty());
+        assertTrue(model.getScheduledReminders().isEmpty());
+    }
+
+    @Test
     void selectRoute_departureCrossesMidnight_savesTargetArrivalDate() {
         var savedPlanLists = new ArrayList<List<SavedPlan>>();
         Clock clock = Clock.fixed(Instant.parse("2026-08-29T14:00:00Z"), ZoneId.of("Asia/Singapore"));
