@@ -53,7 +53,7 @@ class TimeyModelTest {
     }
 
     @Test
-    void selectRoute_targetArrivalAlreadyPassed_savesPlanForTomorrow() {
+    void selectRoute_targetArrivalAlreadyPassed_doesNotSavePlan() {
         var savedPlanLists = new ArrayList<List<SavedPlan>>();
         Clock clock = Clock.fixed(Instant.parse("2026-08-29T12:00:00Z"), ZoneId.of("Asia/Singapore"));
         var model = TestTimeyModelFactory.create(new InMemoryFixedCommuteStore(), clock,
@@ -62,7 +62,7 @@ class TimeyModelTest {
 
         model.selectRoute(1);
 
-        assertEquals(LocalDate.of(2026, 8, 30), model.getSavedPlans().getFirst().date());
-        assertEquals(1, savedPlanLists.size());
+        assertTrue(model.getSavedPlans().isEmpty());
+        assertTrue(savedPlanLists.isEmpty());
     }
 }

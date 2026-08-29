@@ -161,7 +161,7 @@ public final class TimeyModel {
     private void saveSelectedPlan(DepartureRecommendation recommendation) {
         LocalDate date = LocalDate.now(clock);
         if (!pendingPlan.getArrivalTime().isAfter(LocalTime.now(clock))) {
-            date = date.plusDays(1);
+            return;
         }
         SavedPlan savedPlan = new SavedPlan(date, pendingPlan.getArrivalTime(), pendingPlan.getOrigin(),
                 pendingPlan.getDestination(), recommendation.departureTime());
