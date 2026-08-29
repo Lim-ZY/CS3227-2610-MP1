@@ -2,6 +2,7 @@ package timey.command;
 
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.List;
 
 import timey.domain.alert.DepartureRecommendation;
 import timey.domain.alert.ScheduledDepartureReminder;
@@ -42,18 +43,26 @@ public final class ChooseCommand extends Command {
         var messages = new ArrayList<String>();
         messages.add("Great choice! Here is your departure plan:");
         messages.add("");
+        addRecommendationDetails(messages, recommendation);
+        addReminderStatus(messages, reminder, model);
+        return new CommandResult(messages);
+    }
+
+    private void addRecommendationDetails(List<String> messages, DepartureRecommendation recommendation) {
         messages.add("Chosen route: " + recommendation.routeName());
         messages.add("Total travel time: " + recommendation.travelDuration().toMinutes() + " minutes");
         messages.add("Personal buffer: " + recommendation.buffer().toMinutes() + " minutes");
         messages.add("Recommended departure: " + recommendation.departureTime().format(TIME_FORMAT));
         messages.add("");
         messages.add("Please leave your desk by " + recommendation.departureTime().format(TIME_FORMAT) + ".");
+    }
+
+    private void addReminderStatus(List<String> messages, ScheduledDepartureReminder reminder, TimeyModel model) {
         if (reminder == null) {
             messages.add("You have to leave now to stay on time! Good luck!");
         } else {
             messages.add("Departure reminder automatically set for "
                     + REMINDER_TIME_FORMAT.format(reminder.triggerAt().atZone(model.getClock().getZone())) + ".");
         }
-        return new CommandResult(messages);
     }
 }
