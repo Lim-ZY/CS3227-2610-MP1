@@ -7,6 +7,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalTime;
 import java.time.ZoneId;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
@@ -51,6 +52,28 @@ class PlannerTest {
 
         assertEquals("Fastest Transit", result.alternatives().getFirst().name());
         assertEquals(List.of("Using deterministic routes: Offline"), result.messages());
+    }
+
+    @Test
+    void findAlternatives_originUnavailable_doesNotResolveDestination() {
+        List<String> resolvedQueries = new ArrayList<>();
+        var resolver = (timey.ports.LocationResolver) query -> {
+            resolvedQueries.add(query);
+            if (query.equals("COM3")) {
+                return LocationResolution.unavailable("Live location lookup is unavailable.");
+            }
+            throw new AssertionError("Destination should not be resolved after an unavailable origin.");
+        };
+        RailTransitPlanner railPlanner = (origin, destination, date, time) -> {
+            throw new AssertionError("Live routing should not run without both locations.");
+        };
+        var planner = new Planner(new CommutePlanningService(new MockTransitPlanner()), resolver, railPlanner, CLOCK);
+
+        var result = planner.findAlternatives(PLAN);
+
+        assertEquals(List.of("COM3"), resolvedQueries);
+        assertEquals("Fastest Transit", result.alternatives().getFirst().name());
+        assertEquals(List.of("Using deterministic routes: Live location lookup is unavailable."), result.messages());
     }
 
     @Test

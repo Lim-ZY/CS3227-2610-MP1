@@ -35,16 +35,21 @@ public final class Planner {
     /** Finds live rail alternatives when available, otherwise deterministic alternatives. */
     public PlanningResult findAlternatives(PlanCommand plan) {
         LocationResolution origin = locationResolver.resolve(plan.getOrigin());
+        if (!origin.isFound()) {
+            return unavailableLocationResult(plan, origin);
+        }
+
         LocationResolution destination = locationResolver.resolve(plan.getDestination());
-        List<String> messages = new ArrayList<>();
-        if (!origin.isFound() || !destination.isFound()) {
-            String reason = origin.isFound() ? destination.reason() : origin.reason();
-            messages.add("Using deterministic routes: " + reason);
-            return deterministicResult(plan, messages);
+        if (!destination.isFound()) {
+            return unavailableLocationResult(plan, destination);
         }
 
         return findAlternativesForResolvedLocations(plan, origin.location().orElseThrow(),
-                destination.location().orElseThrow(), messages);
+                destination.location().orElseThrow(), new ArrayList<>());
+    }
+
+    private PlanningResult unavailableLocationResult(PlanCommand plan, LocationResolution unavailableLocation) {
+        return deterministicResult(plan, List.of("Using deterministic routes: " + unavailableLocation.reason()));
     }
 
     private PlanningResult findAlternativesForResolvedLocations(PlanCommand plan, ResolvedLocation origin,
