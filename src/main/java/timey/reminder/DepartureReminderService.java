@@ -34,13 +34,22 @@ public final class DepartureReminderService {
     /** Schedules a reminder today, or tomorrow when today's leave-by time has passed. */
     public synchronized ScheduledDepartureReminder schedule(DepartureRecommendation recommendation) {
         Objects.requireNonNull(recommendation);
+        ScheduledDepartureReminder reminder = new ScheduledDepartureReminder(triggerAt(recommendation),
+                "Timey reminder: Please leave your desk now.");
+        registerReminder(reminder);
+        return reminder;
+    }
+
+    private Instant triggerAt(DepartureRecommendation recommendation) {
         ZonedDateTime now = ZonedDateTime.now(clock);
         ZonedDateTime triggerAt = now.with(recommendation.departureTime());
         if (!triggerAt.isAfter(now)) {
             triggerAt = triggerAt.plusDays(1);
         }
-        String message = "Timey reminder: Please leave your desk now.";
-        ScheduledDepartureReminder reminder = new ScheduledDepartureReminder(triggerAt.toInstant(), message);
+        return triggerAt.toInstant();
+    }
+
+    private void registerReminder(ScheduledDepartureReminder reminder) {
         scheduledReminders.add(reminder);
         ReminderHandle handle = reminderScheduler.schedule(reminder.triggerAt(), () -> {
             try {
@@ -50,7 +59,6 @@ public final class DepartureReminderService {
             }
         });
         reminderHandles.put(reminder, handle);
-        return reminder;
     }
 
     /** Returns currently active reminders, discarding entries whose trigger time has passed. */
