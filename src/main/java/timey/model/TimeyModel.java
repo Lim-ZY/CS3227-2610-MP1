@@ -3,7 +3,6 @@ package timey.model;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -165,7 +164,7 @@ public final class TimeyModel {
         DepartureRecommendation recommendation = planner.recommendDeparture(pendingPlan, route);
         selectRecommendation(recommendation);
         saveSelectedPlan(recommendation);
-        if (recommendation.departureTime().isBefore(LocalTime.now(clock))) {
+        if (!recommendation.departureAt().isAfter(LocalDateTime.now(clock))) {
             return RouteSelectionResult.leaveNow(recommendation);
         }
         ScheduledDepartureReminder reminder = departureReminderService.schedule(recommendation);
@@ -183,8 +182,8 @@ public final class TimeyModel {
     }
 
     private void saveSelectedPlan(DepartureRecommendation recommendation) {
-        LocalDate date = LocalDate.now(clock);
-        SavedPlan savedPlan = new SavedPlan(date, pendingPlan.getArrivalTime(), pendingPlan.getOrigin(),
+        SavedPlan savedPlan = new SavedPlan(recommendation.arrivalAt().toLocalDate(), pendingPlan.getArrivalTime(),
+                pendingPlan.getOrigin(),
                 pendingPlan.getDestination(), recommendation.departureTime());
         if (!isFuture(savedPlan)) {
             return;

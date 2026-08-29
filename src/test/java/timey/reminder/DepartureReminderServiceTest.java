@@ -5,7 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
-import java.time.LocalTime;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -23,8 +23,7 @@ class DepartureReminderServiceTest {
     void schedule_departureLaterToday_schedulesReminderToday() {
         var scheduler = new CapturingReminderScheduler();
         var service = createService(scheduler, Clock.fixed(Instant.parse("2026-08-21T08:00:00Z"), SINGAPORE));
-        var recommendation = new DepartureRecommendation("Rail", LocalTime.of(17, 30), Duration.ofMinutes(43),
-                Duration.ofMinutes(10));
+        var recommendation = recommendationAt(LocalDateTime.of(2026, 8, 21, 17, 30));
 
         var reminder = service.schedule(recommendation);
 
@@ -34,11 +33,10 @@ class DepartureReminderServiceTest {
     }
 
     @Test
-    void schedule_departureTimeNowOrPast_schedulesReminderTomorrow() {
+    void schedule_departureTomorrow_schedulesReminderTomorrow() {
         var scheduler = new CapturingReminderScheduler();
         var service = createService(scheduler, Clock.fixed(Instant.parse("2026-08-21T09:30:00Z"), SINGAPORE));
-        var recommendation = new DepartureRecommendation("Rail", LocalTime.of(17, 30), Duration.ofMinutes(43),
-                Duration.ofMinutes(10));
+        var recommendation = recommendationAt(LocalDateTime.of(2026, 8, 22, 17, 30));
 
         var reminder = service.schedule(recommendation);
 
@@ -50,8 +48,7 @@ class DepartureReminderServiceTest {
         var clock = new MutableClock(Instant.parse("2026-08-21T08:00:00Z"), SINGAPORE);
         var scheduler = new CapturingReminderScheduler();
         var service = createService(scheduler, clock);
-        var recommendation = new DepartureRecommendation("Rail", LocalTime.of(17, 30), Duration.ofMinutes(43),
-                Duration.ofMinutes(10));
+        var recommendation = recommendationAt(LocalDateTime.of(2026, 8, 21, 17, 30));
 
         service.schedule(recommendation);
         clock.setInstant(Instant.parse("2026-08-21T09:30:01Z"));
@@ -64,8 +61,7 @@ class DepartureReminderServiceTest {
     void cancel_activeReminder_removesReminderAndCancelsScheduledAction() {
         var scheduler = new CapturingReminderScheduler();
         var service = createService(scheduler, Clock.fixed(Instant.parse("2026-08-21T08:00:00Z"), SINGAPORE));
-        var recommendation = new DepartureRecommendation("Rail", LocalTime.of(17, 30), Duration.ofMinutes(43),
-                Duration.ofMinutes(10));
+        var recommendation = recommendationAt(LocalDateTime.of(2026, 8, 21, 17, 30));
 
         service.schedule(recommendation);
 
@@ -80,8 +76,7 @@ class DepartureReminderServiceTest {
         var notifiedReminder = new AtomicReference<ScheduledDepartureReminder>();
         var service = new DepartureReminderService(scheduler,
                 Clock.fixed(Instant.parse("2026-08-21T08:00:00Z"), SINGAPORE), notifiedReminder::set);
-        var recommendation = new DepartureRecommendation("Rail", LocalTime.of(17, 30), Duration.ofMinutes(43),
-                Duration.ofMinutes(10));
+        var recommendation = recommendationAt(LocalDateTime.of(2026, 8, 21, 17, 30));
 
         var reminder = service.schedule(recommendation);
         scheduler.action.get().run();
@@ -92,6 +87,11 @@ class DepartureReminderServiceTest {
 
     private DepartureReminderService createService(ReminderScheduler scheduler, Clock clock) {
         return new DepartureReminderService(scheduler, clock, reminder -> { });
+    }
+
+    private DepartureRecommendation recommendationAt(LocalDateTime departureAt) {
+        return new DepartureRecommendation("Rail", departureAt.plusMinutes(53), departureAt,
+                Duration.ofMinutes(43), Duration.ofMinutes(10));
     }
 
     private static final class CapturingReminderScheduler implements ReminderScheduler {

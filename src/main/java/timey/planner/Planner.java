@@ -1,6 +1,8 @@
 package timey.planner;
 
 import java.time.Clock;
+import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -18,14 +20,16 @@ public final class Planner {
     private final CommutePlanningService commutePlanningService;
     private final LocationResolver locationResolver;
     private final LiveRailPlanningService liveRailPlanningService;
+    private final Clock clock;
 
     /** Creates a new Planner. */
     public Planner(CommutePlanningService commutePlanningService, LocationResolver locationResolver,
             RailTransitPlanner railTransitPlanner, Clock clock) {
         this.commutePlanningService = Objects.requireNonNull(commutePlanningService);
         this.locationResolver = Objects.requireNonNull(locationResolver);
+        this.clock = Objects.requireNonNull(clock);
         this.liveRailPlanningService = new LiveRailPlanningService(Objects.requireNonNull(railTransitPlanner),
-                Objects.requireNonNull(clock));
+                this.clock);
     }
 
     /** Finds live rail alternatives when available, otherwise deterministic alternatives. */
@@ -68,7 +72,13 @@ public final class Planner {
 
     /** Calculates the leave-by recommendation for a selected route alternative. */
     public DepartureRecommendation recommendDeparture(PlanCommand plan, RouteAlternative route) {
-        return commutePlanningService.recommendDeparture(plan, route);
+        return commutePlanningService.recommendDeparture(plan, route, nextTargetArrival(plan));
+    }
+
+    private LocalDateTime nextTargetArrival(PlanCommand plan) {
+        ZonedDateTime now = ZonedDateTime.now(clock);
+        LocalDateTime todayAtTarget = LocalDateTime.of(now.toLocalDate(), plan.getArrivalTime());
+        return todayAtTarget.isAfter(now.toLocalDateTime()) ? todayAtTarget : todayAtTarget.plusDays(1);
     }
 
     /** The planned alternatives and explanation of the selected planning source. */

@@ -2,7 +2,6 @@ package timey.reminder;
 
 import java.time.Clock;
 import java.time.Instant;
-import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -31,7 +30,7 @@ public final class DepartureReminderService {
         this.notifier = Objects.requireNonNull(notifier);
     }
 
-    /** Schedules a reminder today, or tomorrow when today's leave-by time has passed. */
+    /** Schedules a reminder at the recommendation's exact leave-by datetime. */
     public synchronized ScheduledDepartureReminder schedule(DepartureRecommendation recommendation) {
         Objects.requireNonNull(recommendation);
         ScheduledDepartureReminder reminder = new ScheduledDepartureReminder(triggerAt(recommendation),
@@ -41,12 +40,7 @@ public final class DepartureReminderService {
     }
 
     private Instant triggerAt(DepartureRecommendation recommendation) {
-        ZonedDateTime now = ZonedDateTime.now(clock);
-        ZonedDateTime triggerAt = now.with(recommendation.departureTime());
-        if (!triggerAt.isAfter(now)) {
-            triggerAt = triggerAt.plusDays(1);
-        }
-        return triggerAt.toInstant();
+        return recommendation.departureAt().atZone(clock.getZone()).toInstant();
     }
 
     private void registerReminder(ScheduledDepartureReminder reminder) {

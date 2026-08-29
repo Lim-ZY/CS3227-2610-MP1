@@ -4,7 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.time.Clock;
 import java.time.Instant;
-import java.time.LocalTime;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
 
 import org.junit.jupiter.api.Test;
@@ -15,11 +15,16 @@ class DashboardDepartureTextTest {
 
     @Test
     void until_futureDeparture_formatsHoursAndMinutes() {
-        assertEquals("7h 55m", DashboardDepartureText.until(LocalTime.of(17, 37), CLOCK));
+        assertEquals("7h 55m", DashboardDepartureText.until(LocalDateTime.of(2026, 8, 21, 17, 37), CLOCK));
     }
 
     @Test
     void until_departureReached_showsLeaveNow() {
-        assertEquals("Leave now", DashboardDepartureText.until(LocalTime.of(9, 42), CLOCK));
+        assertEquals("Leave now", DashboardDepartureText.until(LocalDateTime.of(2026, 8, 21, 9, 42), CLOCK));
+    }
+
+    @Test
+    void until_tomorrowDeparture_includesRemainingDay() {
+        assertEquals("22h 18m", DashboardDepartureText.until(LocalDateTime.of(2026, 8, 22, 8, 0), CLOCK));
     }
 }

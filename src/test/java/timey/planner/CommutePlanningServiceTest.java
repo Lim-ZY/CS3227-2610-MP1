@@ -3,6 +3,7 @@ package timey.planner;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.time.Duration;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
 
@@ -35,7 +36,8 @@ class CommutePlanningServiceTest {
         var plan = new PlanCommand("COM3", "VivoCity", LocalTime.of(18, 30), Duration.ofMinutes(10));
         var route = new RouteAlternative("Fastest Transit", Duration.ofMinutes(8), Duration.ofMinutes(35), 1);
 
-        DepartureRecommendation result = service.recommendDeparture(plan, route);
+        DepartureRecommendation result = service.recommendDeparture(plan, route,
+                LocalDateTime.of(2026, 8, 29, 18, 30));
 
         assertEquals(LocalTime.of(17, 37), result.departureTime());
     }

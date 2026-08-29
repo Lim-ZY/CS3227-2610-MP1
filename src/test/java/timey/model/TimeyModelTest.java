@@ -54,17 +54,21 @@ class TimeyModelTest {
     }
 
     @Test
-    void selectRoute_targetArrivalAlreadyPassed_doesNotSavePlan() {
+    void selectRoute_targetArrivalAlreadyPassed_schedulesTomorrowAndSavesPlan() {
         var savedPlanLists = new ArrayList<List<SavedPlan>>();
         Clock clock = Clock.fixed(Instant.parse("2026-08-29T12:00:00Z"), ZoneId.of("Asia/Singapore"));
         var model = TestTimeyModelFactory.create(new InMemoryFixedCommuteStore(), clock,
                 plans -> savedPlanLists.add(List.copyOf(plans)));
         new PlanCommand("Admiralty MRT", "COM3", LocalTime.of(17, 0), Duration.ZERO).execute(model);
 
-        model.selectRoute(1);
+        RouteSelectionResult result = model.selectRoute(1);
 
-        assertTrue(model.getSavedPlans().isEmpty());
-        assertTrue(savedPlanLists.isEmpty());
+        SavedPlan expected = new SavedPlan(LocalDate.of(2026, 8, 30), LocalTime.of(17, 0), "Admiralty MRT", "COM3",
+                LocalTime.of(16, 17));
+        assertEquals(RouteSelectionResult.Status.REMINDER_SCHEDULED, result.status());
+        assertEquals(List.of(expected), model.getSavedPlans());
+        assertEquals(List.of(List.of(expected)), savedPlanLists);
+        assertEquals(Instant.parse("2026-08-30T08:17:00Z"), model.getScheduledReminders().getFirst().triggerAt());
     }
 
     @Test
@@ -75,10 +79,29 @@ class TimeyModelTest {
                 plans -> savedPlanLists.add(List.copyOf(plans)));
         new PlanCommand("Admiralty MRT", "COM3", LocalTime.of(17, 0), Duration.ZERO).execute(model);
 
-        model.selectRoute(1);
+        RouteSelectionResult result = model.selectRoute(1);
 
+        assertEquals(RouteSelectionResult.Status.LEAVE_NOW, result.status());
         assertTrue(model.getSavedPlans().isEmpty());
         assertTrue(savedPlanLists.isEmpty());
+    }
+
+    @Test
+    void selectRoute_departureCrossesMidnight_savesTargetArrivalDate() {
+        var savedPlanLists = new ArrayList<List<SavedPlan>>();
+        Clock clock = Clock.fixed(Instant.parse("2026-08-29T14:00:00Z"), ZoneId.of("Asia/Singapore"));
+        var model = TestTimeyModelFactory.create(new InMemoryFixedCommuteStore(), clock,
+                plans -> savedPlanLists.add(List.copyOf(plans)));
+        new PlanCommand("Admiralty MRT", "COM3", LocalTime.of(0, 10), Duration.ofMinutes(10)).execute(model);
+
+        RouteSelectionResult result = model.selectRoute(1);
+
+        SavedPlan expected = new SavedPlan(LocalDate.of(2026, 8, 30), LocalTime.of(0, 10), "Admiralty MRT", "COM3",
+                LocalTime.of(23, 17));
+        assertEquals(RouteSelectionResult.Status.REMINDER_SCHEDULED, result.status());
+        assertEquals(List.of(expected), model.getSavedPlans());
+        assertEquals(List.of(List.of(expected)), savedPlanLists);
+        assertEquals(Instant.parse("2026-08-29T15:17:00Z"), model.getScheduledReminders().getFirst().triggerAt());
     }
 
     @Test

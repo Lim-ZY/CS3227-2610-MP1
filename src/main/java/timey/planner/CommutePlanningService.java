@@ -1,5 +1,6 @@
 package timey.planner;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
 
@@ -29,8 +30,9 @@ public final class CommutePlanningService {
         return transitPlanner.findRoutes(plan.getOrigin(), plan.getDestination());
     }
 
-    /** Calculates the leave-by recommendation for a chosen route. */
-    public DepartureRecommendation recommendDeparture(PlanCommand plan, RouteAlternative route) {
-        return departureCalculator.calculate(plan, route);
+    /** Calculates the leave-by recommendation for a chosen route and target arrival datetime. */
+    public DepartureRecommendation recommendDeparture(PlanCommand plan, RouteAlternative route,
+            LocalDateTime arrivalAt) {
+        return departureCalculator.calculate(plan, route, arrivalAt);
     }
 }

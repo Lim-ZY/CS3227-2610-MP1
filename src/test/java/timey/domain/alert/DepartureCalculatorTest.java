@@ -3,6 +3,7 @@ package timey.domain.alert;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.time.Duration;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 
 import org.junit.jupiter.api.Test;
@@ -19,8 +20,9 @@ class DepartureCalculatorTest {
         RouteAlternative route = new RouteAlternative(
                 "Fastest Transit", Duration.ofMinutes(8), Duration.ofMinutes(35), 1);
 
-        DepartureRecommendation result = calculator.calculate(plan, route);
+        DepartureRecommendation result = calculator.calculate(plan, route, LocalDateTime.of(2026, 8, 29, 18, 30));
 
+        assertEquals(LocalDateTime.of(2026, 8, 29, 17, 37), result.departureAt());
         assertEquals(LocalTime.of(17, 37), result.departureTime());
         assertEquals(Duration.ofMinutes(43), result.travelDuration());
         assertEquals(Duration.ofMinutes(10), result.buffer());
@@ -32,8 +34,9 @@ class DepartureCalculatorTest {
         RouteAlternative route = new RouteAlternative(
                 "Late route", Duration.ofMinutes(15), Duration.ofMinutes(20), 0);
 
-        DepartureRecommendation result = calculator.calculate(plan, route);
+        DepartureRecommendation result = calculator.calculate(plan, route, LocalDateTime.of(2026, 8, 30, 0, 30));
 
+        assertEquals(LocalDateTime.of(2026, 8, 29, 23, 45), result.departureAt());
         assertEquals(LocalTime.of(23, 45), result.departureTime());
     }
 }

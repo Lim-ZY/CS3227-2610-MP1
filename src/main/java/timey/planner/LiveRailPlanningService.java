@@ -40,8 +40,9 @@ public final class LiveRailPlanningService {
             return probe;
         }
 
-        LocalDateTime calculatedDeparture = targetArrival.minus(
-                departureCalculator.calculate(plan, probe.routes().getFirst()).travelDuration().plus(plan.getBuffer()));
+        LocalDateTime calculatedDeparture = departureCalculator
+                .calculate(plan, probe.routes().getFirst(), targetArrival)
+                .departureAt();
         return railTransitPlanner.findRoutes(origin, destination,
                 calculatedDeparture.toLocalDate(), calculatedDeparture.toLocalTime());
     }

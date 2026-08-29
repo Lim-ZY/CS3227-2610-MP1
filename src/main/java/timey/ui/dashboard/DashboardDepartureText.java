@@ -2,16 +2,16 @@ package timey.ui.dashboard;
 
 import java.time.Clock;
 import java.time.Duration;
-import java.time.LocalTime;
+import java.time.LocalDateTime;
 
 /** Formats the remaining time before a locally scheduled departure. */
 public final class DashboardDepartureText {
     private DashboardDepartureText() {
     }
 
-    /** Performs this operation. */
-    public static String until(LocalTime departureTime, Clock clock) {
-        Duration remaining = Duration.between(LocalTime.now(clock), departureTime);
+    /** Returns the remaining duration before a leave-by datetime. */
+    public static String until(LocalDateTime departureAt, Clock clock) {
+        Duration remaining = Duration.between(LocalDateTime.now(clock), departureAt);
         if (remaining.isZero() || remaining.isNegative()) {
             return "Leave now";
         }

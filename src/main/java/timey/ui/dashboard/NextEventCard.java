@@ -45,7 +45,7 @@ public final class NextEventCard extends UiPart<VBox> {
             arrival.setText(TIME_FORMAT.format(plan.getArrivalTime()));
             state.recommendation().ifPresentOrElse(recommendation -> {
                 departure.setText(TIME_FORMAT.format(recommendation.departureTime()));
-                countdown.setText(DashboardDepartureText.until(recommendation.departureTime(),
+                countdown.setText(DashboardDepartureText.until(recommendation.departureAt(),
                         Clock.system(ApplicationConfiguration.TIME_ZONE)));
                 reminder.setText(state.reminders().isEmpty()
                         ? "Departure reminder will be set shortly" : "Reminder scheduled");
