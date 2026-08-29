@@ -1,6 +1,7 @@
 package Timey.model;
 
 import java.time.Clock;
+import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.Objects;
@@ -8,28 +9,33 @@ import java.util.Optional;
 
 import Timey.domain.alert.DepartureRecommendation;
 import Timey.domain.alert.ScheduledDepartureReminder;
+import Timey.domain.alert.SavedPlan;
 import Timey.domain.transit.FixedCommute;
 import Timey.domain.transit.RouteAlternative;
 import Timey.command.PlanCommand;
 import Timey.planner.Planner;
 import Timey.ports.FixedCommuteStore;
+import Timey.ports.PlanStore;
 import Timey.reminder.DepartureReminderService;
 
 /** Stores the mutable state of a Timey command session. */
 public final class TimeyModel {
     private final Planner planner;
     private final FixedCommuteStore fixedCommuteStore;
+    private final PlanStore planStore;
     private final DepartureReminderService departureReminderService;
     private final Clock clock;
     private PlanCommand pendingPlan;
     private List<RouteAlternative> pendingAlternatives = List.of();
     private List<String> planningMessages = List.of();
     private DepartureRecommendation selectedRecommendation;
+    private List<SavedPlan> savedPlans = List.of();
 
     public TimeyModel(Planner planner, FixedCommuteStore fixedCommuteStore,
-            DepartureReminderService departureReminderService, Clock clock) {
+            PlanStore planStore, DepartureReminderService departureReminderService, Clock clock) {
         this.planner = Objects.requireNonNull(planner);
         this.fixedCommuteStore = Objects.requireNonNull(fixedCommuteStore);
+        this.planStore = Objects.requireNonNull(planStore);
         this.departureReminderService = Objects.requireNonNull(departureReminderService);
         this.clock = Objects.requireNonNull(clock);
     }
@@ -109,6 +115,11 @@ public final class TimeyModel {
         return Optional.ofNullable(selectedRecommendation);
     }
 
+    /** Returns selected plans in the order they were saved. */
+    public List<SavedPlan> getSavedPlans() {
+        return savedPlans;
+    }
+
     /** Returns the currently active departure reminders for this command session. */
     public List<ScheduledDepartureReminder> getScheduledReminders() {
         return departureReminderService.scheduledReminders();
@@ -134,6 +145,7 @@ public final class TimeyModel {
         RouteAlternative route = pendingAlternatives.get(routeNumber - 1);
         DepartureRecommendation recommendation = planner.recommendDeparture(pendingPlan, route);
         selectRecommendation(recommendation);
+        saveSelectedPlan(recommendation);
         if (recommendation.departureTime().isBefore(LocalTime.now(clock))) {
             return RouteSelectionResult.leaveNow(recommendation);
         }
@@ -144,5 +156,16 @@ public final class TimeyModel {
     /** Returns the clock used to present command-session times. */
     public Clock getClock() {
         return clock;
+    }
+
+    private void saveSelectedPlan(DepartureRecommendation recommendation) {
+        LocalDate date = LocalDate.now(clock);
+        if (!pendingPlan.getArrivalTime().isAfter(LocalTime.now(clock))) {
+            date = date.plusDays(1);
+        }
+        SavedPlan savedPlan = new SavedPlan(date, pendingPlan.getArrivalTime(), pendingPlan.getOrigin(),
+                pendingPlan.getDestination(), recommendation.departureTime());
+        savedPlans = java.util.stream.Stream.concat(savedPlans.stream(), java.util.stream.Stream.of(savedPlan)).toList();
+        planStore.saveAll(savedPlans);
     }
 }

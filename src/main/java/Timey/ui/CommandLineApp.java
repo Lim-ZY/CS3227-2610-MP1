@@ -19,6 +19,7 @@ import Timey.infrastructure.transit.InMemoryFixedCommuteStore;
 import Timey.infrastructure.transit.MockTransitPlanner;
 import Timey.ports.LocationResolver;
 import Timey.ports.FixedCommuteStore;
+import Timey.ports.PlanStore;
 import Timey.ports.RailTransitPlanner;
 import Timey.ports.ReminderScheduler;
 
@@ -74,6 +75,14 @@ public final class CommandLineApp {
             CommutePlanningService commutePlanningService, LocationResolver locationResolver,
             RailTransitPlanner railTransitPlanner, Clock clock, ReminderScheduler reminderScheduler,
             FixedCommuteStore fixedCommuteStore) {
+        this(ui, planCommandParser, commutePlanningService, locationResolver, railTransitPlanner, clock,
+                reminderScheduler, fixedCommuteStore, plans -> { });
+    }
+
+    public CommandLineApp(ConsoleUi ui, PlanCommandParser planCommandParser,
+            CommutePlanningService commutePlanningService, LocationResolver locationResolver,
+            RailTransitPlanner railTransitPlanner, Clock clock, ReminderScheduler reminderScheduler,
+            FixedCommuteStore fixedCommuteStore, PlanStore planStore) {
         this.ui = ui;
         this.parser = new Parser(planCommandParser);
         var planner = new Timey.planner.Planner(commutePlanningService, locationResolver, railTransitPlanner, clock);
@@ -82,7 +91,7 @@ public final class CommandLineApp {
             ui.println(reminder.message());
             ui.printPrompt();
         });
-        this.model = new TimeyModel(planner, fixedCommuteStore, departureReminderService, clock);
+        this.model = new TimeyModel(planner, fixedCommuteStore, planStore, departureReminderService, clock);
     }
 
     /** Runs until the user says thanks or standard input closes. */
