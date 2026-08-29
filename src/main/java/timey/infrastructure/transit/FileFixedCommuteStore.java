@@ -28,17 +28,7 @@ public final class FileFixedCommuteStore implements FixedCommuteStore {
     public synchronized void save(FixedCommute commute) {
         Properties timings = load();
         timings.setProperty(key(commute.origin(), commute.destination()), value(commute));
-        try {
-            Path parent = path.getParent();
-            if (parent != null) {
-                Files.createDirectories(parent);
-            }
-            try (OutputStream output = Files.newOutputStream(path)) {
-                timings.store(output, "Timey fixed commute timings");
-            }
-        } catch (IOException exception) {
-            throw new IllegalStateException("Could not save fixed commute timings.", exception);
-        }
+        save(timings);
     }
 
     private void save(Properties timings) {
