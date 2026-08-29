@@ -8,6 +8,7 @@ import java.util.Objects;
 import timey.command.PlanCommand;
 import timey.domain.alert.DepartureRecommendation;
 import timey.domain.location.LocationResolution;
+import timey.domain.location.ResolvedLocation;
 import timey.domain.transit.RouteAlternative;
 import timey.ports.LocationResolver;
 import timey.ports.RailTransitPlanner;
@@ -32,25 +33,36 @@ public final class Planner {
         LocationResolution origin = locationResolver.resolve(plan.getOrigin());
         LocationResolution destination = locationResolver.resolve(plan.getDestination());
         List<String> messages = new ArrayList<>();
-        if (origin.isFound() && destination.isFound()) {
-            messages.add("OneMap resolved your locations:");
-            messages.add("- From: " + origin.location().orElseThrow().address());
-            messages.add("- To: " + destination.location().orElseThrow().address());
-            var liveRoutes = liveRailPlanningService.findAlignedRoutes(plan,
-                    origin.location().orElseThrow(), destination.location().orElseThrow());
-            if (liveRoutes.isAvailable() && !liveRoutes.routes().isEmpty()) {
-                messages.add("Live rail routes were aligned with your target arrival time.");
-                return new PlanningResult(liveRoutes.routes(), messages);
-            }
-            if (liveRoutes.isAvailable()) {
-                messages.add("OneMap returned no live rail routes; using deterministic routes.");
-            } else {
-                messages.add(liveRoutes.unavailableReason().orElseThrow() + " Using deterministic routes.");
-            }
-        } else {
+        if (!origin.isFound() || !destination.isFound()) {
             String reason = origin.isFound() ? destination.reason() : origin.reason();
             messages.add("Using deterministic routes: " + reason);
+            return deterministicResult(plan, messages);
         }
+
+        return findAlternativesForResolvedLocations(plan, origin.location().orElseThrow(),
+                destination.location().orElseThrow(), messages);
+    }
+
+    private PlanningResult findAlternativesForResolvedLocations(PlanCommand plan, ResolvedLocation origin,
+            ResolvedLocation destination, List<String> messages) {
+        messages.add("OneMap resolved your locations:");
+        messages.add("- From: " + origin.address());
+        messages.add("- To: " + destination.address());
+        var liveRoutes = liveRailPlanningService.findAlignedRoutes(plan, origin, destination);
+        if (liveRoutes.isAvailable() && !liveRoutes.routes().isEmpty()) {
+            messages.add("Live rail routes were aligned with your target arrival time.");
+            return new PlanningResult(liveRoutes.routes(), messages);
+        }
+
+        if (liveRoutes.isAvailable()) {
+            messages.add("OneMap returned no live rail routes; using deterministic routes.");
+        } else {
+            messages.add(liveRoutes.unavailableReason().orElseThrow() + " Using deterministic routes.");
+        }
+        return deterministicResult(plan, messages);
+    }
+
+    private PlanningResult deterministicResult(PlanCommand plan, List<String> messages) {
         return new PlanningResult(commutePlanningService.findAlternatives(plan), messages);
     }
 
