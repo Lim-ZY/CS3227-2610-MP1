@@ -120,4 +120,51 @@ class OneMapRailTransitPlannerTest {
         assertTrue(!lookup.isAvailable());
         assertEquals("OneMap routing returned an incomplete itinerary.", lookup.unavailableReason().orElseThrow());
     }
+
+    @Test
+    void findRoutes_negativeDuration_returnsFallbackWithoutException() {
+        var planner = new OneMapRailTransitPlanner(uri -> new HttpResult(200,
+                "{\"plan\":{\"itineraries\":[{\"walkTime\":-1,\"transitTime\":1800,\"transfers\":0}]}}"),
+                Optional.of(URI.create("https://timey.example.workers.dev")));
+
+        var lookup = planner.findRoutes(COM3, VIVOCITY, LocalDate.of(2026, 8, 21), LocalTime.NOON);
+
+        assertTrue(!lookup.isAvailable());
+        assertEquals("OneMap routing returned an incomplete itinerary.", lookup.unavailableReason().orElseThrow());
+    }
+
+    @Test
+    void findRoutes_fractionalDuration_returnsFallbackWithoutException() {
+        var planner = new OneMapRailTransitPlanner(uri -> new HttpResult(200,
+                "{\"plan\":{\"itineraries\":[{\"walkTime\":600.5,\"transitTime\":1800,\"transfers\":0}]}}"),
+                Optional.of(URI.create("https://timey.example.workers.dev")));
+
+        var lookup = planner.findRoutes(COM3, VIVOCITY, LocalDate.of(2026, 8, 21), LocalTime.NOON);
+
+        assertTrue(!lookup.isAvailable());
+        assertEquals("OneMap routing returned an incomplete itinerary.", lookup.unavailableReason().orElseThrow());
+    }
+
+    @Test
+    void findRoutes_excessiveTransfers_returnsFallbackWithoutException() {
+        var planner = new OneMapRailTransitPlanner(uri -> new HttpResult(200,
+                "{\"plan\":{\"itineraries\":[{\"walkTime\":600,\"transitTime\":1800,\"transfers\":11}]}}"),
+                Optional.of(URI.create("https://timey.example.workers.dev")));
+
+        var lookup = planner.findRoutes(COM3, VIVOCITY, LocalDate.of(2026, 8, 21), LocalTime.NOON);
+
+        assertTrue(!lookup.isAvailable());
+        assertEquals("OneMap routing returned an incomplete itinerary.", lookup.unavailableReason().orElseThrow());
+    }
+
+    @Test
+    void findRoutes_emptyResponse_returnsInvalidResponseReason() {
+        var planner = new OneMapRailTransitPlanner(uri -> new HttpResult(200, ""),
+                Optional.of(URI.create("https://timey.example.workers.dev")));
+
+        var lookup = planner.findRoutes(COM3, VIVOCITY, LocalDate.of(2026, 8, 21), LocalTime.NOON);
+
+        assertTrue(!lookup.isAvailable());
+        assertEquals("OneMap routing returned an invalid response.", lookup.unavailableReason().orElseThrow());
+    }
 }

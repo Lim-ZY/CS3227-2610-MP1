@@ -25,6 +25,7 @@ import timey.ports.RailTransitPlanner;
 public final class OneMapRailTransitPlanner implements RailTransitPlanner {
     private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("MM-dd-uuuu");
     private static final DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern("HH:mm:ss");
+    private static final long MAX_TRANSFER_COUNT = 10;
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     private final HttpRequester httpRequester;
@@ -48,7 +49,7 @@ public final class OneMapRailTransitPlanner implements RailTransitPlanner {
                 return LiveRouteLookup.unavailable("OneMap routing failed (HTTP " + response.statusCode() + ").");
             }
             return parseItineraries(response.body());
-        } catch (IllegalStateException exception) {
+        } catch (RuntimeException exception) {
             return LiveRouteLookup.unavailable("OneMap routing timed out or is temporarily unavailable.");
         }
     }
@@ -65,7 +66,11 @@ public final class OneMapRailTransitPlanner implements RailTransitPlanner {
     /** Parses every itinerary in OneMap's response instead of relying on partial text matching. */
     private LiveRouteLookup parseItineraries(String body) {
         try {
-            JsonNode itineraries = OBJECT_MAPPER.readTree(body).path("plan").path("itineraries");
+            JsonNode root = OBJECT_MAPPER.readTree(body);
+            if (root == null) {
+                return LiveRouteLookup.unavailable("OneMap routing returned an invalid response.");
+            }
+            JsonNode itineraries = root.path("plan").path("itineraries");
             if (!itineraries.isArray()) {
                 return LiveRouteLookup.unavailable("OneMap routing returned an invalid response.");
             }
@@ -92,9 +97,19 @@ public final class OneMapRailTransitPlanner implements RailTransitPlanner {
         if (walkTime.isEmpty() || transitTime.isEmpty() || transfers.isEmpty()) {
             return Optional.empty();
         }
-        return Optional.of(new RouteAlternative("Live rail route " + routeNumber,
-                Duration.ofSeconds(walkTime.orElseThrow()), Duration.ofSeconds(transitTime.orElseThrow()),
-                Math.toIntExact(transfers.orElseThrow()), routeSteps(itinerary.path("legs"))));
+        long walkSeconds = walkTime.orElseThrow();
+        long transitSeconds = transitTime.orElseThrow();
+        long transferCount = transfers.orElseThrow();
+        if (walkSeconds < 0 || transitSeconds < 0 || transferCount < 0 || transferCount > MAX_TRANSFER_COUNT) {
+            return Optional.empty();
+        }
+        try {
+            return Optional.of(new RouteAlternative("Live rail route " + routeNumber,
+                    Duration.ofSeconds(walkSeconds), Duration.ofSeconds(transitSeconds),
+                    Math.toIntExact(transferCount), routeSteps(itinerary.path("legs"))));
+        } catch (ArithmeticException | IllegalArgumentException exception) {
+            return Optional.empty();
+        }
     }
 
     /** Extracts displayable walk and rail legs while tolerating missing optional leg data. */
@@ -140,6 +155,7 @@ public final class OneMapRailTransitPlanner implements RailTransitPlanner {
     /** Returns an integral itinerary field, if it is present and representable as a long. */
     private Optional<Long> number(JsonNode itinerary, String fieldName) {
         JsonNode value = itinerary.get(fieldName);
-        return value != null && value.canConvertToLong() ? Optional.of(value.longValue()) : Optional.empty();
+        return value != null && value.isIntegralNumber() && value.canConvertToLong()
+                ? Optional.of(value.longValue()) : Optional.empty();
     }
 }
