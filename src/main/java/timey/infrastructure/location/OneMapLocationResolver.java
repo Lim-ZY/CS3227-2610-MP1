@@ -3,9 +3,13 @@ package timey.infrastructure.location;
 import java.net.URI;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import timey.domain.location.LocationResolution;
 import timey.domain.location.ResolvedLocation;
@@ -14,10 +18,7 @@ import timey.ports.LocationResolver;
 
 /** Resolves Singapore addresses through Timey's server-held live-data service. */
 public final class OneMapLocationResolver implements LocationResolver {
-    private static final Pattern ADDRESS = Pattern.compile("\\\"ADDRESS\\\"\\s*:\\s*\\\"([^\\\"]*)\\\"");
-    private static final Pattern SEARCH_VALUE = Pattern.compile("\\\"SEARCHVAL\\\"\\s*:\\s*\\\"([^\\\"]*)\\\"");
-    private static final Pattern LATITUDE = Pattern.compile("\\\"LATITUDE\\\"\\s*:\\s*\\\"?([-+0-9.]+)\\\"?");
-    private static final Pattern LONGITUDE = Pattern.compile("\\\"LONGITUDE\\\"\\s*:\\s*\\\"?([-+0-9.]+)\\\"?");
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     private final HttpRequester httpRequester;
     private final Optional<URI> liveDataBaseUri;
@@ -42,10 +43,21 @@ public final class OneMapLocationResolver implements LocationResolver {
                 return LocationResolution.unavailable("OneMap lookup is temporarily unavailable (HTTP "
                         + response.statusCode() + ").");
             }
-            return parseFirstResult(response.body()).map(LocationResolution::found)
-                    .orElseGet(() -> LocationResolution.unavailable("OneMap could not find \"" + query + "\"."));
-        } catch (IllegalStateException exception) {
+            return resolveResponse(response.body(), query);
+        } catch (RuntimeException exception) {
             return LocationResolution.unavailable("OneMap lookup is temporarily unavailable.");
+        }
+    }
+
+    private LocationResolution resolveResponse(String body, String query) {
+        try {
+            List<ResolvedLocation> locations = parseLocations(body);
+            if (locations.isEmpty()) {
+                return LocationResolution.unavailable("OneMap could not find \"" + query + "\".");
+            }
+            return selectLocation(locations, query);
+        } catch (JsonProcessingException | IllegalArgumentException exception) {
+            return LocationResolution.unavailable("OneMap lookup returned an unreadable response.");
         }
     }
 
@@ -55,33 +67,61 @@ public final class OneMapLocationResolver implements LocationResolver {
                 + "/v1/search?q=" + encodedQuery);
     }
 
-    private Optional<ResolvedLocation> parseFirstResult(String body) {
-        Optional<String> displayName = first(SEARCH_VALUE, body);
-        if (displayName.isEmpty()) {
-            return Optional.empty();
+    private List<ResolvedLocation> parseLocations(String body) throws JsonProcessingException {
+        JsonNode root = OBJECT_MAPPER.readTree(body);
+        if (root == null) {
+            throw new IllegalArgumentException("OneMap response must not be empty.");
         }
-        Optional<String> address = first(ADDRESS, body);
-        if (address.isEmpty()) {
-            return Optional.empty();
+        JsonNode results = root.path("results");
+        if (!results.isArray()) {
+            throw new IllegalArgumentException("OneMap results must be an array.");
         }
-        Optional<String> latitude = first(LATITUDE, body);
-        if (latitude.isEmpty()) {
-            return Optional.empty();
+        List<ResolvedLocation> locations = new ArrayList<>();
+        for (JsonNode result : results) {
+            toLocation(result).ifPresent(locations::add);
         }
-        Optional<String> longitude = first(LONGITUDE, body);
-        if (longitude.isEmpty()) {
-            return Optional.empty();
-        }
+        return locations;
+    }
+
+    private Optional<ResolvedLocation> toLocation(JsonNode result) {
         try {
-            return Optional.of(new ResolvedLocation(displayName.orElseThrow(), address.orElseThrow(),
-                    Double.parseDouble(latitude.orElseThrow()), Double.parseDouble(longitude.orElseThrow())));
+            String displayName = requiredText(result, "SEARCHVAL");
+            String address = requiredText(result, "ADDRESS");
+            double latitude = requiredCoordinate(result, "LATITUDE");
+            double longitude = requiredCoordinate(result, "LONGITUDE");
+            return Optional.of(new ResolvedLocation(displayName, address, latitude, longitude));
         } catch (IllegalArgumentException exception) {
             return Optional.empty();
         }
     }
 
-    private Optional<String> first(Pattern pattern, String body) {
-        Matcher matcher = pattern.matcher(body);
-        return matcher.find() ? Optional.of(matcher.group(1)) : Optional.empty();
+    private String requiredText(JsonNode result, String fieldName) {
+        JsonNode value = result.path(fieldName);
+        if (!value.isTextual() || value.asText().isBlank()) {
+            throw new IllegalArgumentException("OneMap result field is missing or invalid.");
+        }
+        return value.asText();
+    }
+
+    private double requiredCoordinate(JsonNode result, String fieldName) {
+        JsonNode value = result.path(fieldName);
+        if ((!value.isTextual() && !value.isNumber()) || value.asText().isBlank()) {
+            throw new IllegalArgumentException("OneMap result coordinate is missing or invalid.");
+        }
+        return Double.parseDouble(value.asText());
+    }
+
+    private LocationResolution selectLocation(List<ResolvedLocation> locations, String query) {
+        List<ResolvedLocation> exactMatches = locations.stream()
+                .filter(location -> location.displayName().equalsIgnoreCase(query))
+                .toList();
+        if (exactMatches.size() == 1) {
+            return LocationResolution.found(exactMatches.getFirst());
+        }
+        if (locations.size() == 1) {
+            return LocationResolution.found(locations.getFirst());
+        }
+        return LocationResolution.unavailable("OneMap found multiple locations for \"" + query
+                + "\". Please use a more specific location.");
     }
 }
