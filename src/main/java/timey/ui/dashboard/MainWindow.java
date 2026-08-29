@@ -151,8 +151,12 @@ public final class MainWindow extends UiPart<Stage> {
         }
         activeCommandTask = null;
         commandOutput.appendCommandFailure(input);
+        if (latestDashboardState != null) {
+            refreshDashboard(latestDashboardState);
+        } else {
+            dashboard.alternatives().showFailure();
+        }
         dashboard.commute().showFailure(failure);
-        dashboard.alternatives().showFailure();
         commandBar.showReadyAfterFailure();
     }
 

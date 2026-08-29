@@ -44,7 +44,6 @@ public final class CommuteStatusCard extends UiPart<VBox> {
     /** Displays a command execution failure without altering the prior plan. */
     public void showFailure(Throwable failure) {
         title.setText("Could not update commute");
-        message.setText("Your previous plan is unchanged. "
-                + (failure.getMessage() == null ? "Please try again." : failure.getMessage()));
+        message.setText(DashboardFailureText.commuteUpdate(failure));
     }
 }
