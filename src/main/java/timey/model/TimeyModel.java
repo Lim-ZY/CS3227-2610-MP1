@@ -189,11 +189,12 @@ public final class TimeyModel {
         if (!isFuture(savedPlan)) {
             return;
         }
-        if (!savedPlans.contains(savedPlan)) {
-            savedPlans = java.util.stream.Stream.concat(savedPlans.stream(), java.util.stream.Stream.of(savedPlan))
-                    .toList();
-            planStore.saveAll(savedPlans);
+        if (savedPlans.contains(savedPlan)) {
+            return;
         }
+        savedPlans = java.util.stream.Stream.concat(savedPlans.stream(), java.util.stream.Stream.of(savedPlan))
+                .toList();
+        planStore.saveAll(savedPlans);
     }
 
     private boolean isFuture(SavedPlan plan) {
