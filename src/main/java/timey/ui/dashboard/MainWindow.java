@@ -36,6 +36,8 @@ public final class MainWindow extends UiPart<Stage> {
     private final CommandOutput commandOutput;
     private final CommandBar commandBar;
     private final DashboardContent dashboard;
+    private final DashboardCommandTracker commandTracker = new DashboardCommandTracker();
+    private Task<DashboardCommandResponse> activeCommandTask;
 
     /** Creates a new MainWindow. */
     public MainWindow(Stage primaryStage, CommandLineApp commandLineApp, StringWriter output,
@@ -50,6 +52,8 @@ public final class MainWindow extends UiPart<Stage> {
         commandBar.setCommandExecutor(this::executeCommand);
         fillInnerParts();
         getRoot().setOnHidden(event -> {
+            commandTracker.close();
+            cancelActiveCommand();
             commandLineApp.close();
             header.stopClock();
         });
@@ -100,6 +104,8 @@ public final class MainWindow extends UiPart<Stage> {
     }
 
     private void executeCommand(String input) {
+        long requestId = commandTracker.startRequest();
+        cancelActiveCommand();
         showLoading();
         Task<DashboardCommandResponse> task = new Task<>() {
             @Override
@@ -109,14 +115,19 @@ public final class MainWindow extends UiPart<Stage> {
                 return new DashboardCommandResponse(result, output.getBuffer().substring(outputStart));
             }
         };
-        task.setOnSucceeded(event -> handleCommandSuccess(input, task.getValue()));
-        task.setOnFailed(event -> handleCommandFailure(input, task.getException()));
+        task.setOnSucceeded(event -> handleCommandSuccess(requestId, input, task.getValue()));
+        task.setOnFailed(event -> handleCommandFailure(requestId, input, task.getException()));
+        activeCommandTask = task;
         Thread worker = new Thread(task, "timey-dashboard-command");
         worker.setDaemon(true);
         worker.start();
     }
 
-    private void handleCommandSuccess(String input, DashboardCommandResponse response) {
+    private void handleCommandSuccess(long requestId, String input, DashboardCommandResponse response) {
+        if (!commandTracker.isCurrent(requestId)) {
+            return;
+        }
+        activeCommandTask = null;
         commandOutput.appendCommandResult(input, response.output());
         refreshDashboard(response.result().dashboardState());
         if (response.result().sessionEnded()) {
@@ -126,7 +137,11 @@ public final class MainWindow extends UiPart<Stage> {
         }
     }
 
-    private void handleCommandFailure(String input, Throwable failure) {
+    private void handleCommandFailure(long requestId, String input, Throwable failure) {
+        if (!commandTracker.isCurrent(requestId)) {
+            return;
+        }
+        activeCommandTask = null;
         commandOutput.appendCommandFailure(input);
         dashboard.commute().showFailure(failure);
         dashboard.alternatives().showFailure();
@@ -144,6 +159,13 @@ public final class MainWindow extends UiPart<Stage> {
     private void showLoading() {
         dashboard.commute().showLoading();
         dashboard.alternatives().showLoading();
+    }
+
+    private void cancelActiveCommand() {
+        if (activeCommandTask != null) {
+            activeCommandTask.cancel();
+            activeCommandTask = null;
+        }
     }
 
     private record DashboardContent(VBox content, NextEventCard nextEvent, CommuteStatusCard commute,
