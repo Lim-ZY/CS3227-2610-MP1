@@ -19,22 +19,26 @@ public final class PlanCommand extends Command {
 
     /** Creates a new PlanCommand. */
     public PlanCommand(String origin, String destination, LocalTime arrivalTime, Duration buffer) {
-        if (origin == null || origin.isBlank()) {
-            throw new IllegalArgumentException("Origin must not be blank.");
-        }
-        if (destination == null || destination.isBlank()) {
-            throw new IllegalArgumentException("Destination must not be blank.");
-        }
+        this.origin = normalizeLocation(origin, "Origin");
+        this.destination = normalizeLocation(destination, "Destination");
         if (arrivalTime == null) {
             throw new IllegalArgumentException("Arrival time must be provided.");
         }
         if (buffer == null || buffer.isNegative()) {
             throw new IllegalArgumentException("Buffer must be zero or greater.");
         }
-        this.origin = origin;
-        this.destination = destination;
         this.arrivalTime = arrivalTime;
         this.buffer = buffer;
+    }
+
+    private static String normalizeLocation(String location, String locationType) {
+        if (location == null || location.isBlank()) {
+            throw new IllegalArgumentException(locationType + " must not be blank.");
+        }
+        if (location.chars().anyMatch(Character::isISOControl)) {
+            throw new IllegalArgumentException(locationType + " must not contain control characters.");
+        }
+        return location.strip();
     }
 
     @Override

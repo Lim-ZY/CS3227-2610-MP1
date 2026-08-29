@@ -53,6 +53,14 @@ class PlanCommandParserTest {
     }
 
     @Test
+    void parse_locationHasSurroundingWhitespace_locationsAreTrimmed() {
+        PlanCommand result = parser.parse("plan /from \"  COM3  \" /to \"  VivoCity  \" /by 1830");
+
+        assertEquals("COM3", result.getOrigin());
+        assertEquals("VivoCity", result.getDestination());
+    }
+
+    @Test
     void parse_invalidArrivalTime_validationErrorThrown() {
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
                 parser.parse("plan /from \"COM3\" /to \"VivoCity\" /by 2960"));
@@ -105,5 +113,13 @@ class PlanCommandParserTest {
                 "plan /from \"COM3\" /to \"VivoCity\" /by 1830 /buf 999999999999999999999999999m"));
 
         assertEquals("Buffer is too large.", exception.getMessage());
+    }
+
+    @Test
+    void parse_locationContainsControlCharacter_validationErrorThrown() {
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> parser.parse(
+                "plan /from \"COM3\tBlock\" /to \"VivoCity\" /by 1830"));
+
+        assertEquals("Origin must not contain control characters.", exception.getMessage());
     }
 }
