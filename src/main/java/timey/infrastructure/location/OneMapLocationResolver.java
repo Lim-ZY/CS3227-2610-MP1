@@ -55,7 +55,7 @@ public final class OneMapLocationResolver implements LocationResolver {
             if (locations.isEmpty()) {
                 return LocationResolution.unavailable("OneMap could not find \"" + query + "\".");
             }
-            return selectLocation(locations, query);
+            return LocationResolution.found(locations.getFirst());
         } catch (JsonProcessingException | IllegalArgumentException exception) {
             return LocationResolution.unavailable("OneMap lookup returned an unreadable response.");
         }
@@ -111,17 +111,4 @@ public final class OneMapLocationResolver implements LocationResolver {
         return Double.parseDouble(value.asText());
     }
 
-    private LocationResolution selectLocation(List<ResolvedLocation> locations, String query) {
-        List<ResolvedLocation> exactMatches = locations.stream()
-                .filter(location -> location.displayName().equalsIgnoreCase(query))
-                .toList();
-        if (exactMatches.size() == 1) {
-            return LocationResolution.found(exactMatches.getFirst());
-        }
-        if (locations.size() == 1) {
-            return LocationResolution.found(locations.getFirst());
-        }
-        return LocationResolution.unavailable("OneMap found multiple locations for \"" + query
-                + "\". Please use a more specific location.");
-    }
 }

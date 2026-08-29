@@ -125,7 +125,7 @@ class OneMapLocationResolverTest {
     }
 
     @Test
-    void resolve_ambiguousResults_requestsMoreSpecificLocation() {
+    void resolve_multipleResults_returnsFirstLocation() {
         var resolver = new OneMapLocationResolver(uri -> new HttpResult(200, """
                 {"results":[
                 {"SEARCHVAL":"COM3 Cafe","ADDRESS":"First address","LATITUDE":"1.294","LONGITUDE":"103.773"},
@@ -134,13 +134,13 @@ class OneMapLocationResolverTest {
 
         var result = resolver.resolve("COM3");
 
-        assertFalse(result.isFound());
-        assertEquals("OneMap found multiple locations for \"COM3\". Please use a more specific location.",
-                result.reason());
+        assertTrue(result.isFound());
+        assertEquals("COM3 Cafe", result.location().orElseThrow().displayName());
+        assertEquals("First address", result.location().orElseThrow().address());
     }
 
     @Test
-    void resolve_exactMatchAmongMultipleResults_returnsExactMatch() {
+    void resolve_laterExactMatchAmongMultipleResults_returnsFirstLocation() {
         var resolver = new OneMapLocationResolver(uri -> new HttpResult(200, """
                 {"results":[
                 {"SEARCHVAL":"COM3 Cafe","ADDRESS":"First address","LATITUDE":"1.294","LONGITUDE":"103.773"},
@@ -150,7 +150,23 @@ class OneMapLocationResolverTest {
         var result = resolver.resolve("COM3");
 
         assertTrue(result.isFound());
-        assertEquals("13 Computing Drive", result.location().orElseThrow().address());
+        assertEquals("First address", result.location().orElseThrow().address());
+    }
+
+    @Test
+    void resolve_invalidResultBeforeValidResult_returnsFirstValidLocation() {
+        var resolver = new OneMapLocationResolver(uri -> new HttpResult(200, """
+                {"results":[
+                {"SEARCHVAL":"COM3","ADDRESS":"","LATITUDE":"1.294","LONGITUDE":"103.773"},
+                {"SEARCHVAL":"COM3 Cafe","ADDRESS":"First valid address",
+                "LATITUDE":"1.295","LONGITUDE":"103.774"}
+                ]}"""), Optional.of(URI.create("https://timey.example.workers.dev")));
+
+        var result = resolver.resolve("COM3");
+
+        assertTrue(result.isFound());
+        assertEquals("COM3 Cafe", result.location().orElseThrow().displayName());
+        assertEquals("First valid address", result.location().orElseThrow().address());
     }
 
     @Test
