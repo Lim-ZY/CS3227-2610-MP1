@@ -23,7 +23,7 @@ java {
 }
 
 application {
-    mainClass = 'Timey.Timey'
+    mainClass = 'timey.Timey'
 }
 
 javafx {
@@ -51,5 +51,5 @@ tasks.register('runDashboard', JavaExec) {
     group = 'application'
     description = 'Launches the Timey JavaFX dashboard.'
     classpath = sourceSets.main.runtimeClasspath
-    mainClass = 'Timey.ui.dashboard.DashboardLauncher'
+    mainClass = 'timey.ui.dashboard.DashboardLauncher'
 }
