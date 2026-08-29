@@ -1,6 +1,7 @@
 package timey.ui.dashboard;
 
 import java.io.StringWriter;
+import java.time.Clock;
 import java.util.Objects;
 
 import javafx.animation.KeyFrame;
@@ -69,7 +70,7 @@ public final class MainWindow extends UiPart<Stage> {
     public void show() {
         getRoot().show();
         refreshDashboard(commandLineApp.getDashboardState());
-        header.startClock(ApplicationConfiguration.TIME_ZONE);
+        header.startClock(Clock.system(ApplicationConfiguration.TIME_ZONE));
         startDashboardRefresh();
     }
 

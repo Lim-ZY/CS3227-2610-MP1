@@ -3,7 +3,6 @@ package timey.ui.dashboard;
 import static java.util.Objects.requireNonNull;
 
 import java.time.Clock;
-import java.time.ZoneId;
 
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
@@ -39,12 +38,12 @@ public final class DashboardHeader extends UiPart<HBox> {
         configureMenu();
     }
 
-    /** Starts the header clock in {@code timeZone}. */
-    public void startClock(ZoneId timeZone) {
+    /** Starts the header clock using the supplied time source. */
+    public void startClock(Clock clock) {
         stopClock();
-        Clock clock = Clock.system(requireNonNull(timeZone));
+        Clock headerClock = requireNonNull(clock);
         clockTimer = new Timeline(new KeyFrame(javafx.util.Duration.ZERO,
-                event -> clockLabel.setText(DashboardClockText.now(clock))),
+                event -> clockLabel.setText(DashboardClockText.now(headerClock))),
                 new KeyFrame(javafx.util.Duration.seconds(1)));
         clockTimer.setCycleCount(Timeline.INDEFINITE);
         clockTimer.play();
