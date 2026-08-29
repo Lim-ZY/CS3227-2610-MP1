@@ -190,6 +190,24 @@ class CommandLineAppTest {
     }
 
     @Test
+    void executeCommand_runtimePlanningFailure_showsSafeErrorAndPreservesEmptyState() {
+        var outputText = new StringWriter();
+        var resolver = (timey.ports.LocationResolver) query -> {
+            throw new IllegalStateException("Provider secret failure");
+        };
+        var app = new CommandLineApp(new BufferedReader(new StringReader("")), new PrintWriter(outputText, true),
+                new PlanCommandParser(), new CommutePlanningService(new MockTransitPlanner()), resolver);
+
+        var result = app.executeCommand("plan /from \"COM3\" /to \"VivoCity\" /by 1830");
+
+        assertTrue(!result.sessionEnded());
+        assertTrue(outputText.toString().contains("Timey could not complete that command. Please try again."));
+        assertTrue(!outputText.toString().contains("Provider secret failure"));
+        assertTrue(result.dashboardState().plan().isEmpty());
+        assertTrue(result.dashboardState().alternatives().isEmpty());
+    }
+
+    @Test
     void run_liveRoutesAvailable_displaysItemisedLiveRoutes() {
         var outputText = new StringWriter();
         var resolver = (timey.ports.LocationResolver) query -> LocationResolution.found(

@@ -141,6 +141,9 @@ public final class CommandLineApp {
         } catch (IllegalArgumentException exception) {
             ui.println("I could not create that plan: " + exception.getMessage());
             sessionEnded = false;
+        } catch (RuntimeException exception) {
+            ui.println("Timey could not complete that command. Please try again.");
+            sessionEnded = false;
         }
         return new CommandExecutionResult(sessionEnded, getDashboardState());
     }
