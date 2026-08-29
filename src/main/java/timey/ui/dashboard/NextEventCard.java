@@ -2,6 +2,7 @@ package timey.ui.dashboard;
 
 import java.time.Clock;
 import java.time.format.DateTimeFormatter;
+import java.util.Objects;
 
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
@@ -14,6 +15,8 @@ import timey.ui.UiPart;
 public final class NextEventCard extends UiPart<VBox> {
     private static final String FXML = "NextEventCard.fxml";
     private static final DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern("HH:mm");
+
+    private final Clock clock;
 
     @FXML
     private Label title;
@@ -32,7 +35,12 @@ public final class NextEventCard extends UiPart<VBox> {
 
     /** Creates a new NextEventCard. */
     public NextEventCard() {
+        this(Clock.system(ApplicationConfiguration.TIME_ZONE));
+    }
+
+    NextEventCard(Clock clock) {
         super(FXML);
+        this.clock = Objects.requireNonNull(clock);
         getRoot().getStyleClass().add("next-event-card");
     }
 
@@ -45,8 +53,7 @@ public final class NextEventCard extends UiPart<VBox> {
             arrival.setText(TIME_FORMAT.format(plan.getArrivalTime()));
             state.recommendation().ifPresentOrElse(recommendation -> {
                 departure.setText(TIME_FORMAT.format(recommendation.departureTime()));
-                countdown.setText(DashboardDepartureText.until(recommendation.departureAt(),
-                        Clock.system(ApplicationConfiguration.TIME_ZONE)));
+                countdown.setText(DashboardDepartureText.until(recommendation.departureAt(), clock));
                 reminder.setText(state.reminders().isEmpty()
                         ? "Departure reminder will be set shortly" : "Reminder scheduled");
             }, () -> {

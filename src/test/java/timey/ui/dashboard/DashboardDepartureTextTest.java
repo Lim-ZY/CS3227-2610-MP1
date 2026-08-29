@@ -32,4 +32,15 @@ class DashboardDepartureTextTest {
     void until_tomorrowDeparture_includesRemainingDay() {
         assertEquals("22h 18m", DashboardDepartureText.until(LocalDateTime.of(2026, 8, 22, 8, 0), CLOCK));
     }
+
+    @Test
+    void until_crossesSingaporeMidnight_usesInjectedClockDate() {
+        Clock afterMidnightInSingapore = Clock.fixed(Instant.parse("2026-08-20T16:30:00Z"),
+                ZoneId.of("Asia/Singapore"));
+
+        String countdown = DashboardDepartureText.until(LocalDateTime.of(2026, 8, 21, 23, 15),
+                afterMidnightInSingapore);
+
+        assertEquals("22h 45m", countdown);
+    }
 }
