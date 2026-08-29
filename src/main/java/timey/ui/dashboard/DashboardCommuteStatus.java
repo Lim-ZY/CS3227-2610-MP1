@@ -14,7 +14,7 @@ public record DashboardCommuteStatus(String title, String message) {
         if (messages.contains("Live rail routes were aligned")) {
             return new DashboardCommuteStatus("Live rail routes ready", messages);
         }
-        if (messages.contains("deterministic routes")) {
+        if (messages.contains("fixed sample routes")) {
             return new DashboardCommuteStatus("Using deterministic fallback", messages);
         }
         return new DashboardCommuteStatus(state.alternatives().size() + " route alternatives ready", messages);

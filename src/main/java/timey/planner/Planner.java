@@ -17,6 +17,8 @@ import timey.ports.RailTransitPlanner;
 
 /** Coordinates live and deterministic route planning for a commute request. */
 public final class Planner {
+    private static final String FALLBACK_ROUTE_DESCRIPTION = "fixed sample routes";
+
     private final CommutePlanningService commutePlanningService;
     private final LocationResolver locationResolver;
     private final LiveRailPlanningService liveRailPlanningService;
@@ -49,7 +51,8 @@ public final class Planner {
     }
 
     private PlanningResult unavailableLocationResult(PlanCommand plan, LocationResolution unavailableLocation) {
-        return deterministicResult(plan, List.of("Using deterministic routes: " + unavailableLocation.reason()));
+        return deterministicResult(plan, List.of("Using " + FALLBACK_ROUTE_DESCRIPTION + ": "
+                + unavailableLocation.reason()));
     }
 
     private PlanningResult findAlternativesForResolvedLocations(PlanCommand plan, ResolvedLocation origin,
@@ -64,9 +67,9 @@ public final class Planner {
         }
 
         if (liveRoutes.isAvailable()) {
-            messages.add("OneMap returned no live rail routes; using deterministic routes.");
+            messages.add("OneMap returned no live rail routes; using " + FALLBACK_ROUTE_DESCRIPTION + ".");
         } else {
-            messages.add(liveRoutes.unavailableReason().orElseThrow() + " Using deterministic routes.");
+            messages.add(liveRoutes.unavailableReason().orElseThrow() + " Using " + FALLBACK_ROUTE_DESCRIPTION + ".");
         }
         return deterministicResult(plan, messages);
     }

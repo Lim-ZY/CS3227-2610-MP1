@@ -185,7 +185,7 @@ class CommandLineAppTest {
 
         app.run();
 
-        assertTrue(outputText.toString().contains("Using deterministic routes: OneMap could not find \"VivoCity\"."));
+        assertTrue(outputText.toString().contains("Using fixed sample routes: OneMap could not find \"VivoCity\"."));
         assertTrue(outputText.toString().contains("1. Fastest Transit"));
     }
 

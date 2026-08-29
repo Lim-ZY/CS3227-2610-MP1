@@ -51,7 +51,7 @@ class PlannerTest {
         var result = planner.findAlternatives(PLAN);
 
         assertEquals("Fastest Transit", result.alternatives().getFirst().name());
-        assertEquals(List.of("Using deterministic routes: Offline"), result.messages());
+        assertEquals(List.of("Using fixed sample routes: Offline"), result.messages());
     }
 
     @Test
@@ -73,7 +73,7 @@ class PlannerTest {
 
         assertEquals(List.of("COM3"), resolvedQueries);
         assertEquals("Fastest Transit", result.alternatives().getFirst().name());
-        assertEquals(List.of("Using deterministic routes: Live location lookup is unavailable."), result.messages());
+        assertEquals(List.of("Using fixed sample routes: Live location lookup is unavailable."), result.messages());
     }
 
     @Test
@@ -87,6 +87,6 @@ class PlannerTest {
         var result = planner.findAlternatives(PLAN);
 
         assertEquals("Fastest Transit", result.alternatives().getFirst().name());
-        assertEquals("OneMap is unavailable. Using deterministic routes.", result.messages().getLast());
+        assertEquals("OneMap is unavailable. Using fixed sample routes.", result.messages().getLast());
     }
 }

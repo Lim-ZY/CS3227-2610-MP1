@@ -6,7 +6,7 @@ import java.util.List;
 import timey.domain.transit.RouteAlternative;
 import timey.ports.TransitPlanner;
 
-/** Deterministic route data used until a live transit provider is introduced. */
+/** Fixed sample route data used when live rail data is unavailable. */
 public final class MockTransitPlanner implements TransitPlanner {
     private static final List<RouteAlternative> SAMPLE_ROUTES = List.of(
             new RouteAlternative("Fastest Transit", Duration.ofMinutes(8), Duration.ofMinutes(35), 1),

@@ -11,15 +11,25 @@ import java.time.LocalTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.jupiter.api.Test;
 
 import timey.TestTimeyModelFactory;
 import timey.command.PlanCommand;
 import timey.domain.alert.SavedPlan;
+import timey.domain.location.LocationResolution;
+import timey.domain.location.ResolvedLocation;
+import timey.domain.transit.LiveRouteLookup;
 import timey.domain.transit.RouteAlternative;
 import timey.infrastructure.transit.InMemoryFixedCommuteStore;
+import timey.infrastructure.transit.MockTransitPlanner;
+import timey.planner.CommutePlanningService;
+import timey.planner.Planner;
+import timey.ports.LocationResolver;
 import timey.ports.PlanStore;
+import timey.ports.RailTransitPlanner;
+import timey.reminder.DepartureReminderService;
 
 class TimeyModelTest {
     @Test
@@ -152,6 +162,32 @@ class TimeyModelTest {
     }
 
     @Test
+    void plan_liveRefreshFails_replacesStaleSelectionWithDeterministicFallback() {
+        Clock clock = Clock.fixed(Instant.parse("2026-08-29T01:00:00Z"), ZoneId.of("Asia/Singapore"));
+        PlanCommand previousPlan = new PlanCommand("COM3", "VivoCity", LocalTime.of(18, 30), Duration.ZERO);
+        RouteAlternative previousRoute = new RouteAlternative("Previous live route", Duration.ofMinutes(8),
+                Duration.ofMinutes(35), 1);
+        AtomicInteger liveLookupCalls = new AtomicInteger();
+        RailTransitPlanner railPlanner = (origin, destination, date, time) -> liveLookupCalls.getAndIncrement() == 0
+                ? LiveRouteLookup.available(List.of(previousRoute))
+                : LiveRouteLookup.unavailable("Live routing is unavailable.");
+        var planner = new Planner(new CommutePlanningService(new MockTransitPlanner()), foundLocationResolver(),
+                railPlanner, clock);
+        var model = new TimeyModel(planner, new InMemoryFixedCommuteStore(), plans -> { },
+                new DepartureReminderService((triggerAt, action) -> () -> { }, clock, reminder -> { }), clock);
+        model.replacePlan(previousPlan, List.of(previousRoute), List.of("Live route available."));
+        model.selectRoute(1);
+
+        model.plan(previousPlan);
+
+        assertEquals(2, liveLookupCalls.get());
+        assertTrue(model.getSelectedRecommendation().isEmpty());
+        assertEquals("Fastest Transit", model.getPendingAlternatives().getFirst().name());
+        assertEquals("Live routing is unavailable. Using fixed sample routes.",
+                model.getPlanningMessages().getLast());
+    }
+
+    @Test
     void constructor_loadedPlansContainExpiredEntry_removesItFromStore() {
         var savedPlanLists = new ArrayList<List<SavedPlan>>();
         Clock clock = Clock.fixed(Instant.parse("2026-08-29T01:00:00Z"), ZoneId.of("Asia/Singapore"));
@@ -278,5 +314,9 @@ class TimeyModelTest {
         public Instant instant() {
             return instant;
         }
+    }
+
+    private static LocationResolver foundLocationResolver() {
+        return query -> LocationResolution.found(new ResolvedLocation(query, query + " address", 1.3, 103.8));
     }
 }
