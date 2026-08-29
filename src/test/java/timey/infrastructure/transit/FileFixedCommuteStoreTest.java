@@ -67,6 +67,25 @@ class FileFixedCommuteStoreTest {
         }
     }
 
+    @Test
+    void save_malformedExistingFile_recoversWithReplacementFile() throws Exception {
+        var directory = Files.createTempDirectory("timey-fixed-commute");
+        try {
+            var path = directory.resolve("fixed-commutes.properties");
+            Files.writeString(path, "malformed=\\u12G4");
+            var expected = new FixedCommute("COM3", "VivoCity", Duration.ofMinutes(75));
+
+            new FileFixedCommuteStore(path).save(expected);
+
+            assertEquals(java.util.List.of(expected), new FileFixedCommuteStore(path).findAll());
+            try (var files = Files.list(directory)) {
+                assertEquals(1, files.count());
+            }
+        } finally {
+            deleteDirectory(directory);
+        }
+    }
+
     private void deleteDirectory(java.nio.file.Path directory) throws Exception {
         Files.walk(directory).sorted(java.util.Comparator.reverseOrder()).forEach(path -> {
             try {
