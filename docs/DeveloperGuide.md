@@ -28,6 +28,27 @@ Potentially slow command work runs in a JavaFX `Task`. Its success and failure
 handlers update components on the JavaFX application thread; planners, parsers,
 and domain logic remain outside the presentation package.
 
+`DashboardCommandExecutionGate` serializes command-session access on worker
+threads. This prevents an overlapping or cancelled dashboard request from
+mixing terminal output or model state with a later request.
+
+## Reliability behaviour
+
+All application-facing clocks use the fixed `Asia/Singapore` timezone and can
+be injected in tests. The planner uses OneMap data when available; otherwise it
+publishes a deterministic `Offline estimate` with a one-hour travel buffer.
+The fallback is explicitly labelled and is not a live duration measurement.
+
+Planning assembles its routes, messages, and matching saved timing before
+replacing model state. Selecting a route writes a candidate saved-plan list
+before publishing the local selection. These ordering rules preserve a
+previous valid plan when dependent storage operations fail.
+
+`FileFixedCommuteStore` and `FilePlanStore` write a temporary file and replace
+the destination atomically where the filesystem supports it. Readers discard
+malformed individual records while retaining valid ones. Runtime failures use a
+shared, user-safe recovery message rather than exposing exception details.
+
 ## Testing policy
 
 JUnit tests are kept under `src/test/java` in the same package hierarchy as
@@ -47,12 +68,23 @@ without starting a JavaFX toolkit. Pure dashboard display helpers are tested
 directly; manual smoke testing remains appropriate for control interaction,
 route selection, and visual layout changes.
 
+Run the complete automated verification from the repository root:
+
+```
+./gradlew clean test checkstyleMain checkstyleTest
+```
+
+Tests use injected clocks, HTTP request doubles, and OneMap response fixtures;
+they do not require live internet access.
+
 ## Development status
 
-The current implementation provides an interactive CLI, deterministic route
-alternatives, departure calculation, and OneMap-backed rail route lookup with
-offline fallback. This document will be updated as further features and design
-decisions are implemented.
+The current implementation provides an interactive CLI and JavaFX dashboard,
+route selection and departure calculation, saved timings and plans, OneMap
+location and rail lookup, deterministic offline fallback, preferences, and
+bounded HTTP retries. Calendar import, virtual events, weather and LTA data,
+native notifications, cached routes, walking-speed preferences, and full saved
+location management remain planned enhancements.
 
 ## Acknowledgements
 
