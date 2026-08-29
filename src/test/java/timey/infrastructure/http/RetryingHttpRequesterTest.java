@@ -127,4 +127,18 @@ class RetryingHttpRequesterTest {
         assertEquals(503, result.statusCode());
         assertEquals(3, calls.get());
     }
+
+    @Test
+    void get_persistentRateLimit_returnsFinalRateLimitResponse() {
+        var calls = new AtomicInteger();
+        var retryingRequester = new RetryingHttpRequester(uri -> {
+            calls.incrementAndGet();
+            return new HttpResult(429, "rate limited");
+        }, 2, duration -> { });
+
+        var result = retryingRequester.get(URI);
+
+        assertEquals(429, result.statusCode());
+        assertEquals(3, calls.get());
+    }
 }
