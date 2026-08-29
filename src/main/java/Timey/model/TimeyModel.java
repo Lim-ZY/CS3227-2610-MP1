@@ -123,7 +123,7 @@ public final class TimeyModel {
         return savedPlans;
     }
 
-    /** Removes plans whose target arrival is no longer in the future. */
+    /** Removes plans whose leave-by time is no longer in the future. */
     public void pruneExpiredPlans() {
         List<SavedPlan> remainingPlans = savedPlans.stream().filter(this::isFuture).toList();
         if (!remainingPlans.equals(savedPlans)) {
@@ -187,6 +187,7 @@ public final class TimeyModel {
     }
 
     private boolean isFuture(SavedPlan plan) {
-        return LocalDateTime.of(plan.date(), plan.arrivalTime()).isAfter(LocalDateTime.now(clock));
+        LocalDate leaveByDate = plan.leaveBy().isAfter(plan.arrivalTime()) ? plan.date().minusDays(1) : plan.date();
+        return LocalDateTime.of(leaveByDate, plan.leaveBy()).isAfter(LocalDateTime.now(clock));
     }
 }
