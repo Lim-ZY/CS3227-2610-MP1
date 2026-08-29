@@ -41,6 +41,7 @@ public final class MainWindow extends UiPart<Stage> {
     private final CommandBar commandBar;
     private final DashboardContent dashboard;
     private final DashboardCommandTracker commandTracker = new DashboardCommandTracker();
+    private final DashboardCommandExecutionGate commandExecutionGate = new DashboardCommandExecutionGate();
     private Task<DashboardCommandResponse> activeCommandTask;
     private DashboardState latestDashboardState;
     private Timeline dashboardRefreshTimer;
@@ -119,9 +120,11 @@ public final class MainWindow extends UiPart<Stage> {
         Task<DashboardCommandResponse> task = new Task<>() {
             @Override
             protected DashboardCommandResponse call() {
-                int outputStart = output.getBuffer().length();
-                CommandExecutionResult result = commandLineApp.executeCommand(input);
-                return new DashboardCommandResponse(result, output.getBuffer().substring(outputStart));
+                return commandExecutionGate.execute(() -> {
+                    int outputStart = output.getBuffer().length();
+                    CommandExecutionResult result = commandLineApp.executeCommand(input);
+                    return new DashboardCommandResponse(result, output.getBuffer().substring(outputStart));
+                });
             }
         };
         task.setOnSucceeded(event -> handleCommandSuccess(requestId, input, task.getValue()));
