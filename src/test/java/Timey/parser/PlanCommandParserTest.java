@@ -55,11 +55,14 @@ class PlanCommandParserTest {
 
     @Test
     void parse_malformedArrivalOrBuffer_validationErrorThrown() {
-        assertEquals("Arrival time must use 24-hour HHmm format, for example 1830.", assertThrows(IllegalArgumentException.class,
+        assertEquals("Arrival time must use 24-hour HHmm format, for example 1830.",
+                assertThrows(IllegalArgumentException.class,
                 () -> parser.parse("plan /from \"COM3\" /to \"VivoCity\" /by 18:30")).getMessage());
-        assertEquals("Buffer must be a whole number of minutes, for example 10m.", assertThrows(IllegalArgumentException.class,
+        assertEquals("Buffer must be a whole number of minutes, for example 10m.",
+                assertThrows(IllegalArgumentException.class,
                 () -> parser.parse("plan /from \"COM3\" /to \"VivoCity\" /by 1830 /buf -1m")).getMessage());
-        assertEquals("Buffer must be a whole number of minutes, for example 10m.", assertThrows(IllegalArgumentException.class,
+        assertEquals("Buffer must be a whole number of minutes, for example 10m.",
+                assertThrows(IllegalArgumentException.class,
                 () -> parser.parse("plan /from \"COM3\" /to \"VivoCity\" /by 1830 /buf 1.5m")).getMessage());
     }
 

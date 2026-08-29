@@ -69,7 +69,8 @@ public final class MainWindow extends UiPart<Stage> {
     private DashboardContent createDashboard() {
         Label heading = new Label("Your day, on track.");
         heading.getStyleClass().add("page-heading");
-        Label introduction = new Label("Plan a commute in the command bar to see your next event and departure plan here.");
+        Label introduction = new Label(
+                "Plan a commute in the command bar to see your next event and departure plan here.");
         introduction.getStyleClass().add("muted");
 
         NextEventCard nextEvent = new NextEventCard();

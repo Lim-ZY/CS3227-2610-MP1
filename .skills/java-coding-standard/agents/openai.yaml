@@ -1,0 +1,4 @@
+interface:
+  display_name: "Java Coding Standard"
+  short_description: "Apply this project’s Java conventions."
+  default_prompt: "Use $java-coding-standard to review the Java changes in this project."

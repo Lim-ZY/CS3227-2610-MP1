@@ -1,0 +1,4 @@
+interface:
+  display_name: "Git Standard"
+  short_description: "Write consistent, informative Git commits."
+  default_prompt: "Use $git-standard to prepare a commit for this project."

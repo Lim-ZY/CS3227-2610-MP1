@@ -26,7 +26,8 @@ class OneMapRailTransitPlannerTest {
             return new HttpResult(200, """
                     {"plan":{"itineraries":[{"duration":2400,"walkTime":600,"transitTime":1800,"transfers":1,
                     "legs":[{"mode":"WALK","duration":300,"from":{"name":"COM3"},"to":{"name":"Kent Ridge MRT"}},
-                    {"mode":"SUBWAY","duration":1800,"routeShortName":"Circle Line","from":{"name":"Kent Ridge MRT"},"to":{"name":"HarbourFront MRT"}},
+                    {"mode":"SUBWAY","duration":1800,"routeShortName":"Circle Line",
+                    "from":{"name":"Kent Ridge MRT"},"to":{"name":"HarbourFront MRT"}},
                     {"mode":"WALK","duration":300,"from":{"name":"HarbourFront MRT"},"to":{"name":"VivoCity"}}]},
                     {"duration":2700,"walkTime":900,"transitTime":1800,"transfers":0}]}}""");
         }, Optional.of(URI.create("https://timey.example.workers.dev")));
@@ -111,7 +112,8 @@ class OneMapRailTransitPlannerTest {
     @Test
     void findRoutes_incompleteItinerary_returnsFallbackWithoutException() {
         var planner = new OneMapRailTransitPlanner(uri -> new HttpResult(200,
-                "{\"plan\":{\"itineraries\":[{\"walkTime\":600,\"transfers\":0}]}}"), Optional.of(URI.create("https://timey.example.workers.dev")));
+                "{\"plan\":{\"itineraries\":[{\"walkTime\":600,\"transfers\":0}]}}"),
+                Optional.of(URI.create("https://timey.example.workers.dev")));
 
         var lookup = planner.findRoutes(COM3, VIVOCITY, LocalDate.of(2026, 8, 21), LocalTime.NOON);
 

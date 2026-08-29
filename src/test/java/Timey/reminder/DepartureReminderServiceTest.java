@@ -97,7 +97,8 @@ class DepartureReminderServiceTest {
     private static final class CapturingReminderScheduler implements ReminderScheduler {
         private final AtomicReference<Instant> triggerAt = new AtomicReference<>();
         private final AtomicReference<Runnable> action = new AtomicReference<>();
-        private final java.util.concurrent.atomic.AtomicBoolean cancelled = new java.util.concurrent.atomic.AtomicBoolean();
+        private final java.util.concurrent.atomic.AtomicBoolean cancelled =
+                new java.util.concurrent.atomic.AtomicBoolean();
 
         @Override
         public ReminderHandle schedule(Instant triggerAt, Runnable action) {

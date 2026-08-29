@@ -21,7 +21,8 @@ public final class LiveRailPlanningService {
         this(railTransitPlanner, new DepartureCalculator(), clock);
     }
 
-    LiveRailPlanningService(RailTransitPlanner railTransitPlanner, DepartureCalculator departureCalculator, Clock clock) {
+    LiveRailPlanningService(RailTransitPlanner railTransitPlanner, DepartureCalculator departureCalculator,
+            Clock clock) {
         this.railTransitPlanner = Objects.requireNonNull(railTransitPlanner);
         this.departureCalculator = Objects.requireNonNull(departureCalculator);
         this.clock = Objects.requireNonNull(clock);

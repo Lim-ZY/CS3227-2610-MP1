@@ -183,7 +183,8 @@ public final class TimeyModel {
             return;
         }
         if (!savedPlans.contains(savedPlan)) {
-            savedPlans = java.util.stream.Stream.concat(savedPlans.stream(), java.util.stream.Stream.of(savedPlan)).toList();
+            savedPlans = java.util.stream.Stream.concat(savedPlans.stream(), java.util.stream.Stream.of(savedPlan))
+                    .toList();
             planStore.saveAll(savedPlans);
         }
     }

@@ -30,7 +30,8 @@ public final class ReminderStatusCard extends UiPart<VBox> {
                 : state.reminders().size() + " active departure reminder");
         message.setText(state.reminders().isEmpty()
                 ? "Timey will automatically schedule a departure reminder after you choose a route."
-                : "Next reminder: " + state.reminders().getFirst().triggerAt().atZone(ApplicationConfiguration.TIME_ZONE)
+                : "Next reminder: " + state.reminders().getFirst().triggerAt()
+                        .atZone(ApplicationConfiguration.TIME_ZONE)
                         .format(TIME_FORMAT));
     }
 }

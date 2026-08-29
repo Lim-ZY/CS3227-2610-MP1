@@ -29,7 +29,8 @@ public final class RouteAlternativesPanel extends UiPart<VBox> {
         }
         for (int index = 0; index < state.alternatives().size(); index++) {
             RouteAlternative route = state.alternatives().get(index);
-            boolean selected = state.recommendation().map(recommendation -> recommendation.routeName().equals(route.name()))
+            boolean selected = state.recommendation()
+                    .map(recommendation -> recommendation.routeName().equals(route.name()))
                     .orElse(false);
             alternatives.getChildren().add(routeAlternative(index + 1, route, selected));
         }

@@ -23,7 +23,8 @@ public final class DepartureReminderService {
     private final List<ScheduledDepartureReminder> scheduledReminders = new ArrayList<>();
     private final Map<ScheduledDepartureReminder, ReminderHandle> reminderHandles = new HashMap<>();
 
-    public DepartureReminderService(ReminderScheduler reminderScheduler, Clock clock, DepartureReminderNotifier notifier) {
+    public DepartureReminderService(ReminderScheduler reminderScheduler, Clock clock,
+            DepartureReminderNotifier notifier) {
         this.reminderScheduler = Objects.requireNonNull(reminderScheduler);
         this.clock = Objects.requireNonNull(clock);
         this.notifier = Objects.requireNonNull(notifier);

@@ -45,14 +45,16 @@ public final class CommandLineApp {
     public CommandLineApp(BufferedReader input, PrintWriter output, PlanCommandParser planCommandParser,
             CommutePlanningService commutePlanningService, LocationResolver locationResolver,
             RailTransitPlanner railTransitPlanner, Clock clock) {
-        this(new ConsoleUi(input, output), planCommandParser, commutePlanningService, locationResolver, railTransitPlanner, clock,
+        this(new ConsoleUi(input, output), planCommandParser, commutePlanningService, locationResolver,
+                railTransitPlanner, clock,
                 (triggerAt, action) -> () -> { });
     }
 
     public CommandLineApp(BufferedReader input, PrintWriter output, PlanCommandParser planCommandParser,
             CommutePlanningService commutePlanningService, LocationResolver locationResolver,
             RailTransitPlanner railTransitPlanner, Clock clock, ReminderScheduler reminderScheduler) {
-        this(new ConsoleUi(input, output), planCommandParser, commutePlanningService, locationResolver, railTransitPlanner, clock,
+        this(new ConsoleUi(input, output), planCommandParser, commutePlanningService, locationResolver,
+                railTransitPlanner, clock,
                 reminderScheduler);
     }
 
@@ -60,7 +62,8 @@ public final class CommandLineApp {
             CommutePlanningService commutePlanningService, LocationResolver locationResolver,
             RailTransitPlanner railTransitPlanner, Clock clock, ReminderScheduler reminderScheduler,
             FixedCommuteStore fixedCommuteStore) {
-        this(new ConsoleUi(input, output), planCommandParser, commutePlanningService, locationResolver, railTransitPlanner, clock,
+        this(new ConsoleUi(input, output), planCommandParser, commutePlanningService, locationResolver,
+                railTransitPlanner, clock,
                 reminderScheduler, fixedCommuteStore);
     }
 
@@ -86,7 +89,8 @@ public final class CommandLineApp {
         this.ui = ui;
         this.parser = new Parser(planCommandParser);
         var planner = new Timey.planner.Planner(commutePlanningService, locationResolver, railTransitPlanner, clock);
-        var departureReminderService = new Timey.reminder.DepartureReminderService(reminderScheduler, clock, reminder -> {
+        var departureReminderService = new Timey.reminder.DepartureReminderService(reminderScheduler, clock,
+                reminder -> {
             ui.println();
             ui.println(reminder.message());
             ui.printPrompt();

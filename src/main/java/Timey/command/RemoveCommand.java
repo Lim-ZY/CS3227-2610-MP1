@@ -25,6 +25,7 @@ public final class RemoveCommand extends Command {
         }
         var timing = timings.get(timingNumber - 1);
         model.removeFixedCommute(timing);
-        return CommandResult.message("Removed saved timing from " + timing.origin() + " to " + timing.destination() + ".");
+        return CommandResult.message(
+                "Removed saved timing from " + timing.origin() + " to " + timing.destination() + ".");
     }
 }

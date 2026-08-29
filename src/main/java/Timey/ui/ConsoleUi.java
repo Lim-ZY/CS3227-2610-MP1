@@ -17,7 +17,8 @@ public final class ConsoleUi {
 
     /** Creates a UI connected to the standard console streams. */
     public ConsoleUi() {
-        this(new BufferedReader(new InputStreamReader(System.in, StandardCharsets.UTF_8)), new PrintWriter(System.out, true));
+        this(new BufferedReader(new InputStreamReader(System.in, StandardCharsets.UTF_8)),
+                new PrintWriter(System.out, true));
     }
 
     public ConsoleUi(BufferedReader input, PrintWriter output) {

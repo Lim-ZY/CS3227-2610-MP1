@@ -27,7 +27,8 @@ class PlannerTest {
     void findAlternatives_liveRoutesAvailable_returnsLiveRoutesAndResolutionMessages() {
         var resolver = (Timey.ports.LocationResolver) query -> LocationResolution.found(
                 new ResolvedLocation(query, query + " address", 1.3, 103.8));
-        RouteAlternative liveRoute = new RouteAlternative("Live rail", Duration.ofMinutes(5), Duration.ofMinutes(30), 0);
+        RouteAlternative liveRoute = new RouteAlternative("Live rail", Duration.ofMinutes(5),
+                Duration.ofMinutes(30), 0);
         var planner = new Planner(new CommutePlanningService(new MockTransitPlanner()), resolver,
                 (origin, destination, date, time) -> LiveRouteLookup.available(List.of(liveRoute)), CLOCK);
 

@@ -55,7 +55,8 @@ class OneMapLocationResolverTest {
     @Test
     void resolve_incompleteProviderResponse_returnsNotFoundReason() {
         var resolver = new OneMapLocationResolver(uri -> new HttpResult(200,
-                "{\"results\":[{\"SEARCHVAL\":\"COM3\"}]}"), Optional.of(URI.create("https://timey.example.workers.dev")));
+                "{\"results\":[{\"SEARCHVAL\":\"COM3\"}]}"),
+                Optional.of(URI.create("https://timey.example.workers.dev")));
 
         var result = resolver.resolve("COM3");
 
