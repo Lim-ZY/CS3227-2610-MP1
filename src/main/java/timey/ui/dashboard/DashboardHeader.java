@@ -64,20 +64,32 @@ public final class DashboardHeader extends UiPart<HBox> {
     }
 
     private void configureMenu() {
+        timeyMenu.getItems().addAll(savedLocationsMenu(), recentLocationsMenu(), preferencesMenu());
+    }
+
+    private Menu savedLocationsMenu() {
         Menu savedLocations = new Menu("Saved locations");
         if (preferences.savedLocations().isEmpty()) {
             savedLocations.getItems().add(new MenuItem("No saved locations yet"));
         } else {
             preferences.savedLocations().forEach(location -> savedLocations.getItems().add(new MenuItem(location)));
         }
+        return savedLocations;
+    }
+
+    private Menu recentLocationsMenu() {
         recentLocations = new MenuItem("No recent plan");
         Menu recent = new Menu("Recent locations");
         recent.getItems().add(recentLocations);
+        return recent;
+    }
+
+    private Menu preferencesMenu() {
         personalBuffer = new MenuItem("Set per plan");
         MenuItem timeZone = new MenuItem(ApplicationConfiguration.TIME_ZONE.getId());
         Menu preferenceMenu = new Menu("Preferences");
         preferenceMenu.getItems().addAll(new Menu("Personal buffer", null, personalBuffer),
                 new Menu("Time zone", null, timeZone));
-        timeyMenu.getItems().addAll(savedLocations, recent, preferenceMenu);
+        return preferenceMenu;
     }
 }
