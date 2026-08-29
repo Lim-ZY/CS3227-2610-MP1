@@ -32,16 +32,14 @@ public final class CommandLineApp {
     /** Creates a new CommandLineApp. */
     public CommandLineApp(BufferedReader input, PrintWriter output) {
         this(input, output, new PlanCommandParser(), new CommutePlanningService(new MockTransitPlanner()),
-                new OneMapLocationResolver(uri -> new HttpResult(503, ""),
-                        java.util.Optional.empty()));
+                new OneMapLocationResolver(uri -> new HttpResult(503, ""), java.util.Optional.empty()));
     }
 
     /** Creates a new CommandLineApp. */
     public CommandLineApp(BufferedReader input, PrintWriter output, PlanCommandParser planCommandParser,
             CommutePlanningService commutePlanningService, LocationResolver locationResolver) {
         this(new ConsoleUi(input, output), planCommandParser, commutePlanningService, locationResolver,
-                (origin, destination, date, time) -> LiveRouteLookup.available(List.of()),
-                Clock.systemDefaultZone(), (triggerAt, action) -> () -> { }, new InMemoryFixedCommuteStore());
+                noLiveRoutes(), Clock.systemDefaultZone(), noOpReminderScheduler(), new InMemoryFixedCommuteStore());
     }
 
     /** Creates a new CommandLineApp. */
@@ -49,8 +47,7 @@ public final class CommandLineApp {
             CommutePlanningService commutePlanningService, LocationResolver locationResolver,
             RailTransitPlanner railTransitPlanner, Clock clock) {
         this(new ConsoleUi(input, output), planCommandParser, commutePlanningService, locationResolver,
-                railTransitPlanner, clock,
-                (triggerAt, action) -> () -> { });
+                railTransitPlanner, clock, noOpReminderScheduler());
     }
 
     /** Creates a new CommandLineApp. */
@@ -99,10 +96,10 @@ public final class CommandLineApp {
         var planner = new timey.planner.Planner(commutePlanningService, locationResolver, railTransitPlanner, clock);
         var departureReminderService = new timey.reminder.DepartureReminderService(reminderScheduler, clock,
                 reminder -> {
-            ui.println();
-            ui.println(reminder.message());
-            ui.printPrompt();
-        });
+                    ui.println();
+                    ui.println(reminder.message());
+                    ui.printPrompt();
+                });
         this.model = new TimeyModel(planner, fixedCommuteStore, planStore, departureReminderService, clock);
     }
 
@@ -150,6 +147,14 @@ public final class CommandLineApp {
         CommandResult result = command.execute(model);
         ui.show(result);
         return result;
+    }
+
+    private static RailTransitPlanner noLiveRoutes() {
+        return (origin, destination, date, time) -> LiveRouteLookup.available(List.of());
+    }
+
+    private static ReminderScheduler noOpReminderScheduler() {
+        return (triggerAt, action) -> () -> { };
     }
 
     /** Returns current session data for a dashboard without invoking any planner or API itself. */

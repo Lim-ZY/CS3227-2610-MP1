@@ -16,8 +16,8 @@ class RetryingHttpRequesterTest {
 
     @Test
     void constructor_negativeRetryLimit_validationErrorThrown() {
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-                () -> new RetryingHttpRequester(uri -> new HttpResult(200, "ok"), -1,
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
+                new RetryingHttpRequester(uri -> new HttpResult(200, "ok"), -1,
                         duration -> { }));
 
         assertEquals("Maximum retries must not be negative.", exception.getMessage());
@@ -28,9 +28,9 @@ class RetryingHttpRequesterTest {
         var calls = new AtomicInteger();
         List<Duration> delays = new ArrayList<>();
         HttpRequester requester = uri -> switch (calls.getAndIncrement()) {
-        case 0 -> new HttpResult(429, "rate limited");
-        case 1 -> new HttpResult(503, "unavailable");
-        default -> new HttpResult(200, "ok");
+            case 0 -> new HttpResult(429, "rate limited");
+            case 1 -> new HttpResult(503, "unavailable");
+            default -> new HttpResult(200, "ok");
         };
         var retryingRequester = new RetryingHttpRequester(requester, 2, delays::add);
 

@@ -20,13 +20,11 @@ class SavedPlanTest {
 
     @Test
     void constructor_blankOrigin_rejectsPlan() {
-        assertThrows(IllegalArgumentException.class,
-                () -> new SavedPlan(DATE, ARRIVAL, " ", "COM3", LEAVE_BY));
+        assertThrows(IllegalArgumentException.class, () -> new SavedPlan(DATE, ARRIVAL, " ", "COM3", LEAVE_BY));
     }
 
     @Test
     void constructor_missingLeaveBy_rejectsPlan() {
-        assertThrows(NullPointerException.class,
-                () -> new SavedPlan(DATE, ARRIVAL, "Admiralty MRT", "COM3", null));
+        assertThrows(NullPointerException.class, () -> new SavedPlan(DATE, ARRIVAL, "Admiralty MRT", "COM3", null));
     }
 }

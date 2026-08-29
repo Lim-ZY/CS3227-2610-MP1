@@ -41,6 +41,20 @@ public final class FileFixedCommuteStore implements FixedCommuteStore {
         }
     }
 
+    private void save(Properties timings) {
+        try {
+            Path parent = path.getParent();
+            if (parent != null) {
+                Files.createDirectories(parent);
+            }
+            try (OutputStream output = Files.newOutputStream(path)) {
+                timings.store(output, "Timey fixed commute timings");
+            }
+        } catch (IOException exception) {
+            throw new IllegalStateException("Could not save fixed commute timings.", exception);
+        }
+    }
+
     @Override
     public synchronized Optional<FixedCommute> find(String origin, String destination) {
         String value = load().getProperty(key(origin, destination));
@@ -101,20 +115,6 @@ public final class FileFixedCommuteStore implements FixedCommuteStore {
             return Optional.of(new FixedCommute(origin, destination, Duration.ofMinutes(duration(value))));
         } catch (IllegalArgumentException | ArithmeticException exception) {
             return Optional.empty();
-        }
-    }
-
-    private void save(Properties timings) {
-        try {
-            Path parent = path.getParent();
-            if (parent != null) {
-                Files.createDirectories(parent);
-            }
-            try (OutputStream output = Files.newOutputStream(path)) {
-                timings.store(output, "Timey fixed commute timings");
-            }
-        } catch (IOException exception) {
-            throw new IllegalStateException("Could not save fixed commute timings.", exception);
         }
     }
 

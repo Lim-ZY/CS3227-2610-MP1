@@ -29,16 +29,16 @@ class AddCommandParserTest {
 
     @Test
     void parse_invalidDuration_validationErrorThrown() {
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-                () -> parser.parse("add /from A /to B /dur 90"));
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
+                parser.parse("add /from A /to B /dur 90"));
 
         assertEquals("Duration must use hours and minutes, for example 1h30m.", exception.getMessage());
     }
 
     @Test
     void parse_zeroDuration_validationErrorThrown() {
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-                () -> parser.parse("add /from A /to B /dur 0m"));
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
+                parser.parse("add /from A /to B /dur 0m"));
 
         assertEquals("Duration must be greater than zero.", exception.getMessage());
     }

@@ -95,6 +95,11 @@ class ScheduledExecutorReminderSchedulerTest {
             return new CompletedScheduledFuture<>();
         }
 
+        @Override
+        public <V> ScheduledFuture<V> schedule(Callable<V> callable, long delay, TimeUnit unit) {
+            throw new UnsupportedOperationException();
+        }
+
         private void runScheduledAction() {
             Runnable action = scheduledAction;
             scheduledAction = null;
@@ -130,11 +135,6 @@ class ScheduledExecutorReminderSchedulerTest {
         @Override
         public void execute(Runnable command) {
             command.run();
-        }
-
-        @Override
-        public <V> ScheduledFuture<V> schedule(Callable<V> callable, long delay, TimeUnit unit) {
-            throw new UnsupportedOperationException();
         }
 
         @Override

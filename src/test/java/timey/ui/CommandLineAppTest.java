@@ -40,10 +40,9 @@ class CommandLineAppTest {
         var app = new CommandLineApp(
                 new ConsoleUi(new BufferedReader(new StringReader("")), new PrintWriter(outputText, true)),
                 new PlanCommandParser(), new CommutePlanningService(new MockTransitPlanner()),
-                query -> LocationResolution.unavailable("Offline"),
-                (origin, destination, date, time) -> LiveRouteLookup.available(List.of()),
+                query -> LocationResolution.unavailable("Offline"), availableRailPlanner(),
                 Clock.fixed(Instant.parse("2026-08-21T01:30:00Z"), ZoneId.of("Asia/Singapore")),
-                (triggerAt, action) -> () -> { }, new InMemoryFixedCommuteStore(),
+                noOpReminderScheduler(), new InMemoryFixedCommuteStore(),
                 plans -> savedPlanLists.add(List.copyOf(plans)));
 
         app.executeCommand("plan /from \"COM3\" /to \"VivoCity\" /by 1830");
@@ -60,10 +59,9 @@ class CommandLineAppTest {
         var fixedCommutes = new InMemoryFixedCommuteStore();
         var app = new CommandLineApp(new BufferedReader(new StringReader("")), new PrintWriter(outputText, true),
                 new PlanCommandParser(), new CommutePlanningService(new MockTransitPlanner()),
-                query -> LocationResolution.unavailable("Offline"),
-                (origin, destination, date, time) -> LiveRouteLookup.available(List.of()),
+                query -> LocationResolution.unavailable("Offline"), availableRailPlanner(),
                 Clock.fixed(Instant.parse("2026-08-21T01:30:00Z"), ZoneId.of("Asia/Singapore")),
-                (triggerAt, action) -> () -> { }, fixedCommutes);
+                noOpReminderScheduler(), fixedCommutes);
 
         app.executeCommand("add /from \"COM3\" /to \"VivoCity\" /dur 1h30m");
         var result = app.executeCommand("plan /from \"COM3\" /to \"VivoCity\" /by 1830");
@@ -232,8 +230,8 @@ class CommandLineAppTest {
         var app = new CommandLineApp(new BufferedReader(new StringReader(
                 "plan /from \"COM3\" /to \"VivoCity\" /by 1830\nchoose 1\nreminders\nthx\n")),
                 new PrintWriter(outputText, true), new PlanCommandParser(),
-                new CommutePlanningService(new MockTransitPlanner()), resolver,
-                (origin, destination, date, time) -> LiveRouteLookup.available(List.of()), clock, scheduler);
+                new CommutePlanningService(new MockTransitPlanner()), resolver, availableRailPlanner(), clock,
+                scheduler);
 
         app.run();
 
@@ -256,8 +254,8 @@ class CommandLineAppTest {
         var app = new CommandLineApp(new BufferedReader(new StringReader(
                 "plan /from \"COM3\" /to \"VivoCity\" /by 1830\nchoose 1\nthx\n")),
                 new PrintWriter(outputText, true), new PlanCommandParser(),
-                new CommutePlanningService(new MockTransitPlanner()), resolver,
-                (origin, destination, date, time) -> LiveRouteLookup.available(List.of()), clock, scheduler);
+                new CommutePlanningService(new MockTransitPlanner()), resolver, availableRailPlanner(), clock,
+                scheduler);
 
         app.run();
         scheduledAction.get().run();
@@ -296,8 +294,8 @@ class CommandLineAppTest {
         var app = new CommandLineApp(new BufferedReader(new StringReader(
                 "plan /from \"COM3\" /to \"VivoCity\" /by 1830\nchoose 1\ncancel 1\nreminders\nthx\n")),
                 new PrintWriter(outputText, true), new PlanCommandParser(),
-                new CommutePlanningService(new MockTransitPlanner()), resolver,
-                (origin, destination, date, time) -> LiveRouteLookup.available(List.of()), clock, scheduler);
+                new CommutePlanningService(new MockTransitPlanner()), resolver, availableRailPlanner(), clock,
+                scheduler);
 
         app.run();
 
@@ -318,13 +316,21 @@ class CommandLineAppTest {
         var app = new CommandLineApp(new BufferedReader(new StringReader(
                 "plan /from \"COM3\" /to \"VivoCity\" /by 1830\nchoose 1\nreminders\nthx\n")),
                 new PrintWriter(outputText, true), new PlanCommandParser(),
-                new CommutePlanningService(new MockTransitPlanner()), resolver,
-                (origin, destination, date, time) -> LiveRouteLookup.available(List.of()), clock, scheduler);
+                new CommutePlanningService(new MockTransitPlanner()), resolver, availableRailPlanner(), clock,
+                scheduler);
 
         app.run();
 
         assertNull(scheduledAt.get());
         assertTrue(outputText.toString().contains("You have to leave now to stay on time! Good luck!"));
         assertTrue(outputText.toString().contains("You have no active departure reminders."));
+    }
+
+    private static RailTransitPlanner availableRailPlanner() {
+        return (origin, destination, date, time) -> LiveRouteLookup.available(List.of());
+    }
+
+    private static ReminderScheduler noOpReminderScheduler() {
+        return (triggerAt, action) -> () -> { };
     }
 }

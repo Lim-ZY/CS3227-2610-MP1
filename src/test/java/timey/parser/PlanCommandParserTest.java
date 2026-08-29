@@ -47,8 +47,8 @@ class PlanCommandParserTest {
 
     @Test
     void parse_invalidArrivalTime_validationErrorThrown() {
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-                () -> parser.parse("plan /from \"COM3\" /to \"VivoCity\" /by 2960"));
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
+                parser.parse("plan /from \"COM3\" /to \"VivoCity\" /by 2960"));
 
         assertEquals("Arrival time must be a valid 24-hour time.", exception.getMessage());
     }
@@ -56,36 +56,38 @@ class PlanCommandParserTest {
     @Test
     void parse_malformedArrivalOrBuffer_validationErrorThrown() {
         assertEquals("Arrival time must use 24-hour HHmm format, for example 1830.",
-                assertThrows(IllegalArgumentException.class,
-                () -> parser.parse("plan /from \"COM3\" /to \"VivoCity\" /by 18:30")).getMessage());
+                assertThrows(IllegalArgumentException.class, () ->
+                        parser.parse("plan /from \"COM3\" /to \"VivoCity\" /by 18:30")).getMessage());
         assertEquals("Buffer must be a whole number of minutes, for example 10m.",
-                assertThrows(IllegalArgumentException.class,
-                () -> parser.parse("plan /from \"COM3\" /to \"VivoCity\" /by 1830 /buf -1m")).getMessage());
+                assertThrows(IllegalArgumentException.class, () ->
+                        parser.parse("plan /from \"COM3\" /to \"VivoCity\" /by 1830 /buf -1m")).getMessage());
         assertEquals("Buffer must be a whole number of minutes, for example 10m.",
-                assertThrows(IllegalArgumentException.class,
-                () -> parser.parse("plan /from \"COM3\" /to \"VivoCity\" /by 1830 /buf 1.5m")).getMessage());
+                assertThrows(IllegalArgumentException.class, () ->
+                        parser.parse("plan /from \"COM3\" /to \"VivoCity\" /by 1830 /buf 1.5m")).getMessage());
     }
 
     @Test
     void parse_destinationMissing_validationErrorThrown() {
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-                () -> parser.parse("plan /from \"COM3\" /by 1830"));
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
+                parser.parse("plan /from \"COM3\" /by 1830"));
 
         assertEquals("Missing required option /to.", exception.getMessage());
     }
 
     @Test
     void parse_duplicateOptionOrUnterminatedLocation_validationErrorThrown() {
-        assertEquals("Option /from was provided more than once.", assertThrows(IllegalArgumentException.class,
-                () -> parser.parse("plan /from \"COM3\" /from \"Home\" /to \"VivoCity\" /by 1830")).getMessage());
-        assertEquals("Could not understand part of the plan command.", assertThrows(IllegalArgumentException.class,
-                () -> parser.parse("plan /from \"COM3 /to \"VivoCity\" /by 1830")).getMessage());
+        assertEquals("Option /from was provided more than once.",
+                assertThrows(IllegalArgumentException.class, () -> parser.parse(
+                        "plan /from \"COM3\" /from \"Home\" /to \"VivoCity\" /by 1830")).getMessage());
+        assertEquals("Could not understand part of the plan command.",
+                assertThrows(IllegalArgumentException.class, () ->
+                        parser.parse("plan /from \"COM3 /to \"VivoCity\" /by 1830")).getMessage());
     }
 
     @Test
     void parse_oversizedBuffer_validationErrorThrown() {
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-                () -> parser.parse("plan /from \"COM3\" /to \"VivoCity\" /by 1830 /buf 999999999999999999999999999m"));
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> parser.parse(
+                "plan /from \"COM3\" /to \"VivoCity\" /by 1830 /buf 999999999999999999999999999m"));
 
         assertEquals("Buffer is too large.", exception.getMessage());
     }

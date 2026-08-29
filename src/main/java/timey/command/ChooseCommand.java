@@ -27,13 +27,13 @@ public final class ChooseCommand extends Command {
     public CommandResult execute(TimeyModel model) {
         RouteSelectionResult result = model.selectRoute(routeNumber);
         return switch (result.status()) {
-        case NO_PLAN -> CommandResult.message("Please create a plan before choosing a route.");
-        case MISSING_NUMBER -> CommandResult.message("Choose a route by number, for example: choose 1");
-        case INVALID_NUMBER -> CommandResult.message("Please choose a route between 1 and "
-                + result.alternativeCount() + ".");
-        case LEAVE_NOW -> recommendationResult(result.recommendation().orElseThrow(), null, model);
-        case REMINDER_SCHEDULED -> recommendationResult(result.recommendation().orElseThrow(),
-                result.reminder().orElseThrow(), model);
+            case NO_PLAN -> CommandResult.message("Please create a plan before choosing a route.");
+            case MISSING_NUMBER -> CommandResult.message("Choose a route by number, for example: choose 1");
+            case INVALID_NUMBER -> CommandResult.message("Please choose a route between 1 and "
+                    + result.alternativeCount() + ".");
+            case LEAVE_NOW -> recommendationResult(result.recommendation().orElseThrow(), null, model);
+            case REMINDER_SCHEDULED -> recommendationResult(result.recommendation().orElseThrow(),
+                    result.reminder().orElseThrow(), model);
         };
     }
 
