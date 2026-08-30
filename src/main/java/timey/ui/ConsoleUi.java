@@ -44,7 +44,6 @@ public final class ConsoleUi {
         println("                             |___/ ");
         println("Hey! I'll help you to be on track today as always!");
         println(DIVIDER);
-        println("Try: plan /from \"COM3\" /to \"VivoCity\" /by 1830 /buf 10m");
         printPrompt();
     }
 
