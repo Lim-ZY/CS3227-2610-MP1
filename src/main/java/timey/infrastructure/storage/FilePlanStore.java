@@ -48,17 +48,21 @@ public final class FilePlanStore implements PlanStore {
                     parseSafely(line).ifPresent(plans::add);
                 }
             }
-            return plans.stream().distinct().toList();
+            return uniquePlans(plans);
         } catch (IOException exception) {
             throw new IllegalStateException("Could not load plans.", exception);
         }
     }
 
     private String serialize(List<SavedPlan> plans) {
-        String content = List.copyOf(plans).stream().distinct()
+        String content = uniquePlans(plans).stream()
                 .map(this::format)
                 .collect(java.util.stream.Collectors.joining(System.lineSeparator()));
         return content.isEmpty() ? content : content + System.lineSeparator();
+    }
+
+    private List<SavedPlan> uniquePlans(List<SavedPlan> plans) {
+        return List.copyOf(plans).stream().distinct().toList();
     }
 
     private java.util.Optional<SavedPlan> parseSafely(String line) {
