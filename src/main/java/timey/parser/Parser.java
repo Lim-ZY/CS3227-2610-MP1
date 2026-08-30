@@ -41,10 +41,10 @@ public final class Parser {
         if (command.equalsIgnoreCase("help")) {
             return new HelpCommand();
         }
-        if (startsWithCommandName(command, "plan")) {
+        if (CommandOptionParser.hasCommandName(command, "plan")) {
             return planCommandParser.parse(command);
         }
-        if (startsWithCommandName(command, "add")) {
+        if (CommandOptionParser.hasCommandName(command, "add")) {
             return addCommandParser.parse(command);
         }
         if (command.equalsIgnoreCase("ls saved")) {
@@ -53,21 +53,13 @@ public final class Parser {
         if (command.equalsIgnoreCase("ls plans")) {
             return new ListCommand(ListCommand.ListType.PLANS);
         }
-        if (startsWithCommandName(command, "rm")) {
+        if (CommandOptionParser.hasCommandName(command, "rm")) {
             return new RemoveCommand(parseNumberArgument(command));
         }
-        if (startsWithCommandName(command, "choose")) {
+        if (CommandOptionParser.hasCommandName(command, "choose")) {
             return new ChooseCommand(parseNumberArgument(command));
         }
         return new UnknownCommand();
-    }
-
-    private boolean startsWithCommandName(String input, String commandName) {
-        if (!input.regionMatches(true, 0, commandName, 0, commandName.length())) {
-            return false;
-        }
-        return input.length() == commandName.length()
-                || Character.isWhitespace(input.charAt(commandName.length()));
     }
 
     private Integer parseNumberArgument(String command) {
