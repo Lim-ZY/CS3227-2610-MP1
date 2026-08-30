@@ -1,6 +1,7 @@
 package timey.ui;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -186,6 +187,29 @@ class CommandLineAppTest {
 
         assertTrue(outputText.toString().contains("Using offline estimate: OneMap could not find \"VivoCity\"."));
         assertTrue(outputText.toString().contains("1. Offline estimate"));
+    }
+
+    @Test
+    void run_workerUnreachable_displaysInternetGuidanceAndOfflineEstimate() {
+        var outputText = new StringWriter();
+        var resolver = (timey.ports.LocationResolver) query ->
+                LocationResolution.unreachable("Worker could not be reached.");
+        var app = new CommandLineApp(new BufferedReader(new StringReader(
+                "plan /from \"Blk 127 Rivervale Street\" /to \"Compass One\" /by 1800\nthx\n")),
+                new PrintWriter(outputText, true), new PlanCommandParser(),
+                new CommutePlanningService(new MockTransitPlanner()), resolver);
+
+        app.run();
+
+        String output = outputText.toString();
+        assertTrue(output.contains("I'm so sorry, I need Internet connection to help you plan your routes "
+                + "accurately."));
+        assertTrue(output.contains("Please reconnect to the Internet for more accurate estimates."));
+        assertTrue(output.contains("Using a default 1-hour buffer before your target arrival time instead of live "
+                + "estimates."));
+        assertTrue(output.contains("1. Offline estimate — 0 minutes total"));
+        assertTrue(output.contains("Choose a route with: choose 1"));
+        assertFalse(output.contains("Worker could not be reached."));
     }
 
     @Test

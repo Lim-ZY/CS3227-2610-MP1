@@ -1,7 +1,7 @@
 package timey.planner;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 import java.time.Clock;
 import java.time.Duration;
@@ -54,7 +54,20 @@ class PlannerTest {
 
         assertEquals("Offline estimate", result.alternatives().getFirst().name());
         assertEquals(List.of("Using offline estimate: Offline",
-                "Internet connection is required for an accurate travel-time estimation.",
+                "Using a default 1-hour buffer before your target arrival time instead of live estimates."),
+                result.messages());
+    }
+
+    @Test
+    void findAlternatives_liveDataServiceUnreachableDuringLocationLookup_explainsConnectivityRequirement() {
+        var resolver = (timey.ports.LocationResolver) query -> LocationResolution.unreachable("Lookup timed out.");
+        RailTransitPlanner railPlanner = (origin, destination, date, time) -> LiveRouteLookup.available(List.of());
+        var planner = new Planner(new CommutePlanningService(new MockTransitPlanner()), resolver, railPlanner, CLOCK);
+
+        var result = planner.findAlternatives(PLAN);
+
+        assertEquals(List.of("I'm so sorry, I need Internet connection to help you plan your routes accurately.",
+                "Please reconnect to the Internet for more accurate estimates.",
                 "Using a default 1-hour buffer before your target arrival time instead of live estimates."),
                 result.messages());
     }
@@ -78,7 +91,7 @@ class PlannerTest {
 
         assertEquals(List.of("COM3"), resolvedQueries);
         assertEquals("Offline estimate", result.alternatives().getFirst().name());
-        assertTrue(result.messages().contains(
+        assertFalse(result.messages().contains(
                 "Internet connection is required for an accurate travel-time estimation."));
     }
 
@@ -87,7 +100,7 @@ class PlannerTest {
         var resolver = (timey.ports.LocationResolver) query -> LocationResolution.found(
                 new ResolvedLocation(query, query + " address", 1.3, 103.8));
         RailTransitPlanner railPlanner = (origin, destination, date, time) ->
-                LiveRouteLookup.unavailable("OneMap is unavailable.");
+                LiveRouteLookup.unavailable("OneMap routing failed (HTTP 503).");
         var planner = new Planner(new CommutePlanningService(new MockTransitPlanner()), resolver, railPlanner, CLOCK);
 
         var result = planner.findAlternatives(PLAN);
@@ -95,6 +108,25 @@ class PlannerTest {
         assertEquals("Offline estimate", result.alternatives().getFirst().name());
         assertEquals("Using a default 1-hour buffer before your target arrival time instead of live estimates.",
                 result.messages().getLast());
+        assertFalse(result.messages().contains(
+                "Internet connection is required for an accurate travel-time estimation."));
+    }
+
+    @Test
+    void findAlternatives_liveDataServiceUnreachable_explainsConnectivityRequirement() {
+        var resolver = (timey.ports.LocationResolver) query -> LocationResolution.found(
+                new ResolvedLocation(query, query + " address", 1.3, 103.8));
+        RailTransitPlanner railPlanner = (origin, destination, date, time) ->
+                LiveRouteLookup.unreachable("OneMap routing timed out.");
+        var planner = new Planner(new CommutePlanningService(new MockTransitPlanner()), resolver, railPlanner, CLOCK);
+
+        var result = planner.findAlternatives(PLAN);
+
+        assertEquals(List.of("OneMap resolved your locations:", "- From: COM3 address", "- To: VivoCity address",
+                "I'm so sorry, I need Internet connection to help you plan your routes accurately.",
+                "Please reconnect to the Internet for more accurate estimates.",
+                "Using a default 1-hour buffer before your target arrival time instead of live estimates."),
+                result.messages());
     }
 
     @Test

@@ -14,6 +14,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import timey.domain.location.LocationResolution;
 import timey.domain.location.ResolvedLocation;
 import timey.infrastructure.http.HttpRequester;
+import timey.infrastructure.http.HttpResult;
 import timey.ports.LocationResolver;
 
 /** Resolves Singapore addresses through Timey's server-held live-data service. */
@@ -37,16 +38,17 @@ public final class OneMapLocationResolver implements LocationResolver {
         if (liveDataBaseUri.isEmpty()) {
             return LocationResolution.unavailable("Live location lookup is not configured.");
         }
+        HttpResult response;
         try {
-            var response = httpRequester.get(searchUri(query));
-            if (response.statusCode() != 200) {
-                return LocationResolution.unavailable("OneMap lookup is temporarily unavailable (HTTP "
-                        + response.statusCode() + ").");
-            }
-            return resolveResponse(response.body(), query);
+            response = httpRequester.get(searchUri(query));
         } catch (RuntimeException exception) {
-            return LocationResolution.unavailable("OneMap lookup is temporarily unavailable.");
+            return LocationResolution.unreachable("OneMap lookup is temporarily unavailable.");
         }
+        if (response.statusCode() != 200) {
+            return LocationResolution.unavailable("OneMap lookup is temporarily unavailable (HTTP "
+                    + response.statusCode() + ").");
+        }
+        return resolveResponse(response.body(), query);
     }
 
     private LocationResolution resolveResponse(String body, String query) {

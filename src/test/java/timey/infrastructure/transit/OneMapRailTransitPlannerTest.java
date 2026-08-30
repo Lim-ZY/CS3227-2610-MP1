@@ -1,6 +1,7 @@
 package timey.infrastructure.transit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.net.URI;
@@ -68,6 +69,7 @@ class OneMapRailTransitPlannerTest {
 
         assertTrue(!lookup.isAvailable());
         assertEquals("OneMap routing failed (HTTP 503).", lookup.unavailableReason().orElseThrow());
+        assertFalse(lookup.isLiveDataServiceUnreachable());
     }
 
     @Test
@@ -81,6 +83,7 @@ class OneMapRailTransitPlannerTest {
         assertTrue(!lookup.isAvailable());
         assertEquals("OneMap routing timed out or is temporarily unavailable.",
                 lookup.unavailableReason().orElseThrow());
+        assertTrue(lookup.isLiveDataServiceUnreachable());
     }
 
     @Test
@@ -92,6 +95,7 @@ class OneMapRailTransitPlannerTest {
 
         assertTrue(!lookup.isAvailable());
         assertEquals("OneMap routing returned an unreadable response.", lookup.unavailableReason().orElseThrow());
+        assertFalse(lookup.isLiveDataServiceUnreachable());
     }
 
     @Test

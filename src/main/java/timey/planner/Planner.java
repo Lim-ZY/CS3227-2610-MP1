@@ -20,6 +20,9 @@ import timey.ports.RailTransitPlanner;
 public final class Planner {
     private static final String FALLBACK_ROUTE_NAME = "Offline estimate";
     private static final Duration FALLBACK_BUFFER = Duration.ofHours(1);
+    private static final String INTERNET_CONNECTION_MESSAGE = "I'm so sorry, I need Internet connection to help you "
+            + "plan your routes accurately.";
+    private static final String RECONNECT_MESSAGE = "Please reconnect to the Internet for more accurate estimates.";
 
     private final CommutePlanningService commutePlanningService;
     private final LocationResolver locationResolver;
@@ -53,8 +56,10 @@ public final class Planner {
     }
 
     private PlanningResult unavailableLocationResult(PlanCommand plan, LocationResolution unavailableLocation) {
-        return deterministicResult(plan, List.of("Using offline estimate: "
-                + unavailableLocation.reason()));
+        if (unavailableLocation.isLiveDataServiceUnreachable()) {
+            return workerUnreachableResult(plan, List.of());
+        }
+        return deterministicResult(plan, List.of("Using offline estimate: " + unavailableLocation.reason()));
     }
 
     private PlanningResult findAlternativesForResolvedLocations(PlanCommand plan, ResolvedLocation origin,
@@ -71,14 +76,23 @@ public final class Planner {
         if (liveRoutes.isAvailable()) {
             messages.add("OneMap returned no live rail routes; using offline estimate.");
         } else {
+            if (liveRoutes.isLiveDataServiceUnreachable()) {
+                return workerUnreachableResult(plan, messages);
+            }
             messages.add(liveRoutes.unavailableReason().orElseThrow() + " Using offline estimate.");
         }
         return deterministicResult(plan, messages);
     }
 
+    private PlanningResult workerUnreachableResult(PlanCommand plan, List<String> messages) {
+        var unreachableMessages = new ArrayList<>(messages);
+        unreachableMessages.add(INTERNET_CONNECTION_MESSAGE);
+        unreachableMessages.add(RECONNECT_MESSAGE);
+        return deterministicResult(plan, unreachableMessages);
+    }
+
     private PlanningResult deterministicResult(PlanCommand plan, List<String> messages) {
         messages = new ArrayList<>(messages);
-        messages.add("Internet connection is required for an accurate travel-time estimation.");
         messages.add("Using a default 1-hour buffer before your target arrival time instead of live estimates.");
         return new PlanningResult(List.of(new RouteAlternative(FALLBACK_ROUTE_NAME, Duration.ZERO, Duration.ZERO, 0)),
                 messages, true);

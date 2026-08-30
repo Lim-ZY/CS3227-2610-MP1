@@ -19,6 +19,7 @@ import timey.domain.transit.RouteAlternative;
 import timey.domain.transit.RouteStep;
 import timey.domain.transit.RouteStepMode;
 import timey.infrastructure.http.HttpRequester;
+import timey.infrastructure.http.HttpResult;
 import timey.ports.RailTransitPlanner;
 
 /** Live-data adapter for server-authenticated OneMap rail itineraries. */
@@ -43,15 +44,16 @@ public final class OneMapRailTransitPlanner implements RailTransitPlanner {
         if (liveDataBaseUri.isEmpty()) {
             return LiveRouteLookup.unavailable("Live rail routing is not configured.");
         }
+        HttpResult response;
         try {
-            var response = httpRequester.get(routeUri(origin, destination, departureDate, departureTime));
-            if (response.statusCode() != 200) {
-                return LiveRouteLookup.unavailable("OneMap routing failed (HTTP " + response.statusCode() + ").");
-            }
-            return parseItineraries(response.body());
+            response = httpRequester.get(routeUri(origin, destination, departureDate, departureTime));
         } catch (RuntimeException exception) {
-            return LiveRouteLookup.unavailable("OneMap routing timed out or is temporarily unavailable.");
+            return LiveRouteLookup.unreachable("OneMap routing timed out or is temporarily unavailable.");
         }
+        if (response.statusCode() != 200) {
+            return LiveRouteLookup.unavailable("OneMap routing failed (HTTP " + response.statusCode() + ").");
+        }
+        return parseItineraries(response.body());
     }
 
     private URI routeUri(ResolvedLocation origin, ResolvedLocation destination,

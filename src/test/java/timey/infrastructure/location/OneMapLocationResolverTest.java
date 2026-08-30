@@ -178,6 +178,7 @@ class OneMapLocationResolverTest {
 
         assertFalse(result.isFound());
         assertEquals("OneMap lookup is temporarily unavailable (HTTP 429).", result.reason());
+        assertFalse(result.isLiveDataServiceUnreachable());
     }
 
     @Test
@@ -190,5 +191,6 @@ class OneMapLocationResolverTest {
 
         assertFalse(result.isFound());
         assertEquals("OneMap lookup is temporarily unavailable.", result.reason());
+        assertTrue(result.isLiveDataServiceUnreachable());
     }
 }

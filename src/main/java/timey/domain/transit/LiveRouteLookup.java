@@ -4,7 +4,8 @@ import java.util.List;
 import java.util.Optional;
 
 /** Represents either the live routes returned by a provider or the reason the lookup was unavailable. */
-public record LiveRouteLookup(List<RouteAlternative> routes, Optional<String> unavailableReason) {
+public record LiveRouteLookup(List<RouteAlternative> routes, Optional<String> unavailableReason,
+        boolean isLiveDataServiceUnreachable) {
     /**
      * Creates a successful lookup result, including a valid result with no matching routes.
      *
@@ -22,7 +23,7 @@ public record LiveRouteLookup(List<RouteAlternative> routes, Optional<String> un
      * @return a successful result
      */
     public static LiveRouteLookup available(List<RouteAlternative> routes) {
-        return new LiveRouteLookup(routes, Optional.empty());
+        return new LiveRouteLookup(routes, Optional.empty(), false);
     }
 
     /**
@@ -32,7 +33,12 @@ public record LiveRouteLookup(List<RouteAlternative> routes, Optional<String> un
      * @return an unavailable result
      */
     public static LiveRouteLookup unavailable(String reason) {
-        return new LiveRouteLookup(List.of(), Optional.of(reason));
+        return new LiveRouteLookup(List.of(), Optional.of(reason), false);
+    }
+
+    /** Returns an unavailable lookup caused by an unreachable live-data service. */
+    public static LiveRouteLookup unreachable(String reason) {
+        return new LiveRouteLookup(List.of(), Optional.of(reason), true);
     }
 
     /**
