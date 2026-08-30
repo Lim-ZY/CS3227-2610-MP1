@@ -11,6 +11,7 @@ import timey.model.TimeyModel;
 /** Plans a commute to the requested destination and arrival time. */
 public final class PlanCommand extends Command {
     private static final DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern("HH:mm");
+    private static final Duration OFFLINE_ESTIMATE_DURATION = Duration.ofHours(1);
 
     private final String origin;
     private final String destination;
@@ -57,6 +58,11 @@ public final class PlanCommand extends Command {
         messages.add("Here are your route alternatives:");
         for (int index = 0; index < model.getPendingAlternatives().size(); index++) {
             RouteAlternative route = model.getPendingAlternatives().get(index);
+            if (model.isUsingFallbackEstimate() && route.name().equals("Offline estimate")) {
+                messages.add((index + 1) + ". Offline estimate — " + OFFLINE_ESTIMATE_DURATION.toMinutes()
+                        + " minutes total");
+                continue;
+            }
             messages.add((index + 1) + ". " + route.name() + " — " + route.totalDuration().toMinutes()
                     + " minutes total (walk " + route.walkingDuration().toMinutes() + " minutes, transit "
                     + route.transitDuration().toMinutes() + " minutes, " + route.transferCount()
@@ -66,6 +72,7 @@ public final class PlanCommand extends Command {
         }
         messages.add("");
         messages.add("Choose a route with: choose 1");
+        messages.addAll(model.getRouteSelectionMessages());
         return new CommandResult(messages);
     }
 

@@ -130,6 +130,25 @@ class PlannerTest {
     }
 
     @Test
+    void findAlternatives_routeNotFound_usesOfflineEstimateAndFixedTimingSuggestion() {
+        var resolver = (timey.ports.LocationResolver) query -> LocationResolution.found(
+                new ResolvedLocation(query, query + " address", 1.3, 103.8));
+        RailTransitPlanner railPlanner = (origin, destination, date, time) ->
+                LiveRouteLookup.unavailable(404, "Unable to get MRT route");
+        var planner = new Planner(new CommutePlanningService(new MockTransitPlanner()), resolver, railPlanner, CLOCK);
+
+        var result = planner.findAlternatives(PLAN);
+
+        assertEquals("Offline estimate", result.alternatives().getFirst().name());
+        assertEquals(List.of("OneMap resolved your locations:", "- From: COM3 address", "- To: VivoCity address",
+                "I'm so sorry, OneMap failed to find a suitable route.",
+                "Using a default 1-hour buffer before your target arrival time instead of live estimates."),
+                result.messages());
+        assertEquals(List.of("(Perhaps use `add` later to save this commute route for future reference?)"),
+                result.routeSelectionMessages());
+    }
+
+    @Test
     void recommendFallbackDeparture_targetAlreadyPassed_usesNextSingaporeDay() {
         Clock afterMidnightInSingapore = Clock.fixed(Instant.parse("2026-08-20T16:30:00Z"),
                 ZoneId.of("Asia/Singapore"));

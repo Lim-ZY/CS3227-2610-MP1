@@ -28,6 +28,7 @@ public final class TimeyModel {
     private PlanCommand pendingPlan;
     private List<RouteAlternative> pendingAlternatives = List.of();
     private List<String> planningMessages = List.of();
+    private List<String> routeSelectionMessages = List.of();
     private boolean pendingUsesFallbackEstimate;
     private DepartureRecommendation selectedRecommendation;
     private List<SavedPlan> savedPlans = List.of();
@@ -62,6 +63,7 @@ public final class TimeyModel {
 
         replacePlan(plan, alternatives, messages);
         pendingUsesFallbackEstimate = result.usesFallbackEstimate();
+        routeSelectionMessages = result.routeSelectionMessages();
     }
 
     /** Saves a fixed commute duration for later route planning. */
@@ -91,6 +93,7 @@ public final class TimeyModel {
         this.pendingPlan = Objects.requireNonNull(plan);
         this.pendingAlternatives = List.copyOf(alternatives);
         this.planningMessages = List.copyOf(messages);
+        this.routeSelectionMessages = List.of();
         this.pendingUsesFallbackEstimate = false;
         this.selectedRecommendation = null;
     }
@@ -121,6 +124,16 @@ public final class TimeyModel {
 
     public List<String> getPlanningMessages() {
         return planningMessages;
+    }
+
+    /** Returns guidance to display after the route-selection prompt. */
+    public List<String> getRouteSelectionMessages() {
+        return routeSelectionMessages;
+    }
+
+    /** Returns whether the pending plan uses a default offline estimate. */
+    public boolean isUsingFallbackEstimate() {
+        return pendingUsesFallbackEstimate;
     }
 
     public Optional<DepartureRecommendation> getSelectedRecommendation() {

@@ -109,7 +109,7 @@ class CommandLineAppTest {
         assertTrue(output.contains("To: VivoCity"));
         assertTrue(output.contains("Target arrival: 18:30"));
         assertTrue(output.contains("Personal buffer: 5 minutes"));
-        assertTrue(output.contains("1. Offline estimate — 0 minutes total"));
+        assertTrue(output.contains("1. Offline estimate — 60 minutes total"));
         assertTrue(output.contains("Chosen route: Offline estimate"));
         assertTrue(output.contains("Recommended departure: 17:30"));
         assertTrue(output.contains("Alrighty, hope you'll have a nice day ahead!"));
@@ -207,9 +207,35 @@ class CommandLineAppTest {
         assertTrue(output.contains("Please reconnect to the Internet for more accurate estimates."));
         assertTrue(output.contains("Using a default 1-hour buffer before your target arrival time instead of live "
                 + "estimates."));
-        assertTrue(output.contains("1. Offline estimate — 0 minutes total"));
+        assertTrue(output.contains("1. Offline estimate — 60 minutes total"));
         assertTrue(output.contains("Choose a route with: choose 1"));
         assertFalse(output.contains("Worker could not be reached."));
+    }
+
+    @Test
+    void run_routeNotFound_displaysOfflineEstimateAndFixedTimingSuggestion() {
+        var outputText = new StringWriter();
+        var resolver = (timey.ports.LocationResolver) query -> LocationResolution.found(
+                new ResolvedLocation(query, query + " address", 1.3, 103.8));
+        RailTransitPlanner railPlanner = (origin, destination, date, time) ->
+                LiveRouteLookup.unavailable(404, "Unable to get MRT route");
+        var app = new CommandLineApp(new BufferedReader(new StringReader(
+                "plan /from \"COM3\" /to \"VivoCity\" /by 1830\nthx\n")), new PrintWriter(outputText, true),
+                new PlanCommandParser(), new CommutePlanningService(new MockTransitPlanner()), resolver,
+                railPlanner, Clock.fixed(Instant.parse("2026-08-21T01:30:00Z"), ZoneId.of("Asia/Singapore")));
+
+        app.run();
+
+        String output = outputText.toString();
+        assertTrue(output.contains("I'm so sorry, OneMap failed to find a suitable route."));
+        assertTrue(output.contains("Using a default 1-hour buffer before your target arrival time instead of live "
+                + "estimates."));
+        assertTrue(output.contains("1. Offline estimate — 60 minutes total"));
+        assertTrue(output.contains("Choose a route with: choose 1"));
+        assertTrue(output.contains("(Perhaps use `add` later to save this commute route for future reference?)"));
+        assertTrue(output.indexOf("Choose a route with: choose 1")
+                < output.indexOf("(Perhaps use `add` later to save this commute route for future reference?)"));
+        assertFalse(output.contains("Unable to get MRT route"));
     }
 
     @Test
