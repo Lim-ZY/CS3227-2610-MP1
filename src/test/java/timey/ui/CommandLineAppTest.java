@@ -35,6 +35,9 @@ import timey.ports.PlanStore;
 import timey.ports.RailTransitPlanner;
 
 class CommandLineAppTest {
+    private static final ZoneId TEST_ZONE = ZoneId.of("Asia/Singapore");
+    private static final Clock TEST_CLOCK = Clock.fixed(Instant.parse("2026-08-21T01:30:00Z"), TEST_ZONE);
+
     @Test
     void executeCommand_selectedFutureRoute_savesPlanThroughInjectedStore() {
         var outputText = new StringWriter();
@@ -57,7 +60,7 @@ class CommandLineAppTest {
 
     @Test
     void dashboardState_includesNextPersistedPlan() {
-        SavedPlan savedPlan = new SavedPlan(LocalDate.of(2026, 8, 22), LocalTime.of(9, 0), "Home", "NUS",
+        SavedPlan savedPlan = new SavedPlan(LocalDate.now(TEST_CLOCK).plusDays(1), LocalTime.of(9, 0), "Home", "NUS",
                 LocalTime.of(8, 0));
         PlanStore planStore = new PlanStore() {
             @Override
@@ -73,7 +76,7 @@ class CommandLineAppTest {
                 new ConsoleUi(new BufferedReader(new StringReader("")), new PrintWriter(new StringWriter(), true)),
                 new PlanCommandParser(), new CommutePlanningService(new MockTransitPlanner()),
                 query -> LocationResolution.unavailable("Offline"), availableRailPlanner(),
-                Clock.fixed(Instant.parse("2026-08-21T01:30:00Z"), ZoneId.of("Asia/Singapore")),
+                TEST_CLOCK,
                 new InMemoryFixedCommuteStore(), planStore);
 
         assertEquals(Optional.of(savedPlan), app.getDashboardState().nextSavedPlan());
@@ -101,7 +104,7 @@ class CommandLineAppTest {
     @Test
     void executeCommand_planThenChoose_preservesCommandStateOutsideTerminalLoop() {
         var outputText = new StringWriter();
-        var app = new CommandLineApp(new BufferedReader(new StringReader("")), new PrintWriter(outputText, true));
+        var app = offlineApp(new BufferedReader(new StringReader("")), new PrintWriter(outputText, true));
 
         var planResult = app.executeCommand("plan /from \"COM3\" /to \"VivoCity\" /by 1830");
         var chooseResult = app.executeCommand("choose 1");
@@ -120,7 +123,7 @@ class CommandLineAppTest {
     @Test
     void run_validPlanAndRouteChoice_displaysPlanAndFarewell() {
         var outputText = new StringWriter();
-        var app = new CommandLineApp(
+        var app = offlineApp(
                 new BufferedReader(new StringReader(
                         "plan /from \"COM3\" /to \"VivoCity\" /by 1830 /buf 5m\nchoose 1\nthx\n")),
                 new PrintWriter(outputText, true));
@@ -143,7 +146,7 @@ class CommandLineAppTest {
     @Test
     void run_invalidReplacementPlan_preservesPreviousPlan() {
         var outputText = new StringWriter();
-        var app = new CommandLineApp(new BufferedReader(new StringReader(
+        var app = offlineApp(new BufferedReader(new StringReader(
                 "plan /from \"COM3\" /to \"VivoCity\" /by 1830\n"
                         + "plan /from \"COM3\" /to \"VivoCity\" /by 18x0\nchoose 1\nthx\n")),
                 new PrintWriter(outputText, true));
@@ -157,7 +160,7 @@ class CommandLineAppTest {
     @Test
     void run_invalidRouteSelection_preservesPendingPlan() {
         var outputText = new StringWriter();
-        var app = new CommandLineApp(new BufferedReader(new StringReader(
+        var app = offlineApp(new BufferedReader(new StringReader(
                 "plan /from \"COM3\" /to \"VivoCity\" /by 1830\nchoose 0\nchoose one\nchoose 1\nthx\n")),
                 new PrintWriter(outputText, true));
 
@@ -172,7 +175,7 @@ class CommandLineAppTest {
     @Test
     void run_emptyCommand_preservesPendingPlan() {
         var outputText = new StringWriter();
-        var app = new CommandLineApp(new BufferedReader(new StringReader(
+        var app = offlineApp(new BufferedReader(new StringReader(
                 "plan /from \"COM3\" /to \"VivoCity\" /by 1830\n\nchoose 1\nthx\n")),
                 new PrintWriter(outputText, true));
 
@@ -189,7 +192,8 @@ class CommandLineAppTest {
                 new ResolvedLocation(query, query + " address", 1.3, 103.8));
         var app = new CommandLineApp(new BufferedReader(new StringReader(
                 "plan /from \"COM3\" /to \"VivoCity\" /by 1830\nthx\n")), new PrintWriter(outputText, true),
-                new PlanCommandParser(), new CommutePlanningService(new MockTransitPlanner()), resolver);
+                new PlanCommandParser(), new CommutePlanningService(new MockTransitPlanner()), resolver,
+                availableRailPlanner(), TEST_CLOCK);
 
         app.run();
 
@@ -206,7 +210,8 @@ class CommandLineAppTest {
                 : LocationResolution.notFound("OneMap could not find \"VivoCity\".");
         var app = new CommandLineApp(new BufferedReader(new StringReader(
                 "plan /from \"COM3\" /to \"VivoCity\" /by 1830\nthx\n")), new PrintWriter(outputText, true),
-                new PlanCommandParser(), new CommutePlanningService(new MockTransitPlanner()), resolver);
+                new PlanCommandParser(), new CommutePlanningService(new MockTransitPlanner()), resolver,
+                availableRailPlanner(), TEST_CLOCK);
 
         app.run();
 
@@ -224,7 +229,7 @@ class CommandLineAppTest {
         var app = new CommandLineApp(new BufferedReader(new StringReader(
                 "plan /from \"Blk 127 Rivervale Street\" /to \"Compass One\" /by 1800\nthx\n")),
                 new PrintWriter(outputText, true), new PlanCommandParser(),
-                new CommutePlanningService(new MockTransitPlanner()), resolver);
+                new CommutePlanningService(new MockTransitPlanner()), resolver, availableRailPlanner(), TEST_CLOCK);
 
         app.run();
 
@@ -243,7 +248,7 @@ class CommandLineAppTest {
         var app = new CommandLineApp(new BufferedReader(new StringReader(
                 "plan /from \"Blk 127 Rivervale Street\" /to \"Compass One\" /by 1800\nthx\n")),
                 new PrintWriter(outputText, true), new PlanCommandParser(),
-                new CommutePlanningService(new MockTransitPlanner()), resolver);
+                new CommutePlanningService(new MockTransitPlanner()), resolver, availableRailPlanner(), TEST_CLOCK);
 
         app.run();
 
@@ -317,7 +322,8 @@ class CommandLineAppTest {
             throw new IllegalStateException("Provider secret failure");
         };
         var app = new CommandLineApp(new BufferedReader(new StringReader("")), new PrintWriter(outputText, true),
-                new PlanCommandParser(), new CommutePlanningService(new MockTransitPlanner()), resolver);
+                new PlanCommandParser(), new CommutePlanningService(new MockTransitPlanner()), resolver,
+                availableRailPlanner(), TEST_CLOCK);
 
         var result = app.executeCommand("plan /from \"COM3\" /to \"VivoCity\" /by 1830");
 
@@ -385,6 +391,12 @@ class CommandLineAppTest {
 
     private static RailTransitPlanner availableRailPlanner() {
         return (origin, destination, date, time) -> LiveRouteLookup.available(List.of());
+    }
+
+    private static CommandLineApp offlineApp(BufferedReader input, PrintWriter output) {
+        return new CommandLineApp(input, output, new PlanCommandParser(),
+                new CommutePlanningService(new MockTransitPlanner()),
+                query -> LocationResolution.unavailable("Offline"), availableRailPlanner(), TEST_CLOCK);
     }
 
 }
