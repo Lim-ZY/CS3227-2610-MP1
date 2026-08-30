@@ -8,7 +8,7 @@ import timey.config.ApplicationConfiguration;
 import timey.config.UserPreferences;
 import timey.infrastructure.alert.FilePlanStore;
 import timey.infrastructure.http.JdkHttpRequester;
-import timey.infrastructure.http.RetryingHttpRequester;
+import timey.infrastructure.http.RateLimitedHttpRequester;
 import timey.infrastructure.location.OneMapLocationResolver;
 import timey.infrastructure.notification.ScheduledExecutorReminderScheduler;
 import timey.infrastructure.transit.FileFixedCommuteStore;
@@ -30,10 +30,10 @@ public final class ApplicationFactory {
     public static CommandLineApp createCommandLineApp(ConsoleUi ui) {
         var configuration = ApplicationConfiguration.loadDefault();
         var preferences = configuration.getUserPreferences();
-        var locationResolver = new OneMapLocationResolver(new RetryingHttpRequester(new JdkHttpRequester()),
+        var locationResolver = new OneMapLocationResolver(new RateLimitedHttpRequester(new JdkHttpRequester()),
                 configuration.getLiveDataBaseUri());
         var railTransitPlanner = new OneMapRailTransitPlanner(
-                new RetryingHttpRequester(new JdkHttpRequester(ROUTING_REQUEST_TIMEOUT)),
+                new RateLimitedHttpRequester(new JdkHttpRequester(ROUTING_REQUEST_TIMEOUT)),
                 configuration.getLiveDataBaseUri());
         return new CommandLineApp(ui, new PlanCommandParser(preferences.defaultDepartureBuffer()),
                 new CommutePlanningService(new MockTransitPlanner()), locationResolver, railTransitPlanner,

@@ -91,6 +91,22 @@ class PlannerTest {
     }
 
     @Test
+    void findAlternatives_locationRateLimited_endsPlanningWithBusyServerMessage() {
+        var resolver = (timey.ports.LocationResolver) query ->
+                LocationResolution.unavailable(429, "Rate limit exceeded");
+        RailTransitPlanner railPlanner = (origin, destination, date, time) -> {
+            throw new AssertionError("Routing should not run after a rate-limited location lookup.");
+        };
+        var planner = new Planner(new CommutePlanningService(new MockTransitPlanner()), resolver, railPlanner, CLOCK);
+
+        var result = planner.findAlternatives(PLAN);
+
+        assertTrue(result.alternatives().isEmpty());
+        assertEquals(List.of("Sorry, please try again later as the server is currently busy :("), result.messages());
+        assertFalse(result.createsPendingPlan());
+    }
+
+    @Test
     void findAlternatives_originUnavailable_doesNotResolveDestination() {
         List<String> resolvedQueries = new ArrayList<>();
         var resolver = (timey.ports.LocationResolver) query -> {
@@ -164,6 +180,22 @@ class PlannerTest {
                 result.messages());
         assertEquals(List.of("(Perhaps use `add` later to save this commute route for future reference?)"),
                 result.routeSelectionMessages());
+    }
+
+    @Test
+    void findAlternatives_routeRateLimited_endsPlanningWithBusyServerMessage() {
+        var resolver = (timey.ports.LocationResolver) query -> LocationResolution.found(
+                new ResolvedLocation(query, query + " address", 1.3, 103.8));
+        RailTransitPlanner railPlanner = (origin, destination, date, time) ->
+                LiveRouteLookup.unavailable(429, "Rate limit exceeded");
+        var planner = new Planner(new CommutePlanningService(new MockTransitPlanner()), resolver, railPlanner, CLOCK);
+
+        var result = planner.findAlternatives(PLAN);
+
+        assertTrue(result.alternatives().isEmpty());
+        assertEquals(List.of("OneMap resolved your locations:", "- From: COM3 address", "- To: VivoCity address",
+                "Sorry, please try again later as the server is currently busy :("), result.messages());
+        assertFalse(result.createsPendingPlan());
     }
 
     @Test

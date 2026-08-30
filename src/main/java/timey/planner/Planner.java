@@ -24,6 +24,8 @@ public final class Planner {
             + "plan your routes accurately.";
     private static final String RECONNECT_MESSAGE = "Please reconnect to the Internet for more accurate estimates.";
     private static final String ROUTE_NOT_FOUND_MESSAGE = "I'm so sorry, OneMap failed to find a suitable route.";
+    private static final String RATE_LIMITED_MESSAGE = "Sorry, please try again later as the server is currently "
+            + "busy :(";
     private static final String POSTAL_CODE_SUGGESTION = "Perhaps you can give me the postal code for that location "
             + "instead?";
     private static final String FIXED_TIMING_SUGGESTION = "(Perhaps use `add` later to save this commute route "
@@ -61,6 +63,9 @@ public final class Planner {
     }
 
     private PlanningResult unavailableLocationResult(PlanCommand plan, LocationResolution unavailableLocation) {
+        if (unavailableLocation.responseStatusCode().orElse(-1) == 429) {
+            return rateLimitedResult(List.of());
+        }
         if (isTerminalLocationFailure(unavailableLocation)) {
             return new PlanningResult(List.of(), List.of("I'm so sorry, " + unavailableLocation.reason(),
                     POSTAL_CODE_SUGGESTION), false, List.of(), false);
@@ -92,6 +97,9 @@ public final class Planner {
             if (liveRoutes.isLiveDataServiceUnreachable()) {
                 return workerUnreachableResult(plan, messages);
             }
+            if (liveRoutes.responseStatusCode().orElse(-1) == 429) {
+                return rateLimitedResult(messages);
+            }
             if (liveRoutes.responseStatusCode().orElse(-1) == 404) {
                 messages.add(ROUTE_NOT_FOUND_MESSAGE);
                 return deterministicResult(plan, messages, List.of(FIXED_TIMING_SUGGESTION));
@@ -99,6 +107,12 @@ public final class Planner {
             messages.add(liveRoutes.unavailableReason().orElseThrow() + " Using offline estimate.");
         }
         return deterministicResult(plan, messages);
+    }
+
+    private PlanningResult rateLimitedResult(List<String> messages) {
+        var rateLimitedMessages = new ArrayList<>(messages);
+        rateLimitedMessages.add(RATE_LIMITED_MESSAGE);
+        return new PlanningResult(List.of(), rateLimitedMessages, false, List.of(), false);
     }
 
     private PlanningResult workerUnreachableResult(PlanCommand plan, List<String> messages) {
