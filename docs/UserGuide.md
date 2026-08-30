@@ -26,13 +26,11 @@ Timey keeps the current plan unchanged and asks you to check your internet
 connection or saved data before retrying. Internal exception details are not
 shown in the CLI or dashboard.
 
-## Local preferences
+## Application defaults
 
-Copy `config/application.example.properties` to `config/application.properties` to configure settings that persist
-between launches. `departure-buffer-minutes` and comma-separated `saved-locations` are loaded by both
-the terminal CLI and JavaFX dashboard. The default buffer applies when a `plan` command omits `/buf`; an explicit
-`/buf` always takes precedence. The application includes the deployed Cloudflare Worker endpoint, and the Worker
-holds the OneMap credentials, so users do not need to configure a URL, token, or OneMap account.
+The application uses a built-in 10-minute default buffer whenever a `plan` command omits `/buf`. An explicit `/buf`
+always takes precedence for that command. The application includes the deployed Cloudflare Worker endpoint, and the
+Worker holds the OneMap credentials, so users do not need to configure a URL, token, or OneMap account.
 
 ## Fixed commute timings
 

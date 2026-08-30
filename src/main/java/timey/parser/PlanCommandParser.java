@@ -18,15 +18,7 @@ public final class PlanCommandParser {
     private final Duration defaultBuffer;
 
     public PlanCommandParser() {
-        this(DEFAULT_BUFFER);
-    }
-
-    /** Creates a parser with the persisted buffer used when /buf is omitted. */
-    public PlanCommandParser(Duration defaultBuffer) {
-        if (defaultBuffer == null || defaultBuffer.isNegative()) {
-            throw new IllegalArgumentException("Default buffer must not be negative.");
-        }
-        this.defaultBuffer = defaultBuffer;
+        defaultBuffer = DEFAULT_BUFFER;
     }
 
     /**

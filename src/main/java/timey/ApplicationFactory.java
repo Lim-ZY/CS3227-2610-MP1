@@ -26,14 +26,12 @@ public final class ApplicationFactory {
 
     /** Performs this operation. */
     public static CommandLineApp createCommandLineApp(ConsoleUi ui) {
-        var configuration = ApplicationConfiguration.loadDefault();
-        var preferences = configuration.getUserPreferences();
         var locationResolver = new OneMapLocationResolver(new RateLimitedHttpRequester(new JdkHttpRequester()),
-                configuration.getLiveDataBaseUri());
+                ApplicationConfiguration.getLiveDataBaseUri());
         var railTransitPlanner = new OneMapRailTransitPlanner(
                 new RateLimitedHttpRequester(new JdkHttpRequester(ROUTING_REQUEST_TIMEOUT)),
-                configuration.getLiveDataBaseUri());
-        return new CommandLineApp(ui, new PlanCommandParser(preferences.defaultDepartureBuffer()),
+                ApplicationConfiguration.getLiveDataBaseUri());
+        return new CommandLineApp(ui, new PlanCommandParser(),
                 new CommutePlanningService(new MockTransitPlanner()), locationResolver, railTransitPlanner,
                 Clock.system(ApplicationConfiguration.TIME_ZONE),
                 new FileFixedCommuteStore(Path.of("data", "fixed-commutes.properties")),
