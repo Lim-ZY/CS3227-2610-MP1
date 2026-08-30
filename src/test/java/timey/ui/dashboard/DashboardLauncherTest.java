@@ -41,7 +41,6 @@ class DashboardLauncherTest {
     void dashboardCardLayouts_packagedWithApplication_areAvailable() {
         assertNotNull(NextEventCard.class.getResource("/timey/ui/dashboard/view/NextEventCard.fxml"));
         assertNotNull(CommuteStatusCard.class.getResource("/timey/ui/dashboard/view/CommuteStatusCard.fxml"));
-        assertNotNull(ReminderStatusCard.class.getResource("/timey/ui/dashboard/view/ReminderStatusCard.fxml"));
     }
 
     @Test
@@ -52,7 +51,7 @@ class DashboardLauncherTest {
     @Test
     void dashboardLayouts_delegateControllerOwnershipToTheirUiParts() throws IOException {
         for (String layout : List.of("MainWindow.fxml", "CommandBar.fxml", "CommandOutput.fxml",
-                "DashboardHeader.fxml", "NextEventCard.fxml", "CommuteStatusCard.fxml", "ReminderStatusCard.fxml",
+                "DashboardHeader.fxml", "NextEventCard.fxml", "CommuteStatusCard.fxml",
                 "RouteAlternativesPanel.fxml")) {
             assertFalse(fxmlContents(layout).contains("fx:controller"), layout);
         }

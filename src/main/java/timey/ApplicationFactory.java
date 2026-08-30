@@ -10,7 +10,6 @@ import timey.infrastructure.alert.FilePlanStore;
 import timey.infrastructure.http.JdkHttpRequester;
 import timey.infrastructure.http.RateLimitedHttpRequester;
 import timey.infrastructure.location.OneMapLocationResolver;
-import timey.infrastructure.notification.ScheduledExecutorReminderScheduler;
 import timey.infrastructure.transit.FileFixedCommuteStore;
 import timey.infrastructure.transit.MockTransitPlanner;
 import timey.infrastructure.transit.OneMapRailTransitPlanner;
@@ -38,7 +37,6 @@ public final class ApplicationFactory {
         return new CommandLineApp(ui, new PlanCommandParser(preferences.defaultDepartureBuffer()),
                 new CommutePlanningService(new MockTransitPlanner()), locationResolver, railTransitPlanner,
                 Clock.system(ApplicationConfiguration.TIME_ZONE),
-                new ScheduledExecutorReminderScheduler(),
                 new FileFixedCommuteStore(Path.of("data", "fixed-commutes.properties")),
                 new FilePlanStore(Path.of("data", "plans.txt")));
     }

@@ -37,8 +37,6 @@ class ParserTest {
     void parse_numberedCommands_returnsNumberWhenPresent() {
         assertEquals(2, assertInstanceOf(timey.command.ChooseCommand.class,
                 parser.parse("choose 2")).getRouteNumber());
-        assertEquals(1, assertInstanceOf(timey.command.CancelCommand.class,
-                parser.parse("cancel 1")).getReminderNumber());
         assertEquals(1, assertInstanceOf(timey.command.RemoveCommand.class,
                 parser.parse("rm 1")).getTimingNumber());
     }
@@ -47,8 +45,6 @@ class ParserTest {
     void parse_malformedNumberedCommand_returnsActionWithoutNumber() {
         assertNull(assertInstanceOf(timey.command.ChooseCommand.class,
                 parser.parse("choose one")).getRouteNumber());
-        assertNull(assertInstanceOf(timey.command.CancelCommand.class,
-                parser.parse("cancel 1 2")).getReminderNumber());
         assertNull(assertInstanceOf(timey.command.RemoveCommand.class,
                 parser.parse("rm one")).getTimingNumber());
     }
@@ -57,7 +53,6 @@ class ParserTest {
     void parse_nonArgumentCommands_classifiesActions() {
         assertInstanceOf(timey.command.ThanksCommand.class, parser.parse("thx"));
         assertInstanceOf(timey.command.HelpCommand.class, parser.parse("help"));
-        assertInstanceOf(timey.command.RemindersCommand.class, parser.parse("reminders"));
         assertInstanceOf(timey.command.ListCommand.class, parser.parse("ls saved"));
         assertInstanceOf(timey.command.ListCommand.class, parser.parse("ls plans"));
     }

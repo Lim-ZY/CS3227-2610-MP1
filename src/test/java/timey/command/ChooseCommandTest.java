@@ -22,7 +22,7 @@ class ChooseCommandTest {
     }
 
     @Test
-    void execute_withPendingRoute_selectsRecommendationAndSchedulesReminder() {
+    void execute_withPendingRoute_selectsRecommendationWithoutSchedulingReminder() {
         var model = TestTimeyModelFactory.create(new InMemoryFixedCommuteStore(),
                 Clock.fixed(Instant.parse("2026-08-21T01:30:00Z"), ZoneId.of("Asia/Singapore")));
         new PlanCommand("COM3", "VivoCity", LocalTime.of(18, 30), java.time.Duration.ZERO).execute(model);
@@ -31,13 +31,12 @@ class ChooseCommandTest {
 
         assertTrue(result.messages().contains("Chosen route: Offline estimate"));
         assertTrue(result.messages().stream()
-                .anyMatch(message -> message.startsWith("Departure reminder automatically set")));
+                .noneMatch(message -> message.contains("reminder")));
         assertEquals("Offline estimate", model.getSelectedRecommendation().orElseThrow().routeName());
-        assertEquals(1, model.getScheduledReminders().size());
     }
 
     @Test
-    void execute_routeAlreadySelected_requestsNewPlanWithoutAnotherReminder() {
+    void execute_routeAlreadySelected_requestsNewPlan() {
         var model = TestTimeyModelFactory.create(new InMemoryFixedCommuteStore(),
                 Clock.fixed(Instant.parse("2026-08-21T01:30:00Z"), ZoneId.of("Asia/Singapore")));
         new PlanCommand("COM3", "VivoCity", LocalTime.of(18, 30), java.time.Duration.ZERO).execute(model);
@@ -47,6 +46,5 @@ class ChooseCommandTest {
 
         assertEquals(java.util.List.of("A route is already selected for the current plan. "
                 + "Please create a new plan before choosing another route."), result.messages());
-        assertEquals(1, model.getScheduledReminders().size());
     }
 }

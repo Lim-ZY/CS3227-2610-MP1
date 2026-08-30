@@ -1,11 +1,9 @@
 package timey.parser;
 
-import timey.command.CancelCommand;
 import timey.command.ChooseCommand;
 import timey.command.Command;
 import timey.command.HelpCommand;
 import timey.command.ListCommand;
-import timey.command.RemindersCommand;
 import timey.command.RemoveCommand;
 import timey.command.ThanksCommand;
 import timey.command.UnknownCommand;
@@ -60,12 +58,6 @@ public final class Parser {
         }
         if (startsWithCommandName(command, "choose")) {
             return new ChooseCommand(parseNumberArgument(command));
-        }
-        if (command.equalsIgnoreCase("reminders")) {
-            return new RemindersCommand();
-        }
-        if (startsWithCommandName(command, "cancel")) {
-            return new CancelCommand(parseNumberArgument(command));
         }
         return new UnknownCommand();
     }

@@ -5,14 +5,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 import timey.domain.alert.DepartureRecommendation;
-import timey.domain.alert.ScheduledDepartureReminder;
 import timey.model.RouteSelectionResult;
 import timey.model.TimeyModel;
 
 /** Selects one route alternative from the pending plan. */
 public final class ChooseCommand extends Command {
     private static final DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern("HH:mm");
-    private static final DateTimeFormatter REMINDER_TIME_FORMAT = DateTimeFormatter.ofPattern("uuuu-MM-dd HH:mm");
 
     private final Integer routeNumber;
 
@@ -36,19 +34,19 @@ public final class ChooseCommand extends Command {
                     + "Please create a new plan.");
             case ALREADY_SELECTED -> CommandResult.message("A route is already selected for the current plan. "
                     + "Please create a new plan before choosing another route.");
-            case LEAVE_NOW -> recommendationResult(result.recommendation().orElseThrow(), null, model);
-            case REMINDER_SCHEDULED -> recommendationResult(result.recommendation().orElseThrow(),
-                    result.reminder().orElseThrow(), model);
+            case LEAVE_NOW, ROUTE_SELECTED -> recommendationResult(result.recommendation().orElseThrow(),
+                    result.status() == RouteSelectionResult.Status.LEAVE_NOW);
         };
     }
 
-    private CommandResult recommendationResult(DepartureRecommendation recommendation,
-            ScheduledDepartureReminder reminder, TimeyModel model) {
+    private CommandResult recommendationResult(DepartureRecommendation recommendation, boolean leaveNow) {
         var messages = new ArrayList<String>();
         messages.add("Great choice! Here is your departure plan:");
         messages.add("");
         addRecommendationDetails(messages, recommendation);
-        addReminderStatus(messages, reminder, model);
+        if (leaveNow) {
+            messages.add("You have to leave now to stay on time! Good luck!");
+        }
         return new CommandResult(messages);
     }
 
@@ -59,14 +57,5 @@ public final class ChooseCommand extends Command {
         messages.add("Recommended departure: " + recommendation.departureTime().format(TIME_FORMAT));
         messages.add("");
         messages.add("Please leave your desk by " + recommendation.departureTime().format(TIME_FORMAT) + ".");
-    }
-
-    private void addReminderStatus(List<String> messages, ScheduledDepartureReminder reminder, TimeyModel model) {
-        if (reminder == null) {
-            messages.add("You have to leave now to stay on time! Good luck!");
-        } else {
-            messages.add("Departure reminder automatically set for "
-                    + REMINDER_TIME_FORMAT.format(reminder.triggerAt().atZone(model.getClock().getZone())) + ".");
-        }
     }
 }

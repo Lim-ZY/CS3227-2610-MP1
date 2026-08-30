@@ -61,11 +61,5 @@
         </HBox>
       </children>
     </HBox>
-    <HBox alignment="CENTER_LEFT" spacing="8.0">
-      <children>
-        <Label styleClass="reminder-dot" text="●" />
-        <Label fx:id="reminder" styleClass="reminder-text" text="Plan a route to set a reminder" />
-      </children>
-    </HBox>
   </children>
 </VBox>

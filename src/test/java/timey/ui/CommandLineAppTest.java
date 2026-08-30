@@ -2,7 +2,6 @@ package timey.ui;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.BufferedReader;
@@ -15,7 +14,6 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.jupiter.api.Test;
 
@@ -31,7 +29,6 @@ import timey.infrastructure.transit.MockTransitPlanner;
 import timey.parser.PlanCommandParser;
 import timey.planner.CommutePlanningService;
 import timey.ports.RailTransitPlanner;
-import timey.ports.ReminderScheduler;
 
 class CommandLineAppTest {
     @Test
@@ -43,7 +40,7 @@ class CommandLineAppTest {
                 new PlanCommandParser(), new CommutePlanningService(new MockTransitPlanner()),
                 query -> LocationResolution.unavailable("Offline"), availableRailPlanner(),
                 Clock.fixed(Instant.parse("2026-08-21T01:30:00Z"), ZoneId.of("Asia/Singapore")),
-                noOpReminderScheduler(), new InMemoryFixedCommuteStore(),
+                new InMemoryFixedCommuteStore(),
                 plans -> savedPlanLists.add(List.copyOf(plans)));
 
         app.executeCommand("plan /from \"COM3\" /to \"VivoCity\" /by 1830");
@@ -62,7 +59,7 @@ class CommandLineAppTest {
                 new PlanCommandParser(), new CommutePlanningService(new MockTransitPlanner()),
                 query -> LocationResolution.unavailable("Offline"), availableRailPlanner(),
                 Clock.fixed(Instant.parse("2026-08-21T01:30:00Z"), ZoneId.of("Asia/Singapore")),
-                noOpReminderScheduler(), fixedCommutes);
+                fixedCommutes);
 
         app.executeCommand("add /from \"COM3\" /to \"VivoCity\" /dur 1h30m");
         var result = app.executeCommand("plan /from \"COM3\" /to \"VivoCity\" /by 1830");
@@ -333,52 +330,6 @@ class CommandLineAppTest {
     }
 
     @Test
-    void run_routeChosen_schedulesDepartureReminderAutomatically() {
-        var outputText = new StringWriter();
-        var scheduledAt = new AtomicReference<java.time.Instant>();
-        ReminderScheduler scheduler = (triggerAt, action) -> {
-            scheduledAt.set(triggerAt);
-            return () -> { };
-        };
-        var clock = Clock.fixed(Instant.parse("2026-08-21T01:30:00Z"), ZoneId.of("Asia/Singapore"));
-        var resolver = (timey.ports.LocationResolver) query -> LocationResolution.unavailable("Offline");
-        var app = new CommandLineApp(new BufferedReader(new StringReader(
-                "plan /from \"COM3\" /to \"VivoCity\" /by 1830\nchoose 1\nreminders\nthx\n")),
-                new PrintWriter(outputText, true), new PlanCommandParser(),
-                new CommutePlanningService(new MockTransitPlanner()), resolver, availableRailPlanner(), clock,
-                scheduler);
-
-        app.run();
-
-        assertEquals(Instant.parse("2026-08-21T09:30:00Z"), scheduledAt.get());
-        assertTrue(outputText.toString().contains("Departure reminder automatically set for 2026-08-21 17:30."));
-        assertTrue(outputText.toString().contains("Active departure reminders:"));
-        assertTrue(outputText.toString().contains("1. 2026-08-21 17:30 — Timey reminder: Please leave your desk now."));
-    }
-
-    @Test
-    void run_scheduledReminder_displaysConsoleNotification() {
-        var outputText = new StringWriter();
-        var scheduledAction = new AtomicReference<Runnable>();
-        ReminderScheduler scheduler = (triggerAt, action) -> {
-            scheduledAction.set(action);
-            return () -> { };
-        };
-        var clock = Clock.fixed(Instant.parse("2026-08-21T01:30:00Z"), ZoneId.of("Asia/Singapore"));
-        var resolver = (timey.ports.LocationResolver) query -> LocationResolution.unavailable("Offline");
-        var app = new CommandLineApp(new BufferedReader(new StringReader(
-                "plan /from \"COM3\" /to \"VivoCity\" /by 1830\nchoose 1\nthx\n")),
-                new PrintWriter(outputText, true), new PlanCommandParser(),
-                new CommutePlanningService(new MockTransitPlanner()), resolver, availableRailPlanner(), clock,
-                scheduler);
-
-        app.run();
-        scheduledAction.get().run();
-
-        assertTrue(outputText.toString().contains("Timey reminder: Please leave your desk now."));
-    }
-
-    @Test
     void run_removedRemindCommand_displaysUnknownCommandGuidance() {
         var outputText = new StringWriter();
         var app = new CommandLineApp(new BufferedReader(new StringReader("remind\nthx\n")),
@@ -390,62 +341,22 @@ class CommandLineAppTest {
     }
 
     @Test
-    void run_noScheduledReminders_displaysEmptyReminderMessage() {
+    void run_departureTimePassed_displaysLeaveNowMessage() {
         var outputText = new StringWriter();
-        var app = new CommandLineApp(new BufferedReader(new StringReader("reminders\nthx\n")),
-                new PrintWriter(outputText, true));
-
-        app.run();
-
-        assertTrue(outputText.toString().contains("You have no active departure reminders."));
-    }
-
-    @Test
-    void run_cancelActiveReminder_removesReminderFromList() {
-        var outputText = new StringWriter();
-        ReminderScheduler scheduler = (triggerAt, action) -> () -> { };
-        var clock = Clock.fixed(Instant.parse("2026-08-21T01:30:00Z"), ZoneId.of("Asia/Singapore"));
-        var resolver = (timey.ports.LocationResolver) query -> LocationResolution.unavailable("Offline");
-        var app = new CommandLineApp(new BufferedReader(new StringReader(
-                "plan /from \"COM3\" /to \"VivoCity\" /by 1830\nchoose 1\ncancel 1\nreminders\nthx\n")),
-                new PrintWriter(outputText, true), new PlanCommandParser(),
-                new CommutePlanningService(new MockTransitPlanner()), resolver, availableRailPlanner(), clock,
-                scheduler);
-
-        app.run();
-
-        assertTrue(outputText.toString().contains("Cancelled departure reminder 1."));
-        assertTrue(outputText.toString().contains("You have no active departure reminders."));
-    }
-
-    @Test
-    void run_departureTimePassed_displaysLeaveNowMessageWithoutSchedulingReminder() {
-        var outputText = new StringWriter();
-        var scheduledAt = new AtomicReference<java.time.Instant>();
-        ReminderScheduler scheduler = (triggerAt, action) -> {
-            scheduledAt.set(triggerAt);
-            return () -> { };
-        };
         var clock = Clock.fixed(Instant.parse("2026-08-21T10:00:00Z"), ZoneId.of("Asia/Singapore"));
         var resolver = (timey.ports.LocationResolver) query -> LocationResolution.unavailable("Offline");
         var app = new CommandLineApp(new BufferedReader(new StringReader(
-                "plan /from \"COM3\" /to \"VivoCity\" /by 1830\nchoose 1\nreminders\nthx\n")),
+                "plan /from \"COM3\" /to \"VivoCity\" /by 1830\nchoose 1\nthx\n")),
                 new PrintWriter(outputText, true), new PlanCommandParser(),
-                new CommutePlanningService(new MockTransitPlanner()), resolver, availableRailPlanner(), clock,
-                scheduler);
+                new CommutePlanningService(new MockTransitPlanner()), resolver, availableRailPlanner(), clock);
 
         app.run();
 
-        assertNull(scheduledAt.get());
         assertTrue(outputText.toString().contains("You have to leave now to stay on time! Good luck!"));
-        assertTrue(outputText.toString().contains("You have no active departure reminders."));
     }
 
     private static RailTransitPlanner availableRailPlanner() {
         return (origin, destination, date, time) -> LiveRouteLookup.available(List.of());
     }
 
-    private static ReminderScheduler noOpReminderScheduler() {
-        return (triggerAt, action) -> () -> { };
-    }
 }

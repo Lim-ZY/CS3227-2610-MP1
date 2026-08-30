@@ -34,7 +34,6 @@ import timey.ports.FixedCommuteStore;
 import timey.ports.LocationResolver;
 import timey.ports.PlanStore;
 import timey.ports.RailTransitPlanner;
-import timey.reminder.DepartureReminderService;
 
 class TimeyModelTest {
     @Test
@@ -61,8 +60,7 @@ class TimeyModelTest {
         var planner = new Planner(new CommutePlanningService(new MockTransitPlanner()),
                 query -> LocationResolution.unavailable(400, "OneMap could not find \"" + query + "\"."),
                 railPlanner, clock);
-        var model = new TimeyModel(planner, new InMemoryFixedCommuteStore(), plans -> { },
-                new DepartureReminderService((triggerAt, action) -> () -> { }, clock, reminder -> { }), clock);
+        var model = new TimeyModel(planner, new InMemoryFixedCommuteStore(), plans -> { }, clock);
         model.replacePlan(previousPlan, List.of(previousRoute), List.of("Previous route is available."));
 
         model.plan(new PlanCommand("Home", "NUS", LocalTime.of(9, 0), Duration.ZERO));
@@ -92,7 +90,7 @@ class TimeyModelTest {
     }
 
     @Test
-    void selectRoute_targetArrivalAlreadyPassed_schedulesTomorrowAndSavesPlan() {
+    void selectRoute_targetArrivalAlreadyPassed_selectsTomorrowAndSavesPlan() {
         var savedPlanLists = new ArrayList<List<SavedPlan>>();
         Clock clock = Clock.fixed(Instant.parse("2026-08-29T12:00:00Z"), ZoneId.of("Asia/Singapore"));
         var model = TestTimeyModelFactory.create(new InMemoryFixedCommuteStore(), clock,
@@ -103,10 +101,9 @@ class TimeyModelTest {
 
         SavedPlan expected = new SavedPlan(LocalDate.of(2026, 8, 30), LocalTime.of(17, 0), "Admiralty MRT", "COM3",
                 LocalTime.of(16, 0));
-        assertEquals(RouteSelectionResult.Status.REMINDER_SCHEDULED, result.status());
+        assertEquals(RouteSelectionResult.Status.ROUTE_SELECTED, result.status());
         assertEquals(List.of(expected), model.getSavedPlans());
         assertEquals(List.of(List.of(expected)), savedPlanLists);
-        assertEquals(Instant.parse("2026-08-30T08:00:00Z"), model.getScheduledReminders().getFirst().triggerAt());
     }
 
     @Test
@@ -142,11 +139,10 @@ class TimeyModelTest {
         assertEquals("Offline estimate", model.getPendingAlternatives().getFirst().name());
         assertTrue(model.getSelectedRecommendation().isEmpty());
         assertTrue(model.getSavedPlans().isEmpty());
-        assertTrue(model.getScheduledReminders().isEmpty());
     }
 
     @Test
-    void selectRoute_departureCrossesMidnight_savesTargetArrivalDate() {
+    void selectRoute_departureCrossesMidnight_selectsAndSavesTargetArrivalDate() {
         var savedPlanLists = new ArrayList<List<SavedPlan>>();
         Clock clock = Clock.fixed(Instant.parse("2026-08-29T14:00:00Z"), ZoneId.of("Asia/Singapore"));
         var model = TestTimeyModelFactory.create(new InMemoryFixedCommuteStore(), clock,
@@ -157,10 +153,9 @@ class TimeyModelTest {
 
         SavedPlan expected = new SavedPlan(LocalDate.of(2026, 8, 30), LocalTime.of(0, 10), "Admiralty MRT", "COM3",
                 LocalTime.of(23, 10));
-        assertEquals(RouteSelectionResult.Status.REMINDER_SCHEDULED, result.status());
+        assertEquals(RouteSelectionResult.Status.ROUTE_SELECTED, result.status());
         assertEquals(List.of(expected), model.getSavedPlans());
         assertEquals(List.of(List.of(expected)), savedPlanLists);
-        assertEquals(Instant.parse("2026-08-29T15:10:00Z"), model.getScheduledReminders().getFirst().triggerAt());
     }
 
     @Test
@@ -177,7 +172,6 @@ class TimeyModelTest {
         assertEquals(RouteSelectionResult.Status.ALREADY_SELECTED, secondResult.status());
         assertEquals(1, model.getSavedPlans().size());
         assertEquals(1, savedPlanLists.size());
-        assertEquals(1, model.getScheduledReminders().size());
     }
 
     @Test
@@ -206,7 +200,7 @@ class TimeyModelTest {
         model.replacePlan(secondPlan, List.of(secondRoute), List.of());
         RouteSelectionResult result = model.selectRoute(1);
 
-        assertEquals(RouteSelectionResult.Status.REMINDER_SCHEDULED, result.status());
+        assertEquals(RouteSelectionResult.Status.ROUTE_SELECTED, result.status());
         assertEquals("Second route", result.recommendation().orElseThrow().routeName());
     }
 
@@ -222,8 +216,7 @@ class TimeyModelTest {
                 : LiveRouteLookup.unavailable("Live routing is unavailable.");
         var planner = new Planner(new CommutePlanningService(new MockTransitPlanner()), foundLocationResolver(),
                 railPlanner, clock);
-        var model = new TimeyModel(planner, new InMemoryFixedCommuteStore(), plans -> { },
-                new DepartureReminderService((triggerAt, action) -> () -> { }, clock, reminder -> { }), clock);
+        var model = new TimeyModel(planner, new InMemoryFixedCommuteStore(), plans -> { }, clock);
         model.replacePlan(previousPlan, List.of(previousRoute), List.of("Live route available."));
         model.selectRoute(1);
 

@@ -121,16 +121,6 @@
     -fx-font-weight: 800;
 }
 
-.reminder-dot {
-    -fx-text-fill: #36c780;
-    -fx-font-size: 14px;
-}
-
-.reminder-text {
-    -fx-text-fill: #d5dde6;
-    -fx-font-size: 14px;
-}
-
 .command-bar {
     -fx-background-color: #0f1926;
     -fx-border-color: #31455d transparent transparent transparent;

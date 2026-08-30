@@ -10,8 +10,6 @@ import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.scene.control.Label;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
@@ -84,14 +82,13 @@ public final class MainWindow extends UiPart<Stage> {
     private DashboardContent createDashboard() {
         NextEventCard nextEvent = new NextEventCard();
         CommuteStatusCard commute = new CommuteStatusCard();
-        ReminderStatusCard reminders = new ReminderStatusCard();
         RouteAlternativesPanel alternatives = new RouteAlternativesPanel();
-        VBox content = createDashboardContent(nextEvent, commute, reminders, alternatives);
-        return new DashboardContent(content, nextEvent, commute, reminders, alternatives);
+        VBox content = createDashboardContent(nextEvent, commute, alternatives);
+        return new DashboardContent(content, nextEvent, commute, alternatives);
     }
 
     private VBox createDashboardContent(NextEventCard nextEvent, CommuteStatusCard commute,
-            ReminderStatusCard reminders, RouteAlternativesPanel alternatives) {
+            RouteAlternativesPanel alternatives) {
         Label heading = new Label("Your day, on track.");
         heading.getStyleClass().add("page-heading");
         Label introduction = new Label(
@@ -100,17 +97,11 @@ public final class MainWindow extends UiPart<Stage> {
 
         Label commandHeading = new Label("COMMAND OUTPUT");
         commandHeading.getStyleClass().add("card-label");
-        VBox content = new VBox(18, heading, introduction, nextEvent.getRoot(), createLowerCards(commute, reminders),
+        VBox content = new VBox(18, heading, introduction, nextEvent.getRoot(), commute.getRoot(),
                 alternatives.getRoot(),
                 commandHeading, commandOutput.getRoot());
         content.setPadding(new Insets(40, 56, 32, 56));
         return content;
-    }
-
-    private HBox createLowerCards(CommuteStatusCard commute, ReminderStatusCard reminders) {
-        HBox lowerCards = new HBox(18, commute.getRoot(), reminders.getRoot());
-        lowerCards.getChildren().forEach(card -> HBox.setHgrow(card, Priority.ALWAYS));
-        return lowerCards;
     }
 
     private void executeCommand(String input) {
@@ -168,7 +159,6 @@ public final class MainWindow extends UiPart<Stage> {
         latestDashboardState = Objects.requireNonNull(state);
         dashboard.nextEvent().render(state);
         dashboard.commute().render(state);
-        dashboard.reminders().render(state);
         dashboard.alternatives().render(state);
         header.refresh(state);
     }
@@ -206,7 +196,7 @@ public final class MainWindow extends UiPart<Stage> {
     }
 
     private record DashboardContent(VBox content, NextEventCard nextEvent, CommuteStatusCard commute,
-            ReminderStatusCard reminders, RouteAlternativesPanel alternatives) {
+            RouteAlternativesPanel alternatives) {
     }
 
     private record DashboardCommandResponse(CommandExecutionResult result, String output) {

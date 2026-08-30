@@ -30,8 +30,6 @@ public final class NextEventCard extends UiPart<VBox> {
     private Label arrival;
     @FXML
     private Label countdown;
-    @FXML
-    private Label reminder;
 
     /** Creates a new NextEventCard. */
     public NextEventCard() {
@@ -54,12 +52,9 @@ public final class NextEventCard extends UiPart<VBox> {
             state.recommendation().ifPresentOrElse(recommendation -> {
                 departure.setText(TIME_FORMAT.format(recommendation.departureTime()));
                 countdown.setText(DashboardDepartureText.until(recommendation.departureAt(), clock));
-                reminder.setText(state.reminders().isEmpty()
-                        ? "Departure reminder will be set shortly" : "Reminder scheduled");
             }, () -> {
                 departure.setText("—");
                 countdown.setText("Choose a route");
-                reminder.setText("Choose a route to set a reminder");
             });
         }, () -> {
             title.setText("No commute planned");
@@ -68,7 +63,6 @@ public final class NextEventCard extends UiPart<VBox> {
             departure.setText("—");
             arrival.setText("—");
             countdown.setText("Plan a commute");
-            reminder.setText("Plan a route to set a reminder");
         });
     }
 }
