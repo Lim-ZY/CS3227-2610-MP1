@@ -70,9 +70,7 @@ public final class TimeyModel {
         pendingPlan = null;
         pendingAlternatives = List.of();
         planningMessages = List.copyOf(messages);
-        routeSelectionMessages = List.of();
-        pendingUsesFallbackEstimate = false;
-        selectedRecommendation = null;
+        clearRouteSelection();
     }
 
     /** Saves a fixed commute duration for later route planning. */
@@ -102,9 +100,7 @@ public final class TimeyModel {
         this.pendingPlan = Objects.requireNonNull(plan);
         this.pendingAlternatives = List.copyOf(alternatives);
         this.planningMessages = List.copyOf(messages);
-        this.routeSelectionMessages = List.of();
-        this.pendingUsesFallbackEstimate = false;
-        this.selectedRecommendation = null;
+        clearRouteSelection();
     }
 
     /** Replaces the alternatives associated with the current plan. */
@@ -121,6 +117,12 @@ public final class TimeyModel {
     /** Records the departure recommendation selected for the current plan. */
     private void selectRecommendation(DepartureRecommendation recommendation) {
         this.selectedRecommendation = Objects.requireNonNull(recommendation);
+    }
+
+    private void clearRouteSelection() {
+        routeSelectionMessages = List.of();
+        pendingUsesFallbackEstimate = false;
+        selectedRecommendation = null;
     }
 
     public Optional<PlanCommand> getPendingPlan() {
