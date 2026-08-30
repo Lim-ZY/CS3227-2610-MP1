@@ -66,6 +66,7 @@ public final class MainWindow extends UiPart<Stage> {
     /** Displays the window and starts the header clock. */
     public void show() {
         getRoot().show();
+        commandBar.requestFocus();
         refreshDashboard(commandLineApp.getDashboardState());
         header.startClock(Clock.system(ApplicationConfiguration.TIME_ZONE));
         startDashboardRefresh();

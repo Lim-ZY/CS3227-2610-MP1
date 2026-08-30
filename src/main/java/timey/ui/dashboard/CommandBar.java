@@ -28,6 +28,11 @@ public final class CommandBar extends UiPart<HBox> {
         this.commandExecutor = requireNonNull(commandExecutor);
     }
 
+    /** Requests keyboard focus for the command input field. */
+    public void requestFocus() {
+        commandTextField.requestFocus();
+    }
+
     /** Marks the command session as ended and leaves entry disabled. */
     public void showSessionEnded() {
         commandTextField.setPromptText("This command session has ended");
