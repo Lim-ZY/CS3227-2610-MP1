@@ -40,14 +40,16 @@ public final class RouteAlternativesPanel extends UiPart<VBox> {
 
     /** Displays the loading state while route alternatives are being requested. */
     public void showLoading() {
-        alternatives.getChildren().setAll(routePanelLabel("ROUTE ALTERNATIVES"),
-                routePanelMessage("Loading route alternatives…"));
+        showRoutePanelMessage("Loading route alternatives…");
     }
 
     /** Displays the fallback state when route lookup fails. */
     public void showFailure() {
-        alternatives.getChildren().setAll(routePanelLabel("ROUTE ALTERNATIVES"),
-                routePanelMessage("Route lookup failed. Try the command again."));
+        showRoutePanelMessage("Route lookup failed. Try the command again.");
+    }
+
+    private void showRoutePanelMessage(String text) {
+        alternatives.getChildren().setAll(routePanelLabel("ROUTE ALTERNATIVES"), routePanelMessage(text));
     }
 
     private VBox routeAlternative(int routeNumber, RouteAlternative route, boolean selected) {
