@@ -142,6 +142,6 @@ public final class CommandLineApp {
     /** Returns current session data for a dashboard without invoking any planner or API itself. */
     public DashboardState getDashboardState() {
         return new DashboardState(model.getPendingPlan(), model.getPendingAlternatives(), model.getPlanningMessages(),
-                model.getSelectedRecommendation());
+                model.getSelectedRecommendation(), model.getNextSavedPlan());
     }
 }

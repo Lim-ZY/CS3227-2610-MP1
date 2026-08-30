@@ -18,7 +18,8 @@ class DashboardCommuteStatusTest {
     @Test
     void from_liveRailResult_showsLiveStatus() {
         DashboardState state = new DashboardState(Optional.empty(), List.of(ROUTE),
-                List.of("Live rail routes were aligned with your target arrival time."), Optional.empty());
+                List.of("Live rail routes were aligned with your target arrival time."), Optional.empty(),
+                Optional.empty());
 
         assertEquals("Live rail routes ready", DashboardCommuteStatus.from(state).title());
     }
@@ -26,14 +27,15 @@ class DashboardCommuteStatusTest {
     @Test
     void from_fallbackResult_showsFallbackStatus() {
         DashboardState state = new DashboardState(Optional.empty(), List.of(ROUTE),
-                List.of("Using offline estimate: OneMap is unavailable."), Optional.empty());
+                List.of("Using offline estimate: OneMap is unavailable."), Optional.empty(), Optional.empty());
 
         assertEquals("Using deterministic fallback", DashboardCommuteStatus.from(state).title());
     }
 
     @Test
     void from_noPlan_showsWaitingStatus() {
-        DashboardState state = new DashboardState(Optional.empty(), List.of(), List.of(), Optional.empty());
+        DashboardState state = new DashboardState(Optional.empty(), List.of(), List.of(), Optional.empty(),
+                Optional.empty());
 
         assertEquals("Waiting for a plan", DashboardCommuteStatus.from(state).title());
     }

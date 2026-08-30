@@ -3,6 +3,7 @@ package timey.model;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -156,6 +157,12 @@ public final class TimeyModel {
         return savedPlans;
     }
 
+    /** Returns the earliest upcoming saved plan, if one exists. */
+    public Optional<SavedPlan> getNextSavedPlan() {
+        return savedPlans.stream()
+                .min(Comparator.comparing(this::leaveByDateTime));
+    }
+
     /** Returns whether the requested arrival time has passed today. */
     public boolean hasPlanTimePassed(PlanCommand plan) {
         LocalDateTime requestedArrival = LocalDateTime.of(LocalDate.now(clock), plan.getArrivalTime());
@@ -229,7 +236,11 @@ public final class TimeyModel {
     }
 
     private boolean isFuture(SavedPlan plan) {
+        return leaveByDateTime(plan).isAfter(LocalDateTime.now(clock));
+    }
+
+    private LocalDateTime leaveByDateTime(SavedPlan plan) {
         LocalDate leaveByDate = plan.leaveBy().isAfter(plan.arrivalTime()) ? plan.date().minusDays(1) : plan.date();
-        return LocalDateTime.of(leaveByDate, plan.leaveBy()).isAfter(LocalDateTime.now(clock));
+        return LocalDateTime.of(leaveByDate, plan.leaveBy());
     }
 }

@@ -11,9 +11,12 @@ import java.io.StringWriter;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 
@@ -28,6 +31,7 @@ import timey.infrastructure.transit.InMemoryFixedCommuteStore;
 import timey.infrastructure.transit.MockTransitPlanner;
 import timey.parser.PlanCommandParser;
 import timey.planner.CommutePlanningService;
+import timey.ports.PlanStore;
 import timey.ports.RailTransitPlanner;
 
 class CommandLineAppTest {
@@ -49,6 +53,30 @@ class CommandLineAppTest {
         assertEquals(1, savedPlanLists.size());
         assertEquals("COM3", savedPlanLists.getFirst().getFirst().origin());
         assertEquals("VivoCity", savedPlanLists.getFirst().getFirst().destination());
+    }
+
+    @Test
+    void dashboardState_includesNextPersistedPlan() {
+        SavedPlan savedPlan = new SavedPlan(LocalDate.of(2026, 8, 22), LocalTime.of(9, 0), "Home", "NUS",
+                LocalTime.of(8, 0));
+        PlanStore planStore = new PlanStore() {
+            @Override
+            public List<SavedPlan> loadAll() {
+                return List.of(savedPlan);
+            }
+
+            @Override
+            public void saveAll(List<SavedPlan> plans) {
+            }
+        };
+        var app = new CommandLineApp(
+                new ConsoleUi(new BufferedReader(new StringReader("")), new PrintWriter(new StringWriter(), true)),
+                new PlanCommandParser(), new CommutePlanningService(new MockTransitPlanner()),
+                query -> LocationResolution.unavailable("Offline"), availableRailPlanner(),
+                Clock.fixed(Instant.parse("2026-08-21T01:30:00Z"), ZoneId.of("Asia/Singapore")),
+                new InMemoryFixedCommuteStore(), planStore);
+
+        assertEquals(Optional.of(savedPlan), app.getDashboardState().nextSavedPlan());
     }
 
     @Test

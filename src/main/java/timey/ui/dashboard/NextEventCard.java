@@ -1,13 +1,17 @@
 package timey.ui.dashboard;
 
 import java.time.Clock;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Objects;
+import java.util.Optional;
 
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.scene.layout.VBox;
 import timey.config.ApplicationConfiguration;
+import timey.domain.alert.SavedPlan;
 import timey.ui.DashboardState;
 import timey.ui.UiPart;
 
@@ -44,14 +48,18 @@ public final class NextEventCard extends UiPart<VBox> {
 
     /** Renders the next event from the latest command-session state. */
     public void render(DashboardState state) {
-        state.plan().ifPresentOrElse(plan -> {
-            title.setText("Commute to " + plan.getDestination());
-            origin.setText(plan.getOrigin());
-            destination.setText(plan.getDestination());
-            arrival.setText(TIME_FORMAT.format(plan.getArrivalTime()));
-            state.recommendation().ifPresentOrElse(recommendation -> {
-                departure.setText(TIME_FORMAT.format(recommendation.departureTime()));
-                countdown.setText(DashboardDepartureText.until(recommendation.departureAt(), clock));
+        state.plan().map(plan -> new EventDetails(plan.getOrigin(), plan.getDestination(), plan.getArrivalTime(),
+                state.recommendation().map(recommendation -> recommendation.departureTime()),
+                state.recommendation().map(recommendation -> recommendation.departureAt())))
+                .or(() -> state.nextSavedPlan().map(this::eventDetails))
+                .ifPresentOrElse(event -> {
+            title.setText("Commute to " + event.destination());
+            origin.setText(event.origin());
+            destination.setText(event.destination());
+            arrival.setText(TIME_FORMAT.format(event.arrivalTime()));
+            event.departureTime().ifPresentOrElse(departureTime -> {
+                departure.setText(TIME_FORMAT.format(departureTime));
+                countdown.setText(DashboardDepartureText.until(event.departureAt().orElseThrow(), clock));
             }, () -> {
                 departure.setText("—");
                 countdown.setText("Choose a route");
@@ -64,5 +72,16 @@ public final class NextEventCard extends UiPart<VBox> {
             arrival.setText("—");
             countdown.setText("Plan a commute");
         });
+    }
+
+    private EventDetails eventDetails(SavedPlan plan) {
+        LocalDateTime departureAt = LocalDateTime.of(
+                plan.leaveBy().isAfter(plan.arrivalTime()) ? plan.date().minusDays(1) : plan.date(), plan.leaveBy());
+        return new EventDetails(plan.origin(), plan.destination(), plan.arrivalTime(), Optional.of(plan.leaveBy()),
+                Optional.of(departureAt));
+    }
+
+    private record EventDetails(String origin, String destination, LocalTime arrivalTime,
+            Optional<LocalTime> departureTime, Optional<LocalDateTime> departureAt) {
     }
 }
