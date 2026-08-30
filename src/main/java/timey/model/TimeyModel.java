@@ -186,11 +186,10 @@ public final class TimeyModel {
                 ? planner.recommendFallbackDeparture(pendingPlan, route)
                 : planner.recommendDeparture(pendingPlan, route);
         saveSelectedPlan(recommendation);
+        selectRecommendation(recommendation);
         if (!recommendation.departureAt().isAfter(LocalDateTime.now(clock))) {
-            selectRecommendation(recommendation);
             return RouteSelectionResult.leaveNow(recommendation);
         }
-        selectRecommendation(recommendation);
         return RouteSelectionResult.routeSelected(recommendation);
     }
 
