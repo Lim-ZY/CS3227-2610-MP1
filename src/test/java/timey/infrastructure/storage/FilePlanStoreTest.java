@@ -1,4 +1,4 @@
-package timey.infrastructure.alert;
+package timey.infrastructure.storage;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;

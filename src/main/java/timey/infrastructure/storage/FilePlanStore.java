@@ -1,11 +1,9 @@
-package timey.infrastructure.alert;
+package timey.infrastructure.storage;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.time.format.DateTimeFormatter;
 import java.time.format.ResolverStyle;
 import java.util.ArrayList;
@@ -31,7 +29,8 @@ public final class FilePlanStore implements PlanStore {
     public synchronized void saveAll(List<SavedPlan> plans) {
         Objects.requireNonNull(plans);
         try {
-            writeAtomically(serialize(plans));
+            AtomicFileWriter.write(path, "plans-", temporaryFile ->
+                    Files.writeString(temporaryFile, serialize(plans), StandardCharsets.UTF_8));
         } catch (IOException exception) {
             throw new IllegalStateException("Could not save plans.", exception);
         }
@@ -55,33 +54,11 @@ public final class FilePlanStore implements PlanStore {
         }
     }
 
-    private void moveIntoPlace(Path temporaryFile) throws IOException {
-        try {
-            Files.move(temporaryFile, path, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
-        } catch (AtomicMoveNotSupportedException exception) {
-            Files.move(temporaryFile, path, StandardCopyOption.REPLACE_EXISTING);
-        }
-    }
-
     private String serialize(List<SavedPlan> plans) {
         String content = List.copyOf(plans).stream().distinct()
                 .map(this::format)
                 .collect(java.util.stream.Collectors.joining(System.lineSeparator()));
         return content.isEmpty() ? content : content + System.lineSeparator();
-    }
-
-    private void writeAtomically(String content) throws IOException {
-        Path parent = path.getParent();
-        if (parent != null) {
-            Files.createDirectories(parent);
-        }
-        Path temporaryFile = Files.createTempFile(path.toAbsolutePath().getParent(), "plans-", ".tmp");
-        try {
-            Files.writeString(temporaryFile, content, StandardCharsets.UTF_8);
-            moveIntoPlace(temporaryFile);
-        } finally {
-            Files.deleteIfExists(temporaryFile);
-        }
     }
 
     private java.util.Optional<SavedPlan> parseSafely(String line) {

@@ -5,11 +5,11 @@ import java.time.Clock;
 import java.time.Duration;
 
 import timey.config.ApplicationConfiguration;
-import timey.infrastructure.alert.FilePlanStore;
 import timey.infrastructure.http.JdkHttpRequester;
 import timey.infrastructure.http.RateLimitedHttpRequester;
 import timey.infrastructure.location.OneMapLocationResolver;
-import timey.infrastructure.transit.FileFixedCommuteStore;
+import timey.infrastructure.storage.FileFixedCommuteStore;
+import timey.infrastructure.storage.FilePlanStore;
 import timey.infrastructure.transit.MockTransitPlanner;
 import timey.infrastructure.transit.OneMapRailTransitPlanner;
 import timey.parser.PlanCommandParser;

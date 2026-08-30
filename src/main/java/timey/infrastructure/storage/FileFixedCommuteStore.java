@@ -1,13 +1,11 @@
-package timey.infrastructure.transit;
+package timey.infrastructure.storage;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.time.Duration;
 import java.util.Base64;
 import java.util.Comparator;
@@ -35,33 +33,13 @@ public final class FileFixedCommuteStore implements FixedCommuteStore {
 
     private void save(Properties timings) {
         try {
-            Path parent = path.getParent();
-            if (parent != null) {
-                Files.createDirectories(parent);
-            }
-            writeAtomically(timings);
+            AtomicFileWriter.write(path, "fixed-commutes-", temporaryFile -> {
+                try (OutputStream output = Files.newOutputStream(temporaryFile)) {
+                    timings.store(output, "Timey fixed commute timings");
+                }
+            });
         } catch (IOException exception) {
             throw new IllegalStateException("Could not save fixed commute timings.", exception);
-        }
-    }
-
-    private void writeAtomically(Properties timings) throws IOException {
-        Path temporaryFile = Files.createTempFile(path.toAbsolutePath().getParent(), "fixed-commutes-", ".tmp");
-        try {
-            try (OutputStream output = Files.newOutputStream(temporaryFile)) {
-                timings.store(output, "Timey fixed commute timings");
-            }
-            moveIntoPlace(temporaryFile);
-        } finally {
-            Files.deleteIfExists(temporaryFile);
-        }
-    }
-
-    private void moveIntoPlace(Path temporaryFile) throws IOException {
-        try {
-            Files.move(temporaryFile, path, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
-        } catch (AtomicMoveNotSupportedException exception) {
-            Files.move(temporaryFile, path, StandardCopyOption.REPLACE_EXISTING);
         }
     }
 
