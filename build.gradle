@@ -3,6 +3,7 @@ plugins {
     id 'checkstyle'
     id 'application'
     id 'org.openjfx.javafxplugin' version '0.1.0'
+    id 'com.gradleup.shadow' version '9.5.0'
 }
 
 group = 'Timey'
@@ -40,6 +41,15 @@ dependencies {
 
 tasks.named('test') {
     useJUnitPlatform()
+}
+
+tasks.named('shadowJar') {
+    description = 'Builds the executable fat JAR in the release directory.'
+    destinationDirectory = layout.projectDirectory.dir('release')
+    archiveFileName = "Timey-${project.version}-all.jar"
+    manifest {
+        attributes('Main-Class': 'timey.ui.dashboard.DashboardLauncher')
+    }
 }
 
 // Keep the interactive CLI connected to the terminal when launched with `gradle run`.
