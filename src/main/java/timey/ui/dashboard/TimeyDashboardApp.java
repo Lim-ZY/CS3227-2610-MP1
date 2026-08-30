@@ -8,7 +8,6 @@ import java.io.StringWriter;
 import javafx.application.Application;
 import javafx.stage.Stage;
 import timey.ApplicationFactory;
-import timey.config.UserPreferences;
 import timey.ui.CommandLineApp;
 import timey.ui.ConsoleUi;
 
@@ -16,19 +15,17 @@ import timey.ui.ConsoleUi;
 public final class TimeyDashboardApp extends Application {
     private CommandLineApp commandLineApp;
     private StringWriter output;
-    private UserPreferences userPreferences;
 
     @Override
     public void init() {
         output = new StringWriter();
         commandLineApp = ApplicationFactory.createCommandLineApp(
                 new ConsoleUi(new BufferedReader(new StringReader("")), new PrintWriter(output, true)));
-        userPreferences = ApplicationFactory.loadUserPreferences();
     }
 
     @Override
     public void start(Stage stage) {
-        MainWindow mainWindow = new MainWindow(stage, commandLineApp, output, userPreferences);
+        MainWindow mainWindow = new MainWindow(stage, commandLineApp, output);
         mainWindow.show();
     }
 }

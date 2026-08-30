@@ -5,7 +5,6 @@ import java.time.Clock;
 import java.time.Duration;
 
 import timey.config.ApplicationConfiguration;
-import timey.config.UserPreferences;
 import timey.infrastructure.alert.FilePlanStore;
 import timey.infrastructure.http.JdkHttpRequester;
 import timey.infrastructure.http.RateLimitedHttpRequester;
@@ -41,8 +40,4 @@ public final class ApplicationFactory {
                 new FilePlanStore(Path.of("data", "plans.txt")));
     }
 
-    /** Loads the local preferences displayed by the JavaFX dashboard. */
-    public static UserPreferences loadUserPreferences() {
-        return ApplicationConfiguration.loadDefault().getUserPreferences();
-    }
 }

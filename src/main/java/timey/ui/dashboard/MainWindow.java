@@ -14,7 +14,6 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import timey.config.ApplicationConfiguration;
-import timey.config.UserPreferences;
 import timey.ui.CommandExecutionResult;
 import timey.ui.CommandLineApp;
 import timey.ui.DashboardState;
@@ -45,12 +44,11 @@ public final class MainWindow extends UiPart<Stage> {
     private Timeline dashboardRefreshTimer;
 
     /** Creates a new MainWindow. */
-    public MainWindow(Stage primaryStage, CommandLineApp commandLineApp, StringWriter output,
-            UserPreferences userPreferences) {
+    public MainWindow(Stage primaryStage, CommandLineApp commandLineApp, StringWriter output) {
         super(FXML, primaryStage);
         this.commandLineApp = Objects.requireNonNull(commandLineApp);
         this.output = Objects.requireNonNull(output);
-        this.header = new DashboardHeader(Objects.requireNonNull(userPreferences));
+        this.header = new DashboardHeader();
         this.commandOutput = new CommandOutput();
         this.commandBar = new CommandBar();
         this.dashboard = createDashboard();
@@ -160,7 +158,6 @@ public final class MainWindow extends UiPart<Stage> {
         dashboard.nextEvent().render(state);
         dashboard.commute().render(state);
         dashboard.alternatives().render(state);
-        header.refresh(state);
     }
 
     private void showLoading() {
