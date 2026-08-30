@@ -177,8 +177,22 @@ class OneMapLocationResolverTest {
         var result = resolver.resolve("COM3");
 
         assertFalse(result.isFound());
-        assertEquals("OneMap lookup is temporarily unavailable (HTTP 429).", result.reason());
+        assertEquals("OneMap location lookup is temporarily unavailable.", result.reason());
         assertFalse(result.isLiveDataServiceUnreachable());
+        assertEquals(429, result.responseStatusCode().orElseThrow());
+    }
+
+    @Test
+    void resolve_errorResponse_retainsStatusAndWorkerError() {
+        var resolver = new OneMapLocationResolver(uri -> new HttpResult(400,
+                "{\"error\":\"OneMap could not find \\\"COM3\\\".\"}"),
+                Optional.of(URI.create("https://timey.example.workers.dev")));
+
+        var result = resolver.resolve("COM3");
+
+        assertFalse(result.isFound());
+        assertEquals("OneMap could not find \"COM3\".", result.reason());
+        assertEquals(400, result.responseStatusCode().orElseThrow());
     }
 
     @Test
@@ -192,5 +206,6 @@ class OneMapLocationResolverTest {
         assertFalse(result.isFound());
         assertEquals("OneMap lookup is temporarily unavailable.", result.reason());
         assertTrue(result.isLiveDataServiceUnreachable());
+        assertTrue(result.responseStatusCode().isEmpty());
     }
 }

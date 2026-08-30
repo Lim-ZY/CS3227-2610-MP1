@@ -68,8 +68,22 @@ class OneMapRailTransitPlannerTest {
         var lookup = planner.findRoutes(COM3, VIVOCITY, LocalDate.of(2026, 8, 21), LocalTime.NOON);
 
         assertTrue(!lookup.isAvailable());
-        assertEquals("OneMap routing failed (HTTP 503).", lookup.unavailableReason().orElseThrow());
+        assertEquals("OneMap routing is temporarily unavailable.", lookup.unavailableReason().orElseThrow());
         assertFalse(lookup.isLiveDataServiceUnreachable());
+        assertEquals(503, lookup.responseStatusCode().orElseThrow());
+    }
+
+    @Test
+    void findRoutes_errorResponse_retainsStatusAndWorkerError() {
+        var planner = new OneMapRailTransitPlanner(uri -> new HttpResult(404,
+                "{\"error\":\"Unable to get MRT route\"}"),
+                Optional.of(URI.create("https://timey.example.workers.dev")));
+
+        var lookup = planner.findRoutes(COM3, VIVOCITY, LocalDate.of(2026, 8, 21), LocalTime.NOON);
+
+        assertTrue(!lookup.isAvailable());
+        assertEquals("Unable to get MRT route", lookup.unavailableReason().orElseThrow());
+        assertEquals(404, lookup.responseStatusCode().orElseThrow());
     }
 
     @Test
@@ -84,6 +98,7 @@ class OneMapRailTransitPlannerTest {
         assertEquals("OneMap routing timed out or is temporarily unavailable.",
                 lookup.unavailableReason().orElseThrow());
         assertTrue(lookup.isLiveDataServiceUnreachable());
+        assertTrue(lookup.responseStatusCode().isEmpty());
     }
 
     @Test

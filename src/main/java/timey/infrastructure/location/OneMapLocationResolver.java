@@ -15,6 +15,7 @@ import timey.domain.location.LocationResolution;
 import timey.domain.location.ResolvedLocation;
 import timey.infrastructure.http.HttpRequester;
 import timey.infrastructure.http.HttpResult;
+import timey.infrastructure.http.WorkerErrorMessageParser;
 import timey.ports.LocationResolver;
 
 /** Resolves Singapore addresses through Timey's server-held live-data service. */
@@ -45,8 +46,9 @@ public final class OneMapLocationResolver implements LocationResolver {
             return LocationResolution.unreachable("OneMap lookup is temporarily unavailable.");
         }
         if (response.statusCode() != 200) {
-            return LocationResolution.unavailable("OneMap lookup is temporarily unavailable (HTTP "
-                    + response.statusCode() + ").");
+            return LocationResolution.unavailable(response.statusCode(),
+                    WorkerErrorMessageParser.extract(response.body(),
+                            "OneMap location lookup is temporarily unavailable."));
         }
         return resolveResponse(response.body(), query);
     }

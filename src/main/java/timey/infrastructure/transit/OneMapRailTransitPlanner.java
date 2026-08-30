@@ -20,6 +20,7 @@ import timey.domain.transit.RouteStep;
 import timey.domain.transit.RouteStepMode;
 import timey.infrastructure.http.HttpRequester;
 import timey.infrastructure.http.HttpResult;
+import timey.infrastructure.http.WorkerErrorMessageParser;
 import timey.ports.RailTransitPlanner;
 
 /** Live-data adapter for server-authenticated OneMap rail itineraries. */
@@ -51,7 +52,8 @@ public final class OneMapRailTransitPlanner implements RailTransitPlanner {
             return LiveRouteLookup.unreachable("OneMap routing timed out or is temporarily unavailable.");
         }
         if (response.statusCode() != 200) {
-            return LiveRouteLookup.unavailable("OneMap routing failed (HTTP " + response.statusCode() + ").");
+            return LiveRouteLookup.unavailable(response.statusCode(), WorkerErrorMessageParser.extract(response.body(),
+                    "OneMap routing is temporarily unavailable."));
         }
         return parseItineraries(response.body());
     }
