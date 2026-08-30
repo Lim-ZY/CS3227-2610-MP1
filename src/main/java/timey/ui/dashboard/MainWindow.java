@@ -132,7 +132,7 @@ public final class MainWindow extends UiPart<Stage> {
         commandOutput.appendCommandResult(input, response.output());
         refreshDashboard(response.result().dashboardState());
         if (response.result().sessionEnded()) {
-            commandBar.showSessionEnded();
+            getRoot().close();
         } else {
             commandBar.showReadyAfterSuccess();
         }
