@@ -25,7 +25,6 @@ package "ui.dashboard" {
   class CommandOutput
   class NextEventCard
   class CommuteStatusCard
-  class ReminderStatusCard
   class RouteAlternativesPanel
 }
 
@@ -42,10 +41,6 @@ package "planner" {
   class LiveRailPlanningService
 }
 
-package "reminder" {
-  class DepartureReminderService
-}
-
 package "model" {
   class TimeyModel
   class RouteSelectionResult <<record>>
@@ -59,15 +54,12 @@ package "command" {
   class AddCommand
   class PlanCommand
   class ChooseCommand
-  class RemindersCommand
-  class CancelCommand
   class UnknownCommand
 }
 
 package "domain.alert" {
   class DepartureCalculator
   class DepartureRecommendation <<record>>
-  class ScheduledDepartureReminder <<record>>
 }
 
 package "domain.location" {
@@ -88,9 +80,6 @@ package "ports" {
   interface LocationResolver
   interface TransitPlanner
   interface RailTransitPlanner
-  interface ReminderScheduler
-  interface ReminderHandle
-  interface DepartureReminderNotifier
 }
 
 package "infrastructure.http" {
@@ -110,10 +99,6 @@ package "infrastructure.transit" {
   class OneMapRailTransitPlanner
 }
 
-package "infrastructure.notification" {
-  class ScheduledExecutorReminderScheduler
-}
-
 package "config" {
   class ApplicationConfiguration
 }
@@ -129,7 +114,6 @@ Timey *--> RetryingHttpRequester
 Timey *--> OneMapLocationResolver
 Timey *--> OneMapRailTransitPlanner
 Timey *--> MockTransitPlanner
-Timey *--> ScheduledExecutorReminderScheduler
 
 CommandLineApp --> ConsoleUi
 CommandLineApp --> DashboardState : produces
@@ -142,20 +126,17 @@ CommandBar --|> UiPart
 CommandOutput --|> UiPart
 NextEventCard --|> UiPart
 CommuteStatusCard --|> UiPart
-ReminderStatusCard --|> UiPart
 RouteAlternativesPanel --|> UiPart
 MainWindow *--> DashboardHeader
 MainWindow *--> CommandBar
 MainWindow *--> CommandOutput
 MainWindow *--> NextEventCard
 MainWindow *--> CommuteStatusCard
-MainWindow *--> ReminderStatusCard
 MainWindow *--> RouteAlternativesPanel
 MainWindow --> DashboardState : renders
 CommandLineApp *--> TimeyModel
 CommandLineApp --> Command
 CommandLineApp *--> Parser
-CommandLineApp --> DepartureReminderNotifier : provides
 TimeyModel --> PlanCommand
 TimeyModel --> RouteAlternative
 TimeyModel --> DepartureRecommendation
@@ -165,22 +146,15 @@ AddCommand --|> Command
 PlanCommand --|> Command
 ChooseCommand --|> Command
 UnknownCommand --|> Command
-RemindersCommand --|> Command
-CancelCommand --|> Command
 Command --> TimeyModel
 Command --> CommandResult : creates
 AddCommand --> TimeyModel
 ChooseCommand --> TimeyModel
-RemindersCommand --> TimeyModel
-CancelCommand --> TimeyModel
 TimeyModel --> FixedCommuteStore
 TimeyModel --> FixedCommute : creates
-TimeyModel --> DepartureReminderService
-TimeyModel --> ScheduledDepartureReminder
 TimeyModel --> RouteSelectionResult : creates
 RouteSelectionResult --> RouteSelectionStatus
 RouteSelectionResult --> DepartureRecommendation : optional
-RouteSelectionResult --> ScheduledDepartureReminder : optional
 
 ' Command interpretation
 Parser *--> PlanCommandParser
@@ -207,11 +181,6 @@ CommutePlanningService *--> DepartureCalculator
 CommutePlanningService --> PlanCommand
 CommutePlanningService --> RouteAlternative
 CommutePlanningService --> DepartureRecommendation
-DepartureReminderService --> ReminderScheduler
-DepartureReminderService --> DepartureReminderNotifier
-DepartureReminderService --> ReminderHandle
-DepartureReminderService --> DepartureRecommendation
-DepartureReminderService --> ScheduledDepartureReminder
 
 ' Domain value relationships and business calculation
 DepartureCalculator --> PlanCommand
@@ -226,7 +195,6 @@ RouteStep --> RouteStepMode
 OneMapLocationResolver ..|> LocationResolver
 MockTransitPlanner ..|> TransitPlanner
 OneMapRailTransitPlanner ..|> RailTransitPlanner
-ScheduledExecutorReminderScheduler ..|> ReminderScheduler
 JdkHttpRequester ..|> HttpRequester
 RetryingHttpRequester ..|> HttpRequester
 
@@ -240,7 +208,6 @@ OneMapRailTransitPlanner --> RouteAlternative : creates
 OneMapRailTransitPlanner --> RouteStep : creates
 OneMapRailTransitPlanner --> RouteStepMode
 MockTransitPlanner --> RouteAlternative
-ScheduledExecutorReminderScheduler --> ReminderHandle : creates
 HttpRequester --> HttpResult
 RetryingHttpRequester --> HttpRequester : delegates to
 RetryingHttpRequester --> RetryDelay

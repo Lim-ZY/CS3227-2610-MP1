@@ -15,14 +15,9 @@ one-hour travel buffer before your requested arrival time. This estimate is a
 safe fallback rather than a measured route duration. A failed update leaves
 your current plan unchanged.
 
-Choosing a route automatically schedules a console notification at its
-recommended leave-by time. If that time has already passed today, Timey
-instead tells you to leave immediately and does not create a reminder.
-Reminders remain active while Timey is running. Use `reminders` to view active
-reminders. Entries whose trigger time has already passed are discarded
-automatically. Use `cancel 1` to remove the
-first active reminder and prevent its notification. Virtual-event reminders
-will be added in later iterations.
+Choosing a route displays its recommended leave-by time. If that time has
+already passed today, Timey tells you to leave immediately. Automatic
+departure reminders are reserved for a future enhancement.
 
 ## If a command cannot complete
 
