@@ -48,6 +48,10 @@ public final class TimeyModel {
     /** Finds routes, adds a matching fixed timing, and records the resulting plan state. */
     public void plan(PlanCommand plan) {
         Planner.PlanningResult result = planner.findAlternatives(plan);
+        if (!result.createsPendingPlan()) {
+            clearPendingPlan(result.messages());
+            return;
+        }
         Optional<FixedCommute> savedCommute = findFixedCommute(plan.getOrigin(), plan.getDestination());
         List<RouteAlternative> alternatives = result.alternatives();
         List<String> messages = result.messages();
@@ -64,6 +68,15 @@ public final class TimeyModel {
         replacePlan(plan, alternatives, messages);
         pendingUsesFallbackEstimate = result.usesFallbackEstimate();
         routeSelectionMessages = result.routeSelectionMessages();
+    }
+
+    private void clearPendingPlan(List<String> messages) {
+        pendingPlan = null;
+        pendingAlternatives = List.of();
+        planningMessages = List.copyOf(messages);
+        routeSelectionMessages = List.of();
+        pendingUsesFallbackEstimate = false;
+        selectedRecommendation = null;
     }
 
     /** Saves a fixed commute duration for later route planning. */

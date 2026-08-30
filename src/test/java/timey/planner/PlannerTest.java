@@ -2,6 +2,7 @@ package timey.planner;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.Clock;
 import java.time.Duration;
@@ -70,6 +71,23 @@ class PlannerTest {
                 "Please reconnect to the Internet for more accurate estimates.",
                 "Using a default 1-hour buffer before your target arrival time instead of live estimates."),
                 result.messages());
+    }
+
+    @Test
+    void findAlternatives_locationBadRequest_endsPlanningWithPostalCodeSuggestion() {
+        var resolver = (timey.ports.LocationResolver) query ->
+                LocationResolution.unavailable(400, "OneMap could not find \"" + query + "\".");
+        RailTransitPlanner railPlanner = (origin, destination, date, time) -> {
+            throw new AssertionError("Routing should not run after a failed location lookup.");
+        };
+        var planner = new Planner(new CommutePlanningService(new MockTransitPlanner()), resolver, railPlanner, CLOCK);
+
+        var result = planner.findAlternatives(PLAN);
+
+        assertTrue(result.alternatives().isEmpty());
+        assertEquals(List.of("I'm so sorry, OneMap could not find \"COM3\".",
+                "Perhaps you can give me the postal code for that location instead?"), result.messages());
+        assertFalse(result.createsPendingPlan());
     }
 
     @Test

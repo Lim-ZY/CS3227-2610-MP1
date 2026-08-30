@@ -24,6 +24,8 @@ public final class Planner {
             + "plan your routes accurately.";
     private static final String RECONNECT_MESSAGE = "Please reconnect to the Internet for more accurate estimates.";
     private static final String ROUTE_NOT_FOUND_MESSAGE = "I'm so sorry, OneMap failed to find a suitable route.";
+    private static final String POSTAL_CODE_SUGGESTION = "Perhaps you can give me the postal code for that location "
+            + "instead?";
     private static final String FIXED_TIMING_SUGGESTION = "(Perhaps use `add` later to save this commute route "
             + "for future reference?)";
 
@@ -59,10 +61,18 @@ public final class Planner {
     }
 
     private PlanningResult unavailableLocationResult(PlanCommand plan, LocationResolution unavailableLocation) {
+        if (isTerminalLocationFailure(unavailableLocation)) {
+            return new PlanningResult(List.of(), List.of("I'm so sorry, " + unavailableLocation.reason(),
+                    POSTAL_CODE_SUGGESTION), false, List.of(), false);
+        }
         if (unavailableLocation.isLiveDataServiceUnreachable()) {
             return workerUnreachableResult(plan, List.of());
         }
         return deterministicResult(plan, List.of("Using offline estimate: " + unavailableLocation.reason()));
+    }
+
+    private boolean isTerminalLocationFailure(LocationResolution resolution) {
+        return resolution.isNotFound() || resolution.responseStatusCode().orElse(-1) == 400;
     }
 
     private PlanningResult findAlternativesForResolvedLocations(PlanCommand plan, ResolvedLocation origin,
@@ -73,7 +83,7 @@ public final class Planner {
         var liveRoutes = liveRailPlanningService.findAlignedRoutes(plan, origin, destination);
         if (liveRoutes.isAvailable() && !liveRoutes.routes().isEmpty()) {
             messages.add("Live rail routes were aligned with your target arrival time.");
-            return new PlanningResult(liveRoutes.routes(), messages, false, List.of());
+            return new PlanningResult(liveRoutes.routes(), messages, false, List.of(), true);
         }
 
         if (liveRoutes.isAvailable()) {
@@ -107,7 +117,7 @@ public final class Planner {
         messages = new ArrayList<>(messages);
         messages.add("Using a default 1-hour buffer before your target arrival time instead of live estimates.");
         return new PlanningResult(List.of(new RouteAlternative(FALLBACK_ROUTE_NAME, Duration.ZERO, Duration.ZERO, 0)),
-                messages, true, routeSelectionMessages);
+                messages, true, routeSelectionMessages, true);
     }
 
     /** Calculates the leave-by recommendation for a selected route alternative. */
@@ -130,7 +140,7 @@ public final class Planner {
 
     /** The planned alternatives and explanation of the selected planning source. */
     public record PlanningResult(List<RouteAlternative> alternatives, List<String> messages,
-            boolean usesFallbackEstimate, List<String> routeSelectionMessages) {
+            boolean usesFallbackEstimate, List<String> routeSelectionMessages, boolean createsPendingPlan) {
         /** Performs this operation. */
         public PlanningResult {
             alternatives = List.copyOf(alternatives);

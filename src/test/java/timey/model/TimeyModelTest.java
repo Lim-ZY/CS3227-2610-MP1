@@ -1,6 +1,7 @@
 package timey.model;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -49,6 +50,29 @@ class TimeyModelTest {
         assertEquals(alternatives, model.getPendingAlternatives());
         assertEquals(List.of("Offline route available.", "Saved timing available."), model.getPlanningMessages());
         assertTrue(model.getSelectedRecommendation().isEmpty());
+    }
+
+    @Test
+    void plan_locationFailure_clearsPreviouslyUnchosenPlan() {
+        var previousPlan = new PlanCommand("COM3", "VivoCity", LocalTime.of(18, 30), Duration.ZERO);
+        var previousRoute = new RouteAlternative("Previous route", Duration.ofMinutes(5), Duration.ofMinutes(30), 0);
+        Clock clock = Clock.fixed(Instant.parse("2026-08-21T01:30:00Z"), ZoneId.of("Asia/Singapore"));
+        RailTransitPlanner railPlanner = (origin, destination, date, time) -> LiveRouteLookup.available(List.of());
+        var planner = new Planner(new CommutePlanningService(new MockTransitPlanner()),
+                query -> LocationResolution.unavailable(400, "OneMap could not find \"" + query + "\"."),
+                railPlanner, clock);
+        var model = new TimeyModel(planner, new InMemoryFixedCommuteStore(), plans -> { },
+                new DepartureReminderService((triggerAt, action) -> () -> { }, clock, reminder -> { }), clock);
+        model.replacePlan(previousPlan, List.of(previousRoute), List.of("Previous route is available."));
+
+        model.plan(new PlanCommand("Home", "NUS", LocalTime.of(9, 0), Duration.ZERO));
+
+        assertTrue(model.getPendingPlan().isEmpty());
+        assertTrue(model.getPendingAlternatives().isEmpty());
+        assertTrue(model.getSelectedRecommendation().isEmpty());
+        assertFalse(model.isUsingFallbackEstimate());
+        assertEquals(List.of("I'm so sorry, OneMap could not find \"Home\".",
+                "Perhaps you can give me the postal code for that location instead?"), model.getPlanningMessages());
     }
 
     @Test

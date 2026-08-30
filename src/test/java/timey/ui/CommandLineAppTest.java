@@ -174,19 +174,40 @@ class CommandLineAppTest {
     }
 
     @Test
-    void run_oneLocationUnresolved_displaysDeterministicRoutes() {
+    void run_oneLocationNotFound_endsPlanningWithoutRouteSelection() {
         var outputText = new StringWriter();
         var resolver = (timey.ports.LocationResolver) query -> query.equals("COM3")
                 ? LocationResolution.found(new ResolvedLocation(query, "COM3 address", 1.3, 103.8))
-                : LocationResolution.unavailable("OneMap could not find \"VivoCity\".");
+                : LocationResolution.notFound("OneMap could not find \"VivoCity\".");
         var app = new CommandLineApp(new BufferedReader(new StringReader(
                 "plan /from \"COM3\" /to \"VivoCity\" /by 1830\nthx\n")), new PrintWriter(outputText, true),
                 new PlanCommandParser(), new CommutePlanningService(new MockTransitPlanner()), resolver);
 
         app.run();
 
-        assertTrue(outputText.toString().contains("Using offline estimate: OneMap could not find \"VivoCity\"."));
-        assertTrue(outputText.toString().contains("1. Offline estimate"));
+        String output = outputText.toString();
+        assertTrue(output.contains("I'm so sorry, OneMap could not find \"VivoCity\"."));
+        assertTrue(output.contains("Perhaps you can give me the postal code for that location instead?"));
+        assertFalse(output.contains("Here are your route alternatives:"));
+    }
+
+    @Test
+    void run_locationBadRequest_endsPlanningWithoutRouteSelection() {
+        var outputText = new StringWriter();
+        var resolver = (timey.ports.LocationResolver) query ->
+                LocationResolution.unavailable(400, "OneMap could not find \"" + query + "\".");
+        var app = new CommandLineApp(new BufferedReader(new StringReader(
+                "plan /from \"Blk 127 Rivervale Street\" /to \"Compass One\" /by 1800\nthx\n")),
+                new PrintWriter(outputText, true), new PlanCommandParser(),
+                new CommutePlanningService(new MockTransitPlanner()), resolver);
+
+        app.run();
+
+        String output = outputText.toString();
+        assertTrue(output.contains("I'm so sorry, OneMap could not find \"Blk 127 Rivervale Street\"."));
+        assertTrue(output.contains("Perhaps you can give me the postal code for that location instead?"));
+        assertFalse(output.contains("Here are your route alternatives:"));
+        assertFalse(output.contains("Choose a route with: choose 1"));
     }
 
     @Test

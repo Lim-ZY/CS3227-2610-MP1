@@ -57,7 +57,7 @@ public final class OneMapLocationResolver implements LocationResolver {
         try {
             List<ResolvedLocation> locations = parseLocations(body);
             if (locations.isEmpty()) {
-                return LocationResolution.unavailable("OneMap could not find \"" + query + "\".");
+                return LocationResolution.notFound("OneMap could not find \"" + query + "\".");
             }
             return LocationResolution.found(locations.getFirst());
         } catch (JsonProcessingException | IllegalArgumentException exception) {

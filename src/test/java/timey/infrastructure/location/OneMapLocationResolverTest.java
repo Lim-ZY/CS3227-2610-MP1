@@ -85,6 +85,7 @@ class OneMapLocationResolverTest {
 
         assertFalse(result.isFound());
         assertEquals("OneMap could not find \"COM3\".", result.reason());
+        assertTrue(result.isNotFound());
     }
 
     @Test

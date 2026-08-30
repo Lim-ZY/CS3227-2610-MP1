@@ -54,6 +54,9 @@ public final class PlanCommand extends Command {
         messages.add("Personal buffer: " + buffer.toMinutes() + " minutes");
         messages.add("");
         messages.addAll(model.getPlanningMessages());
+        if (model.getPendingPlan().isEmpty()) {
+            return new CommandResult(messages);
+        }
         messages.add("");
         messages.add("Here are your route alternatives:");
         for (int index = 0; index < model.getPendingAlternatives().size(); index++) {
