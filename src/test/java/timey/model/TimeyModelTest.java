@@ -90,20 +90,18 @@ class TimeyModelTest {
     }
 
     @Test
-    void selectRoute_targetArrivalAlreadyPassed_selectsTomorrowAndSavesPlan() {
+    void selectRoute_leaveByAlreadyPassed_doesNotRollOverOrSavePlan() {
         var savedPlanLists = new ArrayList<List<SavedPlan>>();
         Clock clock = Clock.fixed(Instant.parse("2026-08-29T12:00:00Z"), ZoneId.of("Asia/Singapore"));
         var model = TestTimeyModelFactory.create(new InMemoryFixedCommuteStore(), clock,
                 plans -> savedPlanLists.add(List.copyOf(plans)));
-        new PlanCommand("Admiralty MRT", "COM3", LocalTime.of(17, 0), Duration.ZERO).execute(model);
+        model.plan(new PlanCommand("Admiralty MRT", "COM3", LocalTime.of(17, 0), Duration.ZERO));
 
         RouteSelectionResult result = model.selectRoute(1);
 
-        SavedPlan expected = new SavedPlan(LocalDate.of(2026, 8, 30), LocalTime.of(17, 0), "Admiralty MRT", "COM3",
-                LocalTime.of(16, 0));
-        assertEquals(RouteSelectionResult.Status.ROUTE_SELECTED, result.status());
-        assertEquals(List.of(expected), model.getSavedPlans());
-        assertEquals(List.of(List.of(expected)), savedPlanLists);
+        assertEquals(RouteSelectionResult.Status.LEAVE_NOW, result.status());
+        assertTrue(model.getSavedPlans().isEmpty());
+        assertTrue(savedPlanLists.isEmpty());
     }
 
     @Test
@@ -142,20 +140,18 @@ class TimeyModelTest {
     }
 
     @Test
-    void selectRoute_departureCrossesMidnight_selectsAndSavesTargetArrivalDate() {
+    void selectRoute_departureCrossesMidnight_afterTargetHasPassed_doesNotRollOverOrSavePlan() {
         var savedPlanLists = new ArrayList<List<SavedPlan>>();
         Clock clock = Clock.fixed(Instant.parse("2026-08-29T14:00:00Z"), ZoneId.of("Asia/Singapore"));
         var model = TestTimeyModelFactory.create(new InMemoryFixedCommuteStore(), clock,
                 plans -> savedPlanLists.add(List.copyOf(plans)));
-        new PlanCommand("Admiralty MRT", "COM3", LocalTime.of(0, 10), Duration.ofMinutes(10)).execute(model);
+        model.plan(new PlanCommand("Admiralty MRT", "COM3", LocalTime.of(0, 10), Duration.ofMinutes(10)));
 
         RouteSelectionResult result = model.selectRoute(1);
 
-        SavedPlan expected = new SavedPlan(LocalDate.of(2026, 8, 30), LocalTime.of(0, 10), "Admiralty MRT", "COM3",
-                LocalTime.of(23, 10));
-        assertEquals(RouteSelectionResult.Status.ROUTE_SELECTED, result.status());
-        assertEquals(List.of(expected), model.getSavedPlans());
-        assertEquals(List.of(List.of(expected)), savedPlanLists);
+        assertEquals(RouteSelectionResult.Status.LEAVE_NOW, result.status());
+        assertTrue(model.getSavedPlans().isEmpty());
+        assertTrue(savedPlanLists.isEmpty());
     }
 
     @Test

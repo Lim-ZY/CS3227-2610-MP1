@@ -246,7 +246,7 @@ class PlannerTest {
     }
 
     @Test
-    void recommendFallbackDeparture_targetAlreadyPassed_usesNextSingaporeDay() {
+    void recommendFallbackDeparture_targetAlreadyPassed_doesNotRollOver() {
         Clock afterMidnightInSingapore = Clock.fixed(Instant.parse("2026-08-20T16:30:00Z"),
                 ZoneId.of("Asia/Singapore"));
         RailTransitPlanner railPlanner = (origin, destination, date, time) -> LiveRouteLookup.available(List.of());
@@ -257,8 +257,8 @@ class PlannerTest {
 
         var recommendation = planner.recommendFallbackDeparture(plan, fallbackRoute);
 
-        assertEquals(LocalDateTime.of(2026, 8, 22, 0, 15), recommendation.arrivalAt());
-        assertEquals(LocalDateTime.of(2026, 8, 21, 23, 15), recommendation.departureAt());
+        assertEquals(LocalDateTime.of(2026, 8, 21, 0, 15), recommendation.arrivalAt());
+        assertEquals(LocalDateTime.of(2026, 8, 20, 23, 15), recommendation.departureAt());
     }
 
     private void assertGenericRouteFallback(Planner.PlanningResult result, String failureMessage) {

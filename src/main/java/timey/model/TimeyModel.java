@@ -156,6 +156,12 @@ public final class TimeyModel {
         return savedPlans;
     }
 
+    /** Returns whether the requested arrival time has passed today. */
+    public boolean hasPlanTimePassed(PlanCommand plan) {
+        LocalDateTime requestedArrival = LocalDateTime.of(LocalDate.now(clock), plan.getArrivalTime());
+        return !requestedArrival.isAfter(LocalDateTime.now(clock));
+    }
+
     /** Removes plans whose leave-by time is no longer in the future. */
     public void pruneExpiredPlans() {
         List<SavedPlan> remainingPlans = savedPlans.stream().filter(this::isFuture).distinct().toList();

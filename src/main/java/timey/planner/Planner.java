@@ -2,8 +2,8 @@ package timey.planner;
 
 import java.time.Clock;
 import java.time.Duration;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -147,9 +147,7 @@ public final class Planner {
     }
 
     private LocalDateTime nextTargetArrival(PlanCommand plan) {
-        ZonedDateTime now = ZonedDateTime.now(clock);
-        LocalDateTime todayAtTarget = LocalDateTime.of(now.toLocalDate(), plan.getArrivalTime());
-        return todayAtTarget.isAfter(now.toLocalDateTime()) ? todayAtTarget : todayAtTarget.plusDays(1);
+        return LocalDateTime.of(LocalDate.now(clock), plan.getArrivalTime());
     }
 
     /** The planned alternatives and explanation of the selected planning source. */

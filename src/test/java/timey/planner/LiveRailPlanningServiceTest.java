@@ -44,7 +44,7 @@ class LiveRailPlanningServiceTest {
     }
 
     @Test
-    void findAlignedRoutes_targetTimePassed_usesTomorrow() {
+    void findAlignedRoutes_targetTimePassed_usesTodayWithoutRollover() {
         List<LocalDate> requestedDates = new ArrayList<>();
         RailTransitPlanner planner = (origin, destination, date, time) -> {
             requestedDates.add(date);
@@ -55,11 +55,11 @@ class LiveRailPlanningServiceTest {
 
         service.findAlignedRoutes(plan, ORIGIN, DESTINATION);
 
-        assertEquals(List.of(LocalDate.of(2026, 8, 22)), requestedDates);
+        assertEquals(List.of(LocalDate.of(2026, 8, 21)), requestedDates);
     }
 
     @Test
-    void findAlignedRoutes_targetTimeEqualsNow_usesTomorrow() {
+    void findAlignedRoutes_targetTimeEqualsNow_usesTodayWithoutRollover() {
         List<LocalDate> requestedDates = new ArrayList<>();
         RailTransitPlanner planner = (origin, destination, date, time) -> {
             requestedDates.add(date);
@@ -70,7 +70,7 @@ class LiveRailPlanningServiceTest {
 
         service.findAlignedRoutes(plan, ORIGIN, DESTINATION);
 
-        assertEquals(List.of(LocalDate.of(2026, 8, 22)), requestedDates);
+        assertEquals(List.of(LocalDate.of(2026, 8, 21)), requestedDates);
     }
 
     @Test
@@ -91,7 +91,7 @@ class LiveRailPlanningServiceTest {
     }
 
     @Test
-    void findAlignedRoutes_departureCrossesMidnight_refreshesOnPreviousDate() {
+    void findAlignedRoutes_targetTimePassed_departureRefreshesOnPreviousDate() {
         List<String> requestedTimes = new ArrayList<>();
         RailTransitPlanner planner = (origin, destination, date, time) -> {
             requestedTimes.add(date + " " + time);
@@ -104,6 +104,6 @@ class LiveRailPlanningServiceTest {
 
         service.findAlignedRoutes(plan, ORIGIN, DESTINATION);
 
-        assertEquals(List.of("2026-08-21 00:10", "2026-08-20 23:00"), requestedTimes);
+        assertEquals(List.of("2026-08-20 00:10", "2026-08-19 23:00"), requestedTimes);
     }
 }

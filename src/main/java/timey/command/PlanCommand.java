@@ -1,6 +1,7 @@
 package timey.command;
 
 import java.time.Duration;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -12,6 +13,7 @@ import timey.model.TimeyModel;
 public final class PlanCommand extends Command {
     private static final DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern("HH:mm");
     private static final Duration OFFLINE_ESTIMATE_DURATION = Duration.ofHours(1);
+    private static final String PASSED_TIME_MESSAGE = "Sorry, the time to reach has passed... Time cannot be rewound :(";
 
     private final String origin;
     private final String destination;
@@ -44,6 +46,9 @@ public final class PlanCommand extends Command {
 
     @Override
     public CommandResult execute(TimeyModel model) {
+        if (model.hasPlanTimePassed(this)) {
+            return CommandResult.message(PASSED_TIME_MESSAGE);
+        }
         model.plan(this);
         var messages = new ArrayList<String>();
         messages.add("Got it! I have noted down your plan as follows:");

@@ -4,8 +4,11 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.time.Clock;
 import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalTime;
+import java.time.ZoneId;
 
 import org.junit.jupiter.api.Test;
 
@@ -40,5 +43,18 @@ class PlanCommandTest {
         assertEquals(1, model.getPendingAlternatives().size());
         assertTrue(result.messages().contains("From: COM3"));
         assertTrue(result.messages().contains("Choose a route with: choose 1"));
+    }
+
+    @Test
+    void execute_requestedArrivalPassed_returnsWithoutPlanning() {
+        var clock = Clock.fixed(Instant.parse("2026-08-30T12:00:00Z"), ZoneId.of("Asia/Singapore"));
+        var model = TestTimeyModelFactory.create(new InMemoryFixedCommuteStore(), clock);
+        var command = new PlanCommand("Admiralty MRT", "Harbourfront MRT", LocalTime.of(18, 30), Duration.ZERO);
+
+        var result = command.execute(model);
+
+        assertEquals(java.util.List.of("Sorry, the time to reach has passed... Time cannot be rewound :("),
+                result.messages());
+        assertTrue(model.getPendingPlan().isEmpty());
     }
 }
