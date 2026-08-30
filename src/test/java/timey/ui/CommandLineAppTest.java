@@ -223,13 +223,25 @@ class CommandLineAppTest {
         app.run();
 
         String output = outputText.toString();
-        assertTrue(output.contains("I'm so sorry, I need Internet connection to help you plan your routes "
-                + "accurately."));
-        assertTrue(output.contains("Please reconnect to the Internet for more accurate estimates."));
-        assertTrue(output.contains("Using a default 1-hour buffer before your target arrival time instead of live "
-                + "estimates."));
-        assertTrue(output.contains("1. Offline estimate — 60 minutes total"));
-        assertTrue(output.contains("Choose a route with: choose 1"));
+        assertTrue(output.contains("""
+                _______________________________________________________
+                Got it! I have noted down your plan as follows:
+
+                From: Blk 127 Rivervale Street
+                To: Compass One
+                Target arrival: 18:00
+                Personal buffer: 10 minutes
+
+                I'm so sorry, I need Internet connection to help you plan your routes accurately.
+                Please reconnect to the Internet for more accurate estimates.
+                Using a default 1-hour buffer before your target arrival time instead of live estimates.
+
+                Here are your route alternatives:
+                1. Offline estimate — 60 minutes total
+
+                Choose a route with: choose 1
+                _______________________________________________________
+                > """));
         assertFalse(output.contains("Worker could not be reached."));
     }
 
@@ -248,14 +260,28 @@ class CommandLineAppTest {
         app.run();
 
         String output = outputText.toString();
-        assertTrue(output.contains("I'm so sorry, OneMap failed to find a suitable route."));
-        assertTrue(output.contains("Using a default 1-hour buffer before your target arrival time instead of live "
-                + "estimates."));
-        assertTrue(output.contains("1. Offline estimate — 60 minutes total"));
-        assertTrue(output.contains("Choose a route with: choose 1"));
-        assertTrue(output.contains("(Perhaps use `add` later to save this commute route for future reference?)"));
-        assertTrue(output.indexOf("Choose a route with: choose 1")
-                < output.indexOf("(Perhaps use `add` later to save this commute route for future reference?)"));
+        assertTrue(output.contains("""
+                _______________________________________________________
+                Got it! I have noted down your plan as follows:
+
+                From: COM3
+                To: VivoCity
+                Target arrival: 18:30
+                Personal buffer: 10 minutes
+
+                OneMap resolved your locations:
+                - From: COM3 address
+                - To: VivoCity address
+                I'm so sorry, OneMap failed to find a suitable route.
+                Using a default 1-hour buffer before your target arrival time instead of live estimates.
+
+                Here are your route alternatives:
+                1. Offline estimate — 60 minutes total
+
+                Choose a route with: choose 1
+                (Perhaps use `add` later to save this commute route for future reference?)
+                _______________________________________________________
+                > """));
         assertFalse(output.contains("Unable to get MRT route"));
     }
 
