@@ -15,16 +15,9 @@ public final class AddCommandParser {
     /** Performs this operation. */
     public AddCommand parse(String input) {
         Map<String, String> options = CommandOptionParser.parse(input, "add", OPTION);
-        return new AddCommand(requiredOption(options, "from"), requiredOption(options, "to"),
-                parseDuration(requiredOption(options, "dur")));
-    }
-
-    private String requiredOption(Map<String, String> options, String name) {
-        String value = options.get(name);
-        if (value == null || value.isBlank()) {
-            throw new IllegalArgumentException("Missing required option /" + name + ".");
-        }
-        return value;
+        return new AddCommand(CommandOptionParser.requiredOption(options, "from"),
+                CommandOptionParser.requiredOption(options, "to"),
+                parseDuration(CommandOptionParser.requiredOption(options, "dur")));
     }
 
     private Duration parseDuration(String value) {

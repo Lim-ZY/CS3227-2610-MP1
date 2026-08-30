@@ -39,19 +39,11 @@ public final class PlanCommandParser {
     public PlanCommand parse(String input) {
         Map<String, String> options = CommandOptionParser.parse(input, "plan", OPTION);
 
-        String origin = requiredOption(options, "from");
-        String destination = requiredOption(options, "to");
-        LocalTime arrivalTime = parseTime(requiredOption(options, "by"));
+        String origin = CommandOptionParser.requiredOption(options, "from");
+        String destination = CommandOptionParser.requiredOption(options, "to");
+        LocalTime arrivalTime = parseTime(CommandOptionParser.requiredOption(options, "by"));
         Duration buffer = options.containsKey("buf") ? parseBuffer(options.get("buf")) : defaultBuffer;
         return new PlanCommand(origin, destination, arrivalTime, buffer);
-    }
-
-    private String requiredOption(Map<String, String> options, String name) {
-        String value = options.get(name);
-        if (value == null || value.isBlank()) {
-            throw new IllegalArgumentException("Missing required option /" + name + ".");
-        }
-        return value;
     }
 
     private LocalTime parseTime(String value) {

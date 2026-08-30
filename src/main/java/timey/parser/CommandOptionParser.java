@@ -35,6 +35,14 @@ final class CommandOptionParser {
         return options;
     }
 
+    static String requiredOption(Map<String, String> options, String name) {
+        String value = options.get(name);
+        if (value == null || value.isBlank()) {
+            throw new IllegalArgumentException("Missing required option /" + name + ".");
+        }
+        return value;
+    }
+
     private static boolean startsWithCommandName(String input, String commandName) {
         if (input == null || !input.regionMatches(true, 0, commandName, 0, commandName.length())) {
             return false;
