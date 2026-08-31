@@ -149,12 +149,24 @@ choose 1
 - If the route number is missing or outside the displayed range, Timey reports
   the valid usage or range instead of changing the plan.
 
-## If a command cannot complete
+### 11. Handling errors
 
-Input errors identify the affected command option. For operational failures,
-Timey keeps the current plan unchanged and asks you to check your internet
-connection or saved data before retrying. Internal exception details are not
-shown in the CLI or dashboard.
+Timey reports the first error it finds and leaves the current plan unchanged
+when an operation cannot complete.
+
+Common input errors include:
+
+- Missing required options, such as `/by` in a `plan` command.
+- Invalid arrival times, such as `/by 18:30` instead of 24-hour `HHmm` format.
+- Malformed or zero-length durations, such as `/dur 90` or `/dur 0m`.
+- Missing, non-numeric, or out-of-range route numbers in `choose`.
+- Using `choose` before creating a plan, or choosing again after a route has
+  already been selected.
+- Requesting an arrival time that has already passed today.
+
+For live-data or storage failures, check the internet connection or saved data
+and retry. Timey does not show internal exception details in the CLI or
+dashboard, and a failed operational update does not replace the current plan.
 
 ## Application defaults
 
