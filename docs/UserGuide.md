@@ -216,3 +216,22 @@ Each result shows a one-based number, date (`dd-MM-yyyy`), target arrival time
 (`HHmm`), origin, destination, and recommended leave-by time (`HHmm`). Plans
 whose leave-by time has passed are removed automatically and do not appear in
 the list.
+
+### 8. Removing a saved timing: `rm`
+
+Removes a saved fixed commute timing by its number in the `ls saved` list.
+
+Format: `rm <timing-number>`
+
+Example:
+
+```
+rm 1
+```
+
+- The timing number must be a positive integer between 1 and the number of
+  entries currently shown by `ls saved`.
+- If the number is missing or is not an integer, Timey displays the command’s
+  usage instead of removing a timing.
+- If the number is outside the current list, Timey reports that no saved timing
+  has that number.
