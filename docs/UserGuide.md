@@ -9,12 +9,12 @@
    ./gradlew shadowJar
    ```
 
-   The JAR is generated at `release/Timey-0.1.0-all.jar`.
+   The JAR is generated at `release/Timey-0.2.0-all.jar`.
 
 3. Launch the JavaFX dashboard:
 
    ```bash
-   java -jar ./release/Timey-0.1.0-all.jar
+   java -jar ./release/Timey-0.2.0-all.jar
    ```
 
 4. To use the terminal CLI instead, run:

@@ -26,11 +26,11 @@ and test source sets with Checkstyle. To build the executable fat JAR, run:
 ./gradlew shadowJar
 ```
 
-The JAR is written to `release/Timey-0.1.0-all.jar`. Launch the JavaFX
+The JAR is written to `release/Timey-0.2.0-all.jar`. Launch the JavaFX
 dashboard with:
 
 ```bash
-java -jar ./release/Timey-0.1.0-all.jar
+java -jar ./release/Timey-0.2.0-all.jar
 ```
 
 To use the terminal CLI during development, run:
@@ -671,7 +671,7 @@ not affect the expected results. Build the application first with
 
 ### Launch and shutdown
 
-1. Run `java -jar ./release/Timey-0.1.0-all.jar`.
+1. Run `java -jar ./release/Timey-0.2.0-all.jar`.
    Expected: the JavaFX dashboard opens with its header, commute cards, route
    panel, and command bar.
 2. Run `./gradlew run` in a terminal.
