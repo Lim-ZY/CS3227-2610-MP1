@@ -17,9 +17,10 @@ Timey helps you:
 
 ![Timey JavaFX dashboard](docs/images/TimeyDashboard.png)
 
-Live OneMap route and location lookups are used when available. When live data
-cannot be retrieved, Timey retains valid prior state and offers a deterministic
-offline estimate using a one-hour travel buffer.
+Timey uses its deployed service to request live OneMap location and rail-route
+lookups when available. Users do not need to configure a URL, token, or OneMap
+account. When live data cannot be retrieved, Timey retains valid prior state
+and offers a deterministic offline estimate using a one-hour travel buffer.
 
 Saved fixed commute timings and selected future plans are stored locally in the
 `data/` directory as `fixed-commutes.txt` and `plans.txt`. The files are
