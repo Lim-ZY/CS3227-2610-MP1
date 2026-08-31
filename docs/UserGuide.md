@@ -26,6 +26,42 @@
    Enter `help` to display the available commands. The dashboard and CLI use
    the same command workflow and locally saved data.
 
+## First-use workflow
+
+Use the following sequence to plan a commute:
+
+1. Enter a `plan` command with your origin, destination, target arrival time,
+   and optional personal buffer:
+
+   ```text
+   plan /from "COM3" /to "VivoCity" /by 1830 /buf 10m
+   ```
+
+2. Review the numbered route alternatives. Each live alternative includes its
+   total travel time, walking time, transit time, transfer count, and steps.
+   If live data is unavailable, Timey labels the one-hour fallback as
+   `Offline estimate`.
+
+3. Select an alternative by its number:
+
+   ```text
+   choose 1
+   ```
+
+4. Timey displays the selected route, total travel time, personal buffer, and
+   recommended departure time. For example:
+
+   ```text
+   Chosen route: Offline estimate
+   Total travel time: 60 minutes
+   Personal buffer: 10 minutes
+   Recommended departure: 17:20
+   Please leave your desk by 17:20.
+   ```
+
+   The exact route and departure time depend on the requested journey, current
+   time, live service availability, and selected buffer.
+
 ## Planning a commute
 
 Enter a plan and choose a route:
