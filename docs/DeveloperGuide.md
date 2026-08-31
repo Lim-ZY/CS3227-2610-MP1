@@ -170,6 +170,39 @@ presentation components.
 threads. This prevents an overlapping or cancelled dashboard request from
 mixing terminal output or model state with a later request.
 
+### Command and logic flow
+
+The command layer separates text interpretation from application behaviour:
+
+1. `CommandLineApp.executeCommand()` passes the raw input to `Parser`.
+2. `Parser` identifies the command name and delegates option-bearing commands
+   to `PlanCommandParser` or `AddCommandParser`. It creates simple commands
+   such as `HelpCommand`, `ListCommand`, `RemoveCommand`, `ChooseCommand`, or
+   `ThanksCommand` directly.
+3. `CommandOptionParser` checks command boundaries, extracts quoted or
+   unquoted option values, rejects duplicate or unrecognised text, and enforces
+   required options. The specialised parsers validate times, buffers, and
+   durations before constructing command objects.
+4. The resulting `Command` executes against the session’s `TimeyModel` and
+   returns an immutable `CommandResult` containing display messages.
+5. `CommandLineApp` sends those messages to `ConsoleUi` and returns a
+   `CommandExecutionResult` containing the session-ended flag and a fresh
+   `DashboardState` snapshot for the dashboard.
+
+`plan` and `choose` form a stateful two-step workflow. `PlanCommand` asks the
+model’s planner to resolve locations and create route alternatives, replacing
+the pending plan only after a valid planning result is assembled. `ChooseCommand`
+then validates that a pending plan exists and that its one-based route number is
+valid before calculating and saving the departure recommendation. Selecting a
+route clears the possibility of selecting another route for that plan; a new
+`plan` request creates a new selection context.
+
+Invalid input is reported as an `IllegalArgumentException` during parsing or
+command construction and is converted by `CommandLineApp` into user-facing
+feedback. Unexpected runtime failures use the shared safe recovery message,
+while commands that are valid but cannot complete return an ordinary
+`CommandResult` explaining the actionable next step.
+
 ## Reliability behaviour
 
 All application-facing clocks use the fixed `Asia/Singapore` timezone and can
