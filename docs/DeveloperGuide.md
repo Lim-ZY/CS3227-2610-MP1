@@ -100,6 +100,37 @@ entry point. The composition layer supplies the concrete dependencies, the
 command session parses and executes user input, and the UI renders the returned
 result and current session state.
 
+### Application bootstrap and dependency composition
+
+The CLI entry point is `timey.Timey`. It creates a `ConsoleUi`, asks
+`ApplicationFactory.createCommandLineApp()` for the shared command session,
+and calls `run()`. The session prints the welcome message, reads commands,
+executes them against one `TimeyModel`, and closes the model when the session
+ends.
+
+The dashboard entry point is `timey.ui.dashboard.DashboardLauncher`. JavaFX
+launches `TimeyDashboardApp`, whose `init()` method creates the same kind of
+`CommandLineApp` with an in-memory console input and captured output. Its
+`start()` method passes that session to `MainWindow`, allowing dashboard
+controls to use the command workflow without duplicating application logic.
+
+`ApplicationFactory` is the composition root for the production application.
+It supplies:
+
+- `PlanCommandParser` and `CommutePlanningService` for command interpretation
+  and deterministic commute calculations.
+- `OneMapLocationResolver` and `OneMapRailTransitPlanner` for live lookups,
+  each backed by a rate-limited HTTP requester.
+- `FileFixedCommuteStore` and `FilePlanStore` for local persistence under
+  `data/`.
+- A system `Clock` configured with `ApplicationConfiguration.TIME_ZONE`.
+
+The factory also applies the routing request timeout and the configured live
+data endpoint. Tests bypass this production composition root and inject parser,
+planner, port implementations, stores, and fixed clocks directly into
+`CommandLineApp`. This keeps external services out of unit tests and makes
+time-dependent behaviour deterministic.
+
 ## Presentation architecture
 
 `ConsoleUi` owns terminal input/output. `CommandLineApp` owns the shared command
