@@ -731,3 +731,31 @@ not affect the expected results. Build the application first with
    while a command is running as a separate check.
    Expected: the active work is cancelled or superseded, stale output does not
    overwrite the latest dashboard state, and the window closes cleanly.
+
+## Appendix: Planned Enhancements
+
+The following items are deliberately outside the currently implemented scope.
+They should be treated as future requirements rather than assumptions about
+current behavior. Each enhancement should preserve the existing domain and
+ports boundaries and add offline test doubles before introducing live service
+dependencies.
+
+1. **Calendar and event ingestion:** Import `.ics` calendars, classify events as
+   physical or virtual, list upcoming commitments, and support manual event
+   management.
+2. **Weather-aware planning:** Query the Data.gov.sg weather forecast and add a
+   configurable weather buffer when rain affects the journey.
+3. **Real-time bus verification:** Query LTA DataMall bus arrivals for imminent
+   bus legs and adjust departure guidance when appropriate.
+4. **Virtual-event support:** Calculate preparation buffers, show virtual
+   meeting countdowns, and offer a one-click action to open meeting links.
+5. **Native notifications:** Notify users at configurable preparation and
+   departure milestones.
+6. **Cached route data:** Cache valid route responses and use them, together
+   with local calculations, when live services are unavailable.
+7. **Walking-speed preferences:** Let users configure walking speed and use it
+   when estimating walking legs and departure times.
+8. **Named saved locations:** Allow users to create, view, edit, and delete
+   labels such as Home, Office, or Campus for frequent locations.
+9. **Persistent preferences:** Store default origins, walking speed, custom
+   buffers, and other user preferences locally.
