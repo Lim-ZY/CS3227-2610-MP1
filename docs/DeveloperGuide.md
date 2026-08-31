@@ -518,3 +518,111 @@ cases and edge cases, troubleshoot build or implementation issues, and refine
 wording. The project’s implementation decisions, source changes, and final
 verification remain the responsibility of the project team. AI assistance is
 recorded in [`Reflections.md`](Reflections.md) where applicable.
+
+## Appendix: Requirements
+
+### Product scope
+
+Timey is a desktop commute assistant for students and workers travelling to
+physical commitments. The implemented scope covers command-driven commute
+planning, Singapore location resolution, live rail-route alternatives, route
+selection, personal departure buffers, reusable fixed commute timings, saved
+future plans, a JavaFX dashboard, and a deterministic offline estimate when live
+data is unavailable. The dashboard and CLI use the same command session and
+local stores.
+
+Calendar and virtual-event ingestion, weather and LTA lookups, native
+notifications, cached routes, walking-speed preferences, and named saved
+locations remain planned enhancements. The full prioritized requirements and
+acceptance measures are maintained in [`Requirements.md`](Requirements.md).
+
+### User stories
+
+| Priority | User | Goal | Benefit |
+| --- | --- | --- | --- |
+| Must have | Commuter | plan a journey from an origin to a destination by a target arrival time | know when to leave |
+| Must have | Commuter | compare live route alternatives and their steps | choose an informed route |
+| Must have | Commuter | add a personal departure buffer | account for transition time |
+| Must have | Commuter | select a route and see a leave-by recommendation | reach the destination on time |
+| Should have | Frequent traveller | save, list, reuse, and remove a fixed commute timing | avoid repeating known timing work |
+| Should have | Planner | view and revisit future selected plans | keep upcoming journeys visible |
+| Should have | User without connectivity | receive a labelled deterministic estimate | continue planning during service failure |
+
+### Use cases
+
+For the use cases below, the actor is the user and the system is Timey.
+
+**Use case: UC1 - Plan a commute**
+
+**MSS**
+
+1. User supplies an origin, destination, target arrival time, and optional
+   buffer.
+2. Timey resolves both locations and obtains aligned route alternatives.
+3. Timey displays the alternatives and their route steps.
+
+**Extensions**
+
+* 1a. A required option is missing or malformed.
+  * 1a1. Timey displays an input error and does not change the pending plan.
+* 2a. A location is not found.
+  * 2a1. Timey displays a correction prompt.
+* 2b. Live routing is unavailable or returns no usable route.
+  * 2b1. Timey displays a labelled `Offline estimate` when fallback planning is
+    possible.
+
+**Use case: UC2 - Select a route and receive a departure recommendation**
+
+**MSS**
+
+1. User enters `choose <route-number>` after planning.
+2. Timey validates the pending plan and route number.
+3. Timey displays the route, travel duration, buffer, and recommended departure.
+
+**Extensions**
+
+* 1a. No plan exists, the number is missing, or the number is out of range.
+  * 1a1. Timey explains the required next action.
+* 1b. The recommended departure time has arrived.
+  * 1b1. Timey returns `LEAVE_NOW` and tells the user to leave immediately.
+* 1c. A route has already been selected for the pending plan.
+  * 1c1. Timey asks the user to create a new plan before selecting again.
+
+**Use case: UC3 - Manage saved timings and plans**
+
+**MSS**
+
+1. User adds, lists, removes, or reuses a fixed commute timing, or selects a
+   future route.
+2. Timey persists the valid change and displays the resulting stable list.
+
+**Extensions**
+
+* 1a. The timing or plan is a duplicate.
+  * 1a1. Timey keeps one record and reports that it is already saved.
+* 1b. A stored line is malformed or expired.
+  * 1b1. Timey skips or prunes that record while retaining valid records.
+* 1c. Storage cannot be written.
+  * 1c1. Timey keeps the previous valid state and displays a safe failure
+    message.
+
+### Non-functional requirements
+
+1. **Portability:** Timey must run on supported macOS, Windows, and Linux
+   configurations with Java 25 and the bundled JavaFX modules.
+2. **Responsiveness:** Network work must provide loading feedback and use
+   bounded timeouts/retries; it must not block the JavaFX application thread.
+3. **Reliability:** Invalid input, unavailable services, malformed responses,
+   and malformed local records must not crash the application or discard valid
+   local state.
+4. **Determinism:** Time-dependent logic must use `Asia/Singapore` and injected
+   clocks; network-dependent tests must use fixtures or test doubles.
+5. **Usability:** CLI errors and dashboard failures must identify an actionable
+   next step without exposing raw stack traces.
+6. **Maintainability:** Domain and application logic must remain independent of
+   JavaFX, provider response classes, and concrete storage formats.
+7. **Distribution:** The Gradle build must produce an executable fat JAR without
+   requiring an external database or runtime service.
+8. **Privacy and security:** Local plan data remains under the launch
+   directory’s `data/` folder, and credentials or user-specific secrets must not
+   be committed to the repository.
