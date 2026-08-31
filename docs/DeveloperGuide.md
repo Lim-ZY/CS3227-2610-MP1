@@ -244,6 +244,40 @@ The `timey.domain` types represent provider-independent concepts:
 and user-facing branching in `ChooseCommand` while keeping the underlying
 recommendation calculation in the planner and domain layers.
 
+### Ports and infrastructure
+
+Ports define the boundaries that the application uses without depending on a
+specific provider or persistence mechanism:
+
+- `LocationResolver` converts a user query into a `LocationResolution` and,
+  when successful, a `ResolvedLocation`.
+- `RailTransitPlanner` returns a `LiveRouteLookup` for resolved locations,
+  while `TransitPlanner` provides the simpler route-planning abstraction used
+  by deterministic planning services.
+- `FixedCommuteStore` provides save, find, list, and remove operations for
+  reusable commute durations.
+- `PlanStore` loads and replaces the list of selected saved plans.
+
+The production adapters implement these ports as follows:
+
+- `OneMapLocationResolver` calls the configured live-data endpoint to resolve
+  Singapore locations. `OneMapRailTransitPlanner` maps the endpoint response
+  into `RouteAlternative` and `RouteStep` domain values.
+- `MockTransitPlanner` supplies a deterministic, network-free planner for
+  tests and local composition paths that do not need live routes.
+- `FileFixedCommuteStore` and `FilePlanStore` persist local text records. The
+  in-memory fixed-commute store is used by isolated test or development
+  sessions.
+- `JdkHttpRequester` is the concrete HTTP client. `RateLimitedHttpRequester`
+  handles a rate-limit retry, while `RetryingHttpRequester` handles bounded
+  retries for transient server responses and request failures. All are exposed
+  behind the small `HttpRequester` boundary so API adapters can use test
+  doubles instead of live network calls.
+
+This separation lets planner and model tests use fixed clocks, mock ports, and
+fixtures. Replacing a provider or storage format therefore changes the adapter
+and its composition rather than the command or domain rules.
+
 ## Reliability behaviour
 
 All application-facing clocks use the fixed `Asia/Singapore` timezone and can
