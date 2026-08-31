@@ -84,16 +84,16 @@ Timey commands use the following conventions:
 
 ### 2. Command overview
 
-| Action                      | Format and Examples |
-|-----------------------------| --- |
-| Plan                        | `plan /from "<origin>" /to "<destination>" /by <HHmm> [/buf <duration>]`<br>e.g. `plan /from "Kent Ridge MRT" /to "Harbourfront MRT" /by 2000` |
-| Choose                      | `choose <route-number>`<br>e.g. `choose 1` |
-| Add                         | `add /from "<origin>" /to "<destination>" /dur <duration>`<br>e.g. `add /from "COM3" /to "VivoCity" /dur 1h30m` |
-| List Saved Commute Timings  | `ls saved` |
-| List Current Plans          | `ls plans` |
-| Remove Saved Commute Timing | `rm <timing-number>`<br>e.g. `rm 1` |
-| Help                        | `help` |
-| Exit the Program            | `thx` |
+| Action                       | Format and Examples |
+|------------------------------| --- |
+| Plan                         | `plan /from "<origin>" /to "<destination>" /by <HHmm> [/buf <duration>]`<br>e.g. `plan /from "Kent Ridge MRT" /to "Harbourfront MRT" /by 2000` |
+| Choose                       | `choose <route-number>`<br>e.g. `choose 1` |
+| Saving Fixed Commute Timings | `add /from "<origin>" /to "<destination>" /dur <duration>`<br>e.g. `add /from "COM3" /to "VivoCity" /dur 1h30m` |
+| List Saved Commute Timings   | `ls saved` |
+| List Current Plans           | `ls plans` |
+| Remove Saved Commute Timing  | `rm <timing-number>`<br>e.g. `rm 1` |
+| Help                         | `help` |
+| Exit the Program             | `thx` |
 
 ### 3. Planning a commute: `plan`
 
