@@ -133,25 +133,38 @@ time-dependent behaviour deterministic.
 
 ## Presentation architecture
 
+<puml src="UiClassDiagram.puml" width="800" />
+
 `ConsoleUi` owns terminal input/output. `CommandLineApp` owns the shared command
 session and returns immutable `DashboardState` snapshots, so it does not depend on
 JavaFX controls or FXML.
 
-The JavaFX dashboard is organised under `Timey.ui.dashboard`:
+The JavaFX dashboard is organised under `timey.ui.dashboard`:
 
-- `TimeyDashboardApp` is a thin JavaFX lifecycle and dependency-composition adapter.
+- `TimeyDashboardApp` is a thin JavaFX lifecycle adapter. It receives a shared
+  `CommandLineApp` from the composition root and gives it to `MainWindow`.
 - `MainWindow` owns the stage, composes dashboard parts into the placeholders in
-  `view/MainWindow.fxml`, coordinates command tasks, and propagates resulting state.
-- Each major dashboard region has one `UiPart` subclass and one matching FXML view
-  in `src/main/resources/Timey/ui/dashboard/view`. Components keep controls private
-  and expose small rendering or event APIs.
+  `view/MainWindow.fxml`, coordinates command tasks, and propagates resulting
+  state to the cards and panels.
+- `DashboardHeader`, `CommandBar`, `CommandOutput`, `NextEventCard`,
+  `CommuteStatusCard`, and `RouteAlternativesPanel` each have one `UiPart`
+  subclass and one matching FXML view in
+  `src/main/resources/timey/ui/dashboard/view`. Components keep controls
+  private and expose small rendering or event APIs.
 - `UiPart` supplies the concrete component as the FXML controller. Consequently,
-  dashboard FXML must use `fx:id` and event handlers as needed but must not declare
+  dashboard FXML uses `fx:id` and event handlers as needed but does not declare
   `fx:controller`.
 
 Potentially slow command work runs in a JavaFX `Task`. Its success and failure
 handlers update components on the JavaFX application thread; planners, parsers,
 and domain logic remain outside the presentation package.
+
+Successful command execution produces a `DashboardState` containing the current
+plan, route alternatives, planning messages, selected recommendation, and next
+saved plan. `MainWindow` passes that immutable snapshot to each component’s
+rendering method. A failed or superseded task does not overwrite the latest
+rendered state; the command output and failure text are handled by the relevant
+presentation components.
 
 `DashboardCommandExecutionGate` serializes command-session access on worker
 threads. This prevents an overlapping or cancelled dashboard request from

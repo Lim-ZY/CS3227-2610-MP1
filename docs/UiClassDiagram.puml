@@ -1,0 +1,58 @@
+@startuml TimeyUiClassDiagram
+title Timey presentation component diagram
+
+skinparam packageStyle rectangle
+skinparam classAttributeIconSize 0
+hide empty members
+
+package "timey.ui" {
+  class CommandLineApp
+  class ConsoleUi
+  class DashboardState <<record>>
+  class CommandExecutionResult <<record>>
+  abstract class UiPart
+}
+
+package "timey.ui.dashboard" {
+  class DashboardLauncher
+  class TimeyDashboardApp
+  class MainWindow
+  class DashboardHeader
+  class CommandBar
+  class CommandOutput
+  class NextEventCard
+  class CommuteStatusCard
+  class RouteAlternativesPanel
+  class DashboardCommandExecutionGate
+}
+
+DashboardLauncher --> TimeyDashboardApp : launches
+TimeyDashboardApp --> MainWindow : creates
+TimeyDashboardApp --> CommandLineApp : composes
+MainWindow --> CommandLineApp : executes commands
+MainWindow --> DashboardState : renders
+MainWindow --> DashboardCommandExecutionGate : serializes work
+CommandLineApp --> DashboardState : produces
+CommandLineApp --> CommandExecutionResult : returns
+CommandLineApp --> ConsoleUi : writes output
+
+MainWindow --|> UiPart
+DashboardHeader --|> UiPart
+CommandBar --|> UiPart
+CommandOutput --|> UiPart
+NextEventCard --|> UiPart
+CommuteStatusCard --|> UiPart
+RouteAlternativesPanel --|> UiPart
+
+MainWindow *--> DashboardHeader
+MainWindow *--> CommandBar
+MainWindow *--> CommandOutput
+MainWindow *--> NextEventCard
+MainWindow *--> CommuteStatusCard
+MainWindow *--> RouteAlternativesPanel
+
+note bottom
+  Each UiPart loads its matching FXML view and supplies itself as the controller.
+  MainWindow updates components on the JavaFX application thread.
+end note
+@enduml
