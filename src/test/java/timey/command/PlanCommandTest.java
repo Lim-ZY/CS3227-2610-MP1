@@ -34,7 +34,8 @@ class PlanCommandTest {
 
     @Test
     void execute_plansRouteAndStoresTheCurrentPlan() {
-        var model = TestTimeyModelFactory.create(new InMemoryFixedCommuteStore());
+        var clock = Clock.fixed(Instant.parse("2026-08-30T09:00:00Z"), ZoneId.of("Asia/Singapore"));
+        var model = TestTimeyModelFactory.create(new InMemoryFixedCommuteStore(), clock);
         var command = new PlanCommand("COM3", "VivoCity", LocalTime.of(18, 30), Duration.ofMinutes(5));
 
         var result = command.execute(model);
