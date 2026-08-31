@@ -155,3 +155,5 @@ I would definitely try to limit the scope of the project especially when just be
 I would also plan the project the traditional way (paper and pen). This includes the requirements, software architecture, algorithms to use,
 other high-level ideas and testing strategies. This would greatly reduce the time needed to "redirect" the effort of the agent,
 and allow more efficiency in the work done.
+
+I would also probably package my process into a skill for the agent to use, on second thought.
