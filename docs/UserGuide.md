@@ -294,3 +294,24 @@ thx
 
 Timey closes the session after displaying a short acknowledgement. The
 dashboard is closed separately using the window controls.
+
+## Constraints
+
+The following constraints apply to Timey’s command inputs:
+
+- **Locations:** `<origin>` and `<destination>` must be non-blank and must not
+  contain control characters. Surrounding whitespace is removed. Quote a
+  location when it contains spaces.
+- **Arrival time:** `/by` must be a valid 24-hour `HHmm` value, such as `0830`
+  or `1830`. An arrival time that has already passed today cannot be planned.
+- **Personal buffer:** `/buf` must be a whole number of minutes followed by
+  `m`, such as `10m`. It must be zero or greater and defaults to `10m` when
+  omitted.
+- **Fixed duration:** `/dur` must use hours and/or minutes with the matching
+  suffix, such as `1h`, `30m`, or `1h30m`. It must be greater than zero.
+- **List numbers:** `choose` and `rm` require positive, one-based integers.
+  A route number must refer to a displayed alternative, and a timing number
+  must refer to an entry in `ls saved`.
+- **Offline estimate:** When live data is unavailable or no suitable live route
+  is returned, the fallback uses a fixed one-hour travel buffer. It is not a
+  measured route duration.
