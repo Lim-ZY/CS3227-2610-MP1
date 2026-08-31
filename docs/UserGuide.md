@@ -128,6 +128,27 @@ the selected route’s recommended leave-by time. If that time has already
 arrived, Timey tells you to leave immediately; automatic departure reminders
 are not available.
 
+### 4. Selecting a route: `choose`
+
+Selects one of the alternatives displayed by the most recent `plan` command.
+
+Format: `choose <route-number>`
+
+Example:
+
+```
+choose 1
+```
+
+- The route number is a one-based positive integer matching the displayed list.
+- A plan must be created successfully before a route can be selected.
+- Select a route only once for the current plan. Create a new plan if you want
+  to choose a different route.
+- A successful selection calculates and saves the route’s departure
+  recommendation for future reference.
+- If the route number is missing or outside the displayed range, Timey reports
+  the valid usage or range instead of changing the plan.
+
 ## If a command cannot complete
 
 Input errors identify the affected command option. For operational failures,
