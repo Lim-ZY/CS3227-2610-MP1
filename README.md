@@ -15,6 +15,8 @@ Timey helps you:
 - Save fixed commute timings for frequently used routes.
 - Review upcoming saved plans and the next departure recommendation.
 
+![Timey JavaFX dashboard](docs/images/TimeyDashboard.png)
+
 Live OneMap route and location lookups are used when available. When live data
 cannot be retrieved, Timey retains valid prior state and offers a deterministic
 offline estimate using a one-hour travel buffer.
