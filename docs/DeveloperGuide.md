@@ -119,7 +119,7 @@ It supplies:
 
 - `PlanCommandParser` and `CommutePlanningService` for command interpretation
   and deterministic commute calculations.
-- `OneMapLocationResolver` and `OneMapRailTransitPlanner` for live lookups,
+- `OneMapLocationResolver` and `OneMapTransitPlanner` for live lookups,
   each backed by a rate-limited HTTP requester.
 - `FileFixedCommuteStore` and `FilePlanStore` for local persistence under
   `data/`.
@@ -251,7 +251,7 @@ specific provider or persistence mechanism:
 
 - `LocationResolver` converts a user query into a `LocationResolution` and,
   when successful, a `ResolvedLocation`.
-- `RailTransitPlanner` returns a `LiveRouteLookup` for resolved locations,
+- `LiveTransitPlanner` returns a `LiveRouteLookup` for resolved locations,
   while `TransitPlanner` provides the simpler route-planning abstraction used
   by deterministic planning services.
 - `FixedCommuteStore` provides save, find, list, and remove operations for
@@ -261,8 +261,10 @@ specific provider or persistence mechanism:
 The production adapters implement these ports as follows:
 
 - `OneMapLocationResolver` calls the configured live-data endpoint to resolve
-  Singapore locations. `OneMapRailTransitPlanner` maps the endpoint response
-  into `RouteAlternative` and `RouteStep` domain values.
+  Singapore locations. `OneMapTransitPlanner` calls the worker's
+  `/v1/transit-route` endpoint and maps its OneMap public-transport response
+  into `RouteAlternative` and `RouteStep` domain values. It supports walking,
+  bus, and rail legs, so endpoints do not have to be rail stations.
 - `MockTransitPlanner` supplies a deterministic, network-free planner for
   tests and local composition paths that do not need live routes.
 - `FileFixedCommuteStore` and `FilePlanStore` persist local text records. The
@@ -327,19 +329,21 @@ If either location is not found, the planner returns an explanatory result. A
 service failure, rate limit, or unavailable live endpoint is mapped to a safe
 message and the deterministic fallback path.
 
-For resolved locations, `LiveRailPlanningService` performs a bounded two-step
-lookup through `RailTransitPlanner`:
+For resolved locations, `LiveTransitPlanningService` performs a bounded
+two-step lookup through `LiveTransitPlanner`:
 
 1. It probes for routes at the requested target-arrival time.
 2. If routes are returned, it calculates the leave-by time for the first route
    using the requested personal buffer, then refreshes the lookup at that
    departure time so the alternatives are aligned with the arrival target.
 
-`OneMapRailTransitPlanner` maps each returned itinerary into a
-`RouteAlternative`, preserving walking duration, transit duration, transfer
-count, and displayable `RouteStep` values. The planner reports live routes and
-their source messages to the command layer. The model then prepends a matching
-saved fixed timing as `Saved timing` route 1 when one exists.
+`OneMapTransitPlanner` maps each returned itinerary into a `RouteAlternative`,
+preserving walking duration, transit duration, transfer count, and displayable
+walking, bus, and rail `RouteStep` values. The worker requests OneMap
+`routeType=pt` with its mixed public-transport mode and forwards up to three
+itineraries from `/v1/transit-route`. The planner reports live routes and their
+source messages to the command layer. The model then prepends a matching saved
+fixed timing as `Saved timing` route 1 when one exists.
 
 When live data is unavailable or returns no usable routes, `Planner` creates a
 single `Offline estimate` route. This route is explicitly labelled and uses a
@@ -376,9 +380,10 @@ new content has been written.
 
 ### Departure calculation and route selection
 
-`PlanCommand` rejects a target arrival time that has already passed in the
-current `Asia/Singapore` clock context before asking the model to plan. For a
-selected route, `DepartureCalculator` applies the rule:
+Timey can only plan routes for the current day. `PlanCommand` rejects a target
+arrival time that has already passed in the current `Asia/Singapore` clock
+context before asking the model to plan. For a selected route,
+`DepartureCalculator` applies the rule:
 
 ```text
 leave-by = target arrival - route travel duration - personal buffer
@@ -525,11 +530,12 @@ recorded in [`Reflections.md`](Reflections.md) where applicable.
 
 Timey is a desktop commute assistant for students and workers travelling to
 physical commitments. The implemented scope covers command-driven commute
-planning, Singapore location resolution, live rail-route alternatives, route
+planning for the current day, Singapore location resolution, live
+public-transport alternatives with walking, bus, and rail legs, route
 selection, personal departure buffers, reusable fixed commute timings, saved
-future plans, a JavaFX dashboard, and a deterministic offline estimate when live
-data is unavailable. The dashboard and CLI use the same command session and
-local stores.
+future plans, a JavaFX dashboard, and a deterministic offline estimate when
+live data is unavailable. The dashboard and CLI use the same command session
+and local stores. Timey can only plan routes for the current day.
 
 Calendar and virtual-event ingestion, weather and LTA lookups, native
 notifications, cached routes, walking-speed preferences, and named saved
@@ -638,7 +644,7 @@ For the use cases below, the actor is the user and the system is Timey.
 - **Route alternative:** One candidate way to travel between two resolved
   locations, including walking time, transit time, transfer count, and steps.
 - **Route step:** One human-readable leg of a route, such as walking between
-  locations or taking a named rail service.
+  locations or taking a named bus or rail service.
 - **Transfer:** A change between transit services within a route alternative.
 - **Personal buffer:** Extra time requested by the user and subtracted from the
   target arrival time when calculating departure.
@@ -651,7 +657,7 @@ For the use cases below, the actor is the user and the system is Timey.
 - **Session:** The period during which one `CommandLineApp` and its
   `TimeyModel` remain active.
 - **OneMap:** The live-data service used by Timey’s adapters for Singapore
-  location resolution and rail-route lookup.
+  location resolution and public-transport route lookup.
 
 ## Appendix: Instructions for manual testing
 

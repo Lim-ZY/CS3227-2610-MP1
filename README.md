@@ -8,19 +8,23 @@ a glance.
 
 Timey helps you:
 
-- Plan a journey to reach a destination by a target arrival time.
-- Compare live rail route alternatives and their walking, transit, and transfer
-  details.
+- Plan a journey for the current day to reach a destination by a target arrival
+  time.
+- Compare live public-transport alternatives and their walking, bus, rail, and
+  transfer details.
 - Calculate a recommended leave-by time with a personal buffer.
 - Save fixed commute timings for frequently used routes.
 - Review upcoming saved plans and the next departure recommendation.
 
 ![Timey JavaFX dashboard](docs/images/TimeyDashboard.png)
 
-Timey uses its deployed service to request live OneMap location and rail-route
-lookups when available. Users do not need to configure a URL, token, or OneMap
-account. When live data cannot be retrieved, Timey retains valid prior state
-and offers a deterministic offline estimate using a one-hour travel buffer.
+Timey can only plan routes for the current day. It uses its deployed service to
+request live OneMap location and public-transport route lookups when available.
+These routes can combine walking, bus, and rail legs, allowing locations away
+from rail stations to be reached. Users do not need to configure a URL, token,
+or OneMap account. When live data cannot be retrieved or no suitable live route
+is found, Timey retains valid prior state and offers a deterministic offline
+estimate using a one-hour travel buffer.
 
 Saved fixed commute timings and selected future plans are stored locally in the
 `data/` directory as `fixed-commutes.txt` and `plans.txt`. The files are

@@ -62,6 +62,8 @@ Use the following sequence to plan a commute:
    The exact route and departure time depend on the requested journey, current
    time, live service availability, and selected buffer.
 
+Timey can only plan routes for the current day.
+
 ## Features
 
 ### 1. Command format
@@ -95,20 +97,22 @@ plan /from "Kent Ridge MRT" /to "Harbourfront MRT" /by 1830 /buf 10m
 ```
 
 - `/from`, `/to`, and `/by` are required. Quote locations containing spaces.
-- `/by` uses 24-hour `HHmm` format, such as `1830` for 6:30 pm. The requested
-  arrival time must not have passed today.
+- `/by` uses 24-hour `HHmm` format, such as `1830` for 6:30 pm. Timey can only
+  plan routes for the current day, and the requested arrival time must not have
+  passed today.
 - `/buf` is optional and accepts a whole number of minutes with the `m` suffix.
   It defaults to 10 minutes when omitted and cannot be negative.
 - A new `plan` replaces the currently pending plan and clears any previous
   route selection.
 
-When live data is available, Timey resolves the locations and shows rail-route
-alternatives with total, walking, and transit durations, transfer counts, and
-individual route steps. If a location cannot be found, correct the location or
-try a postal code. If the live service is unavailable or returns no suitable
-route, Timey may show an `Offline estimate` using a fixed one-hour travel
-buffer. This fallback is not a measured route duration, and a failed update
-leaves the current plan unchanged.
+When live data is available, Timey resolves the locations and shows
+public-transport alternatives with total, walking, and transit durations,
+transfer counts, and individual walking, bus, and rail steps. This supports
+locations that are away from rail stations. If a location cannot be found,
+correct the location or try a postal code. If the live service is unavailable
+or returns no suitable route, Timey may show an `Offline estimate` using a
+fixed one-hour travel buffer. This fallback is not a measured route duration,
+and a failed update leaves the current plan unchanged.
 
 Use `choose <route-number>` after reviewing the alternatives. Timey displays
 the selected route’s recommended leave-by time. If that time has already
@@ -290,7 +294,8 @@ The following constraints apply to Timey’s command inputs:
   contain control characters. Surrounding whitespace is removed. Quote a
   location when it contains spaces.
 - **Arrival time:** `/by` must be a valid 24-hour `HHmm` value, such as `0830`
-  or `1830`. An arrival time that has already passed today cannot be planned.
+  or `1830`. Timey can only plan routes for the current day, and an arrival
+  time that has already passed today cannot be planned.
 - **Personal buffer:** `/buf` must be a whole number of minutes followed by
   `m`, such as `10m`. It must be zero or greater and defaults to `10m` when
   omitted.
