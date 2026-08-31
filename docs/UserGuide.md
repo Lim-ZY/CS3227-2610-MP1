@@ -162,21 +162,23 @@ The application uses a built-in 10-minute default buffer whenever a `plan` comma
 always takes precedence for that command. The application includes the deployed Cloudflare Worker endpoint, and the
 Worker holds the OneMap credentials, so users do not need to configure a URL, token, or OneMap account.
 
-## Fixed commute timings
+### 5. Saving fixed commute timings: `add`
 
-Save a known duration for an exact origin and destination pair:
+Saves a known duration for a frequently used journey.
+
+Format: `add /from "<origin>" /to "<destination>" /dur <duration>`
+
+Example:
 
 ```
 add /from "COM3" /to "VivoCity" /dur 1h30m
 ```
 
-The timing is stored locally and appears as the first route alternative for later matching `plan` commands. Durations
-may use hours, minutes, or both: `1h`, `30m`, and `1h30m`.
-
-Review saved timings with `ls saved`. Use `ls plans` to review saved plans whose
-departure time is still in the future. Remove a saved timing by its list number
-with `rm 1`.
-
-Saved timings and plans are written through a temporary replacement file to
-reduce the risk of losing an existing file during a failed write. Malformed
-stored entries are ignored where a valid record can still be recovered.
+- `/from`, `/to`, and `/dur` are required. Quote locations containing spaces.
+- A duration must be greater than zero and may use hours, minutes, or both:
+  `1h`, `30m`, or `1h30m`.
+- Timey matches a saved timing by origin and destination without regard to
+  case or surrounding whitespace.
+- A matching saved timing appears as route 1 in a later `plan` command.
+- Saving an existing journey with a new duration updates its timing. Saving
+  the same duration again leaves the existing timing unchanged.
