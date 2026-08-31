@@ -9,7 +9,7 @@ import timey.ui.UiPart;
 public final class CommandOutput extends UiPart<TextArea> {
     private static final String FXML = "CommandOutput.fxml";
     private static final String INITIAL_MESSAGE = "Use the command bar below, for example:\n"
-            + "plan /from \"COM3\" /to \"VivoCity\" /by 1830 /buf 10m";
+            + "plan /from \"Kent Ridge MRT\" /to \"Harbourfront MRT\" /by 1830 /buf 10m";
 
     @FXML
     private TextArea commandOutput;

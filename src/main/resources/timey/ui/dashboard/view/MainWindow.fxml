@@ -2,6 +2,7 @@
 
 <?import java.net.URL?>
 <?import javafx.scene.Scene?>
+<?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.stage.Stage?>
@@ -19,7 +20,11 @@
             <StackPane fx:id="headerPlaceholder" />
           </top>
           <center>
-            <StackPane fx:id="dashboardPlaceholder" />
+            <ScrollPane fitToWidth="true" hbarPolicy="NEVER" styleClass="dashboard-scroll-pane">
+              <content>
+                <StackPane fx:id="dashboardPlaceholder" />
+              </content>
+            </ScrollPane>
           </center>
           <bottom>
             <StackPane fx:id="commandBarPlaceholder" />

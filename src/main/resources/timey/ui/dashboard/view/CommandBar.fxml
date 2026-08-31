@@ -8,12 +8,12 @@
 <HBox alignment="CENTER_LEFT" spacing="12.0" styleClass="command-bar"
       xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1">
   <padding>
-    <Insets bottom="24.0" left="56.0" right="56.0" top="18.0" />
+    <Insets bottom="24.0" left="56.0" right="56.0" top="24.0" />
   </padding>
   <children>
     <Label styleClass="command-prompt" text="&gt;" />
-    <TextField fx:id="commandTextField" onAction="#handleCommandEntered"
-               promptText="Enter a Timey command, for example: plan /from &quot;COM3&quot; /to &quot;VivoCity&quot; /by 1830"
+    <TextField styleClass="command-prompt" fx:id="commandTextField" onAction="#handleCommandEntered"
+               promptText="Tell me what to do! Call `help` if you're lost!"
                HBox.hgrow="ALWAYS" />
   </children>
 </HBox>

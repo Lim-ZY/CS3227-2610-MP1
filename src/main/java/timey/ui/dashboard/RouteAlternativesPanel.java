@@ -23,7 +23,7 @@ public final class RouteAlternativesPanel extends UiPart<VBox> {
         alternatives.getChildren().setAll(routePanelLabel("ROUTE ALTERNATIVES"));
         if (state.alternatives().isEmpty()) {
             alternatives.getChildren().add(routePanelMessage(
-                    "Plan a commute to compare routes. Select one from the command bar with choose <number>."));
+                    "You can select one with `choose <number>` later."));
             return;
         }
         for (int index = 0; index < state.alternatives().size(); index++) {

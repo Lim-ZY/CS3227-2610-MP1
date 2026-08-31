@@ -88,15 +88,18 @@ public final class MainWindow extends UiPart<Stage> {
 
     private VBox createDashboardContent(NextEventCard nextEvent, CommuteStatusCard commute,
             RouteAlternativesPanel alternatives) {
-        Label heading = new Label("Your day, on track.");
+        Label heading = new Label("Your day, On track.");
         heading.getStyleClass().add("page-heading");
         Label introduction = new Label(
-                "Plan a commute in the command bar to see your next event and departure plan here.");
+                "Hey! I'll help you to be on track today as always~");
         introduction.getStyleClass().add("muted");
+        introduction.getStyleClass().add("introduction");
+        VBox headingSection = new VBox(18, heading, introduction);
 
         Label commandHeading = new Label("COMMAND OUTPUT");
         commandHeading.getStyleClass().add("card-label");
-        VBox content = new VBox(18, heading, introduction, nextEvent.getRoot(), commute.getRoot(),
+        VBox.setMargin(commandHeading, new Insets(8, 0, 0, 0));
+        VBox content = new VBox(18, headingSection, nextEvent.getRoot(), commute.getRoot(),
                 alternatives.getRoot(),
                 commandHeading, commandOutput.getRoot());
         content.setPadding(new Insets(40, 56, 32, 56));
