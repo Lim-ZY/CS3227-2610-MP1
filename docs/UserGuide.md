@@ -182,3 +182,37 @@ add /from "COM3" /to "VivoCity" /dur 1h30m
 - A matching saved timing appears as route 1 in a later `plan` command.
 - Saving an existing journey with a new duration updates its timing. Saving
   the same duration again leaves the existing timing unchanged.
+
+### 6. Listing saved timings: `ls saved`
+
+Lists all saved fixed commute timings and assigns each one a one-based number.
+
+Format: `ls saved`
+
+Example:
+
+```
+ls saved
+```
+
+Each result shows the timing number, origin, destination, and duration in
+minutes. The list is sorted by origin and then destination without regard to
+case, so use the displayed number when removing a timing with `rm`.
+
+### 7. Listing future plans: `ls plans`
+
+Lists selected commute plans whose recommended departure time is still in the
+future.
+
+Format: `ls plans`
+
+Example:
+
+```
+ls plans
+```
+
+Each result shows a one-based number, date (`dd-MM-yyyy`), target arrival time
+(`HHmm`), origin, destination, and recommended leave-by time (`HHmm`). Plans
+whose leave-by time has passed are removed automatically and do not appear in
+the list.
