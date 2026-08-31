@@ -370,6 +370,34 @@ class CommandLineAppTest {
     }
 
     @Test
+    void run_offStationMixedRoute_displaysSelectsAndCalculatesDeparture() {
+        var outputText = new StringWriter();
+        var resolver = (timey.ports.LocationResolver) query -> LocationResolution.found(
+                new ResolvedLocation(query, query, 1.3, 103.8));
+        LiveTransitPlanner liveTransitPlanner = (origin, destination, date, time) ->
+                LiveRouteLookup.available(List.of(new RouteAlternative("Live public transport route 1",
+                        Duration.ofMinutes(5), Duration.ofMinutes(25), 1,
+                        List.of(new RouteStep(RouteStepMode.WALK, "Blk 440 Clementi Avenue 3",
+                                        "Clementi Ave 3 bus stop", "walking", Duration.ofMinutes(5)),
+                                new RouteStep(RouteStepMode.BUS, "Clementi Ave 3 bus stop", "Clementi MRT", "96",
+                                        Duration.ofMinutes(10)),
+                                new RouteStep(RouteStepMode.RAIL, "Clementi MRT", "Buona Vista MRT",
+                                        "East West Line", Duration.ofMinutes(15))))));
+        var app = new CommandLineApp(new BufferedReader(new StringReader(
+                "plan /from \"Blk 440 Clementi Avenue 3\" /to \"Buona Vista\" /by 1830\nchoose 1\nthx\n")),
+                new PrintWriter(outputText, true), new PlanCommandParser(),
+                new CommutePlanningService(new MockTransitPlanner()), resolver, liveTransitPlanner, TEST_CLOCK);
+
+        app.run();
+
+        String output = outputText.toString();
+        assertTrue(output.contains("- Take bus 96 from Clementi Ave 3 bus stop to Clementi MRT (10 minutes)"));
+        assertTrue(output.contains("- Take East West Line from Clementi MRT to Buona Vista MRT (15 minutes)"));
+        assertTrue(output.contains("Chosen route: Live public transport route 1"));
+        assertTrue(output.contains("Recommended departure: 17:50"));
+    }
+
+    @Test
     void run_removedRemindCommand_displaysUnknownCommandGuidance() {
         var outputText = new StringWriter();
         var app = new CommandLineApp(new BufferedReader(new StringReader("remind\nthx\n")),
