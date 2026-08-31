@@ -1,4 +1,13 @@
+---
+layout: default.md
+title: "Developer Guide"
+pageNav: 3
+---
+
 # Timey Developer Guide
+
+<!-- * Table of Contents -->
+<page-nav-print />
 
 ## Architecture
 
