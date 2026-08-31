@@ -17,6 +17,10 @@ import timey.ports.FixedCommuteStore;
 
 /** Text-file implementation of locally persisted fixed commute timings. */
 public final class FileFixedCommuteStore implements FixedCommuteStore {
+    private static final Comparator<FixedCommute> JOURNEY_ORDER = Comparator
+            .comparing(FixedCommute::origin, String.CASE_INSENSITIVE_ORDER)
+            .thenComparing(FixedCommute::destination, String.CASE_INSENSITIVE_ORDER);
+
     private final Path path;
 
     public FileFixedCommuteStore(Path path) {
@@ -49,8 +53,7 @@ public final class FileFixedCommuteStore implements FixedCommuteStore {
                     .filter(line -> !line.isBlank())
                     .map(this::parseSafely)
                     .flatMap(Optional::stream)
-                    .sorted(Comparator.comparing(FixedCommute::origin, String.CASE_INSENSITIVE_ORDER)
-                            .thenComparing(FixedCommute::destination, String.CASE_INSENSITIVE_ORDER))
+                    .sorted(JOURNEY_ORDER)
                     .toList();
         } catch (IOException exception) {
             throw new IllegalStateException("Could not load fixed commute timings.", exception);
@@ -72,8 +75,7 @@ public final class FileFixedCommuteStore implements FixedCommuteStore {
 
     private void write(List<FixedCommute> commutes) {
         String content = commutes.stream()
-                .sorted(Comparator.comparing(FixedCommute::origin, String.CASE_INSENSITIVE_ORDER)
-                        .thenComparing(FixedCommute::destination, String.CASE_INSENSITIVE_ORDER))
+                .sorted(JOURNEY_ORDER)
                 .map(this::format)
                 .collect(Collectors.joining(System.lineSeparator(), "", System.lineSeparator()));
         try {
