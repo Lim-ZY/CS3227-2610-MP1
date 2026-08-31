@@ -203,6 +203,47 @@ feedback. Unexpected runtime failures use the shared safe recovery message,
 while commands that are valid but cannot complete return an ordinary
 `CommandResult` explaining the actionable next step.
 
+### Model and domain components
+
+`TimeyModel` owns mutable state for one command session. It keeps the pending
+`PlanCommand`, the current list of `RouteAlternative` objects, planning and
+route-selection messages, the selected `DepartureRecommendation`, and locally
+loaded `SavedPlan` objects. Commands interact with this state through model
+operations rather than reaching into provider or UI classes.
+
+The model’s planning state follows this sequence:
+
+1. `plan` resolves locations and asks `Planner` for a `PlanningResult`.
+2. A successful result replaces the pending plan and stores immutable route and
+   message lists. A result that cannot create a plan clears the pending route
+   selection while retaining its explanatory messages.
+3. `choose` validates the pending plan and one-based alternative number. It
+   calculates a recommendation, persists a future `SavedPlan` when needed, and
+   records the selected recommendation.
+4. A later `plan` replaces the previous planning context and clears the prior
+   route selection.
+
+The `timey.domain` types represent provider-independent concepts:
+
+- `RouteAlternative` combines walking and transit durations, transfer count,
+  and itemised `RouteStep` values. Its `totalDuration()` is the sum of the two
+  duration components.
+- `DepartureCalculator` computes `arrivalAt - travelDuration - buffer`, and
+  `DepartureRecommendation` validates that its stored departure time matches
+  that formula.
+- `FixedCommute` stores a reusable user-provided duration between two
+  locations.
+- `SavedPlan` stores the date, target arrival, locations, and leave-by time for
+  a selected future route.
+- `LiveRouteLookup` distinguishes available routes from an empty successful
+  response, an HTTP failure, or an unreachable live-data service.
+
+`RouteSelectionResult` gives the command layer explicit outcomes such as
+`NO_PLAN`, `MISSING_NUMBER`, `INVALID_NUMBER`, `NO_ALTERNATIVES`,
+`ALREADY_SELECTED`, `LEAVE_NOW`, and `ROUTE_SELECTED`. This keeps validation
+and user-facing branching in `ChooseCommand` while keeping the underlying
+recommendation calculation in the planner and domain layers.
+
 ## Reliability behaviour
 
 All application-facing clocks use the fixed `Asia/Singapore` timezone and can
