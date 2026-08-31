@@ -374,6 +374,35 @@ deduplicates them. Both stores serialize through `AtomicFileWriter`, which
 writes a temporary sibling and replaces the destination only after the complete
 new content has been written.
 
+### Departure calculation and route selection
+
+`PlanCommand` rejects a target arrival time that has already passed in the
+current `Asia/Singapore` clock context before asking the model to plan. For a
+selected route, `DepartureCalculator` applies the rule:
+
+```text
+leave-by = target arrival - route travel duration - personal buffer
+```
+
+`DepartureRecommendation` validates this relationship when it is constructed,
+so presentation code can safely display the stored departure time, route, total
+travel duration, and buffer. The planner uses the same injected `Clock` for
+target-date and current-time decisions, keeping the calculation deterministic
+in tests.
+
+`ChooseCommand` delegates route validation to `TimeyModel.selectRoute()`. The
+model reports distinct outcomes when there is no pending plan, no route
+number, an out-of-range number, no alternatives, or an existing selection.
+After a valid selection it chooses the ordinary live calculation or the
+one-hour offline calculation, depending on the route source. A recommendation
+whose departure time is now or earlier returns `LEAVE_NOW` and adds urgent
+guidance; a future recommendation returns `ROUTE_SELECTED`.
+
+The model persists a future selected plan before publishing the selected
+recommendation. This preserves the previous valid state if the plan store
+fails, while duplicate plans remain a no-op. A subsequent `plan` request clears
+the previous selection and starts a new route-selection context.
+
 ## Reliability behaviour
 
 All application-facing clocks use the fixed `Asia/Singapore` timezone and can
