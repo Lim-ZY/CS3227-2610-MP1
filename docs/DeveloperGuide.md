@@ -97,4 +97,18 @@ location management remain planned enhancements.
 
 ## Acknowledgements
 
-To be completed with all reused ideas, code, libraries, and documentation.
+Timey is developed for the CS3227 project. The project uses the following
+open-source libraries and tools:
+
+- [OpenJFX](https://openjfx.io/) for the JavaFX dashboard and FXML views.
+- [Jackson](https://github.com/FasterXML/jackson) for structured data handling
+  where required by the application.
+- [JUnit 5](https://junit.org/junit5/) for automated tests.
+- [Gradle](https://gradle.org/) for building, testing, packaging, and
+  Checkstyle verification.
+
+AI-assisted development was used to help review documentation, suggest test
+cases and edge cases, troubleshoot build or implementation issues, and refine
+wording. The project’s implementation decisions, source changes, and final
+verification remain the responsibility of the project team. AI assistance is
+recorded in [`Reflections.md`](Reflections.md) where applicable.

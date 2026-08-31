@@ -1,7 +1,7 @@
 # DeveloperGuide.md update checklist
 
 - [x] Add the standard document metadata and a table of contents so contributors can navigate the guide quickly.
-- [ ] Add an acknowledgements section covering the project/template origin, JavaFX, JUnit, Jackson or other third-party libraries actually used, and the team’s AI-usage declaration where required.
+- [x] Add an acknowledgements section covering the project/template origin, JavaFX, JUnit, Jackson or other third-party libraries actually used, and the team’s AI-usage declaration where required.
 - [ ] Add a setup/getting-started section that links to `docs/UserGuide.md` and documents the supported JDK (Java 25), Gradle commands, fat-JAR generation, CLI launch, JavaFX dashboard launch, and expected project layout.
 - [ ] Expand the architecture section with a high-level component diagram using `docs/ClassDiagram.puml` (or add/update diagrams as needed), and explain the responsibilities and dependencies of the `domain`, `application`/CLI, `ports`, `infrastructure`, `presentation/UI`, `command`, `planner`, and `configuration` areas.
 - [ ] Document the application bootstrap and dependency-composition flow from `timey.Timey` through `ApplicationFactory`, including which concrete adapters are injected for clocks, storage, location resolution, and transit planning.
@@ -26,4 +26,4 @@
 - [ ] Add an appendix of manual-testing instructions for CLI launch/shutdown, JavaFX dashboard launch and layout, each supported command, route selection and departure recommendations, fixed-timing CRUD, saved-plan listing/pruning, live-success and offline-fallback flows, invalid input, malformed storage files, and concurrent/cancelled dashboard requests.
 - [ ] For each manual-test area, provide prerequisites, exact sample commands/data, expected output, and edge cases; keep the detailed command syntax in `docs/UserGuide.md` and link to it instead of duplicating the entire command reference.
 - [ ] Add a planned-enhancements appendix that reflects the current status list and separates future items such as calendar/virtual-event/weather/LTA integrations, notifications, cached routes, walking-speed preferences, and fuller saved-location management from features already implemented.
-- [ ] Replace the placeholder acknowledgements text in the current guide with completed project-specific acknowledgements before the guide is considered complete.
+- [x] Replace the placeholder acknowledgements text in the current guide with completed project-specific acknowledgements before the guide is considered complete.
