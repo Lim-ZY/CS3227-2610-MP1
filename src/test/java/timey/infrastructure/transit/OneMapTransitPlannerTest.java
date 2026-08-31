@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.net.URI;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.List;
 import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
@@ -158,6 +159,26 @@ class OneMapTransitPlannerTest {
     }
 
     @Test
+    void findRoutes_mixedWalkBusAndRailLegs_preservesEverySupportedMode() {
+        var planner = new OneMapTransitPlanner(uri -> new HttpResult(200, """
+                {"plan":{"itineraries":[{"walkTime":300,"transitTime":2100,"transfers":1,
+                "legs":[{"mode":"WALK","duration":300,"from":{"name":"COM3"},
+                "to":{"name":"Kent Ridge MRT"}},{"mode":"BUS","duration":900,"routeShortName":"95",
+                "from":{"name":"NUS Kent Ridge Terminal"},"to":{"name":"Clementi MRT"}},
+                {"mode":"SUBWAY","duration":1200,"routeShortName":"East West Line",
+                "from":{"name":"Clementi MRT"},"to":{"name":"Outram Park MRT"}}]}]}}"""),
+                Optional.of(URI.create("https://timey.example.workers.dev")));
+
+        var lookup = planner.findRoutes(COM3, VIVOCITY, LocalDate.of(2026, 8, 21), LocalTime.NOON);
+        var steps = lookup.routes().getFirst().steps();
+
+        assertTrue(lookup.isAvailable());
+        assertEquals(List.of(RouteStepMode.WALK, RouteStepMode.BUS, RouteStepMode.RAIL),
+                steps.stream().map(step -> step.mode()).toList());
+        assertEquals("Take bus 95 from NUS Kent Ridge Terminal to Clementi MRT", steps.get(1).description());
+    }
+
+    @Test
     void findRoutes_unknownLegMode_omitsLegWithoutMislabelingItAsRail() {
         var planner = new OneMapTransitPlanner(uri -> new HttpResult(200, """
                 {"plan":{"itineraries":[{"walkTime":0,"transitTime":900,"transfers":0,
@@ -169,6 +190,22 @@ class OneMapTransitPlannerTest {
 
         assertTrue(lookup.isAvailable());
         assertTrue(lookup.routes().getFirst().steps().isEmpty());
+    }
+
+    @Test
+    void findRoutes_transitLegWithoutService_omitsOnlyTheMalformedLeg() {
+        var planner = new OneMapTransitPlanner(uri -> new HttpResult(200, """
+                {"plan":{"itineraries":[{"walkTime":300,"transitTime":900,"transfers":0,
+                "legs":[{"mode":"WALK","duration":300,"from":{"name":"COM3"},
+                "to":{"name":"Kent Ridge MRT"}},{"mode":"BUS","duration":900,
+                "from":{"name":"NUS Kent Ridge Terminal"},"to":{"name":"Clementi MRT"}}]}]}}"""),
+                Optional.of(URI.create("https://timey.example.workers.dev")));
+
+        var lookup = planner.findRoutes(COM3, VIVOCITY, LocalDate.of(2026, 8, 21), LocalTime.NOON);
+
+        assertTrue(lookup.isAvailable());
+        assertEquals(1, lookup.routes().getFirst().steps().size());
+        assertEquals(RouteStepMode.WALK, lookup.routes().getFirst().steps().getFirst().mode());
     }
 
     @Test
