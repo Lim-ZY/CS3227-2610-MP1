@@ -21,8 +21,8 @@ Live OneMap route and location lookups are used when available. When live data
 cannot be retrieved, Timey retains valid prior state and offers a deterministic
 offline estimate using a one-hour travel buffer.
 
-See `docs/UserGuide.md` for commands and setup, and `docs/DeveloperGuide.md`
-for architecture and test guidance.
+See the [User Guide](docs/UserGuide.md) for commands and setup, and the
+[Developer Guide](docs/DeveloperGuide.md) for architecture and test guidance.
 
 ## Quick start
 
