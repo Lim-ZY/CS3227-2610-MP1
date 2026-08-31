@@ -43,7 +43,14 @@
             <VBox alignment="CENTER_RIGHT" spacing="4.0">
               <children>
                 <Label fx:id="countdown" styleClass="departure-countdown" text="Plan a commute" />
-                <Label styleClass="departure-caption" text="time-dot" text="●" />
+                <Label styleClass="departure-caption" text="time until&#10;departure" />
+              </children>
+            </VBox>
+            <VBox spacing="2.0">
+              <children>
+                <HBox alignment="CENTER_LEFT" spacing="6.0">
+                  <children>
+                    <Label styleClass="time-dot" text="●" />
                     <Label fx:id="departure" styleClass="event-time" text="—" />
                   </children>
                 </HBox>
