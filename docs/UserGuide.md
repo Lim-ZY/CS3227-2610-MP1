@@ -315,3 +315,32 @@ The following constraints apply to Timey’s command inputs:
 - **Offline estimate:** When live data is unavailable or no suitable live route
   is returned, the fallback uses a fixed one-hour travel buffer. It is not a
   measured route duration.
+
+## FAQ
+
+**Q: Which Java version does Timey require?**<br>
+**A:** Install Java 25 or a compatible JDK before building or running Timey.
+See [Quick start](#quick-start) for the setup commands.
+
+**Q: What happens when live route data is unavailable?**<br>
+**A:** Timey may show an `Offline estimate` using a fixed one-hour travel
+buffer. It identifies the fallback as an estimate rather than a measured route
+duration. A failed operational update leaves the current plan unchanged.
+
+**Q: Where is my saved data stored?**<br>
+**A:** Timey stores fixed timings in `data/fixed-commutes.txt` and selected
+future plans in `data/plans.txt`, relative to the directory from which it is
+run.
+
+**Q: How do I move my data to another computer or working directory?**<br>
+**A:** Close Timey, copy the `data` directory containing both files to the new
+working directory, and launch Timey from that directory. Back up the files
+before copying or editing them.
+
+**Q: Why does `ls plans` not show an older plan?**<br>
+**A:** `ls plans` lists only plans whose recommended leave-by time is still in
+the future. Expired plans are pruned automatically.
+
+**Q: Can I choose a different route after selecting one?**<br>
+**A:** No. A route can be selected only once for the current plan. Create a new
+`plan` command to compare and select a different route.
