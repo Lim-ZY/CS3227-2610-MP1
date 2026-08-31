@@ -1,5 +1,31 @@
 # Timey User Guide
 
+## Quick start
+
+1. Install Java 25 or a compatible JDK.
+2. From the project root, build the executable fat JAR:
+
+   ```bash
+   ./gradlew shadowJar
+   ```
+
+   The JAR is generated at `release/Timey-0.1.0-all.jar`.
+
+3. Launch the JavaFX dashboard:
+
+   ```bash
+   java -jar ./release/Timey-0.1.0-all.jar
+   ```
+
+4. To use the terminal CLI instead, run:
+
+   ```bash
+   ./gradlew run
+   ```
+
+   Enter `help` to display the available commands. The dashboard and CLI use
+   the same command workflow and locally saved data.
+
 ## Planning a commute
 
 Enter a plan and choose a route:
