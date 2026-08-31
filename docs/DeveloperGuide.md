@@ -347,6 +347,33 @@ deterministic one-hour travel estimate during route selection. The application
 does not present that fallback as a live measurement, allowing users and tests
 to distinguish degraded service from a successful live lookup.
 
+### Plan saving and lifecycle
+
+Fixed commute timings and selected future plans are separate persisted concepts.
+The `add` command constructs a `FixedCommute` and delegates it to
+`FixedCommuteStore`; the `ls saved` and `rm` commands read the store’s stable
+list order and remove by its one-based display number. A matching fixed timing
+is offered as a route option during a later `plan` request.
+
+After a route is selected, `TimeyModel` creates a `SavedPlan` from the target
+date, arrival time, journey, and calculated leave-by time. It does not persist
+plans whose leave-by time is no longer in the future, and it does not add an
+equal plan twice. The store is written before the new plan is published to the
+model, so a failed write does not make the in-memory session claim that the
+plan was saved.
+
+At model construction, `PlanStore.loadAll()` restores saved plans and immediately
+prunes expired or duplicate records. `getNextSavedPlan()` selects the upcoming
+plan with the earliest leave-by datetime, including the previous calendar date
+when an overnight journey’s leave-by time is later than its arrival time. The
+same pruning runs when `ls plans` is executed and when the session closes.
+
+`FileFixedCommuteStore` sorts timings by origin and destination for stable
+numbering. `FilePlanStore` preserves the order of valid stored plans and
+deduplicates them. Both stores serialize through `AtomicFileWriter`, which
+writes a temporary sibling and replaces the destination only after the complete
+new content has been written.
+
 ## Reliability behaviour
 
 All application-facing clocks use the fixed `Asia/Singapore` timezone and can
