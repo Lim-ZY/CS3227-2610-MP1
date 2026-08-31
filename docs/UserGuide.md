@@ -82,20 +82,7 @@ Timey commands use the following conventions:
 - Extra text that does not match the command format is rejected and reported
   as an input error.
 
-### 2. Command overview
-
-| Action                       | Format and Examples |
-|------------------------------| --- |
-| Plan                         | `plan /from "<origin>" /to "<destination>" /by <HHmm> [/buf <duration>]`<br>e.g. `plan /from "Kent Ridge MRT" /to "Harbourfront MRT" /by 2000` |
-| Choose                       | `choose <route-number>`<br>e.g. `choose 1` |
-| Saving Fixed Commute Timings | `add /from "<origin>" /to "<destination>" /dur <duration>`<br>e.g. `add /from "COM3" /to "VivoCity" /dur 1h30m` |
-| List Saved Commute Timings   | `ls saved` |
-| List Current Plans           | `ls plans` |
-| Remove Saved Commute Timing  | `rm <timing-number>`<br>e.g. `rm 1` |
-| Help                         | `help` |
-| Exit the Program             | `thx` |
-
-### 3. Planning a commute: `plan`
+### 2. Planning a commute: `plan`
 
 Plans a commute and displays numbered route alternatives.
 
@@ -128,7 +115,7 @@ the selected route’s recommended leave-by time. If that time has already
 arrived, Timey tells you to leave immediately; automatic departure reminders
 are not available.
 
-### 4. Selecting a route: `choose`
+### 3. Selecting a route: `choose`
 
 Selects one of the alternatives displayed by the most recent `plan` command.
 
@@ -149,7 +136,7 @@ choose 1
 - If the route number is missing or outside the displayed range, Timey reports
   the valid usage or range instead of changing the plan.
 
-### 11. Handling errors
+### 10. Handling errors
 
 Timey reports the first error it finds and leaves the current plan unchanged
 when an operation cannot complete.
@@ -191,7 +178,7 @@ individual records are ignored where valid records can still be recovered.
 Back up the relevant file before editing it manually, and close Timey first so
 the application does not overwrite your changes.
 
-### 5. Saving fixed commute timings: `add`
+### 4. Saving fixed commute timings: `add`
 
 Saves a known duration for a frequently used journey.
 
@@ -212,7 +199,7 @@ add /from "COM3" /to "VivoCity" /dur 1h30m
 - Saving an existing journey with a new duration updates its timing. Saving
   the same duration again leaves the existing timing unchanged.
 
-### 6. Listing saved timings: `ls saved`
+### 5. Listing saved timings: `ls saved`
 
 Lists all saved fixed commute timings and assigns each one a one-based number.
 
@@ -228,7 +215,7 @@ Each result shows the timing number, origin, destination, and duration in
 minutes. The list is sorted by origin and then destination without regard to
 case, so use the displayed number when removing a timing with `rm`.
 
-### 7. Listing future plans: `ls plans`
+### 6. Listing future plans: `ls plans`
 
 Lists selected commute plans whose recommended departure time is still in the
 future.
@@ -246,7 +233,7 @@ Each result shows a one-based number, date (`dd-MM-yyyy`), target arrival time
 whose leave-by time has passed are removed automatically and do not appear in
 the list.
 
-### 8. Removing a saved timing: `rm`
+### 7. Removing a saved timing: `rm`
 
 Removes a saved fixed commute timing by its number in the `ls saved` list.
 
@@ -265,7 +252,7 @@ rm 1
 - If the number is outside the current list, Timey reports that no saved timing
   has that number.
 
-### 9. Viewing command help: `help`
+### 8. Viewing command help: `help`
 
 Displays the commands supported by the current Timey session.
 
@@ -280,7 +267,7 @@ help
 Use this command when you need a quick reminder of the available command
 formats. It does not change the current plan or saved data.
 
-### 10. Ending a session: `thx`
+### 9. Ending a session: `thx`
 
 Ends the current terminal CLI session.
 
@@ -344,3 +331,16 @@ the future. Expired plans are pruned automatically.
 **Q: Can I choose a different route after selecting one?**<br>
 **A:** No. A route can be selected only once for the current plan. Create a new
 `plan` command to compare and select a different route.
+
+## Command summary
+
+| Action                       | Format and Examples |
+|------------------------------| --- |
+| Plan                         | `plan /from "<origin>" /to "<destination>" /by <HHmm> [/buf <duration>]`<br>e.g. `plan /from "Kent Ridge MRT" /to "Harbourfront MRT" /by 2000` |
+| Choose                       | `choose <route-number>`<br>e.g. `choose 1` |
+| Saving Fixed Commute Timings | `add /from "<origin>" /to "<destination>" /dur <duration>`<br>e.g. `add /from "COM3" /to "VivoCity" /dur 1h30m` |
+| List Saved Commute Timings   | `ls saved` |
+| List Current Plans           | `ls plans` |
+| Remove Saved Commute Timing  | `rm <timing-number>`<br>e.g. `rm 1` |
+| Help                         | `help` |
+| Exit the Program             | `thx` |
