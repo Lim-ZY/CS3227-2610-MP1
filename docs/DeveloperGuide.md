@@ -278,6 +278,44 @@ This separation lets planner and model tests use fixed clocks, mock ports, and
 fixtures. Replacing a provider or storage format therefore changes the adapter
 and its composition rather than the command or domain rules.
 
+### Storage design
+
+Production storage is local and relative to the directory from which Timey is
+run. `ApplicationFactory` supplies `FileFixedCommuteStore` for
+`data/fixed-commutes.txt` and `FilePlanStore` for `data/plans.txt`. Missing files
+are treated as empty stores, and parent directories are created when a write is
+first needed.
+
+The fixed-commute format stores one journey per line:
+
+```text
+Origin -> Destination = 45m
+```
+
+Origins and destinations are compared case-insensitively. Saving the same
+journey and duration is a no-op; saving the same journey with a new duration
+replaces the previous timing. Reads discard blank or malformed lines and return
+valid timings in case-insensitive origin/destination order.
+
+The saved-plan format stores one selected plan per line:
+
+```text
+31-08-2026 | 1830 | Origin -> Destination | leave by 1745
+```
+
+`FilePlanStore` parses dates strictly, removes duplicate records, and retains
+the stored order of valid plans. Invalid individual records are skipped without
+preventing other plans from loading. `TimeyModel` removes plans whose leave-by
+time has passed and writes the remaining list back to the store.
+
+Both file stores use `AtomicFileWriter`: content is written to a temporary
+sibling file first, then moved over the destination with an atomic replace when
+the filesystem supports it. A regular replace is used as the fallback when an
+atomic move is unavailable. If writing or replacing fails, the temporary file is
+cleaned up and the in-memory model updates its state only after the store call
+succeeds, preserving the previous valid destination and model state as far as
+the filesystem allows.
+
 ## Reliability behaviour
 
 All application-facing clocks use the fixed `Asia/Singapore` timezone and can
