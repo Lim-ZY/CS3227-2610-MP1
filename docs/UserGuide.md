@@ -235,3 +235,33 @@ rm 1
   usage instead of removing a timing.
 - If the number is outside the current list, Timey reports that no saved timing
   has that number.
+
+### 9. Viewing command help: `help`
+
+Displays the commands supported by the current Timey session.
+
+Format: `help`
+
+Example:
+
+```
+help
+```
+
+Use this command when you need a quick reminder of the available command
+formats. It does not change the current plan or saved data.
+
+### 10. Ending a session: `thx`
+
+Ends the current terminal CLI session.
+
+Format: `thx`
+
+Example:
+
+```
+thx
+```
+
+Timey closes the session after displaying a short acknowledgement. The
+dashboard is closed separately using the window controls.
