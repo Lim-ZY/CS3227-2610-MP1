@@ -403,6 +403,30 @@ recommendation. This preserves the previous valid state if the plan store
 fails, while duplicate plans remain a no-op. A subsequent `plan` request clears
 the previous selection and starts a new route-selection context.
 
+## Design considerations
+
+The following choices keep the implementation small while preserving safe
+extension points:
+
+- **Ports and adapters:** Provider and persistence concerns are accessed
+  through interfaces, so domain and model rules do not depend on OneMap, HTTP,
+  or a particular file format. The trade-off is a few additional adapter and
+  composition classes for otherwise simple operations.
+- **Live routes with deterministic fallback:** Live OneMap routes provide useful
+  current alternatives, while the labelled one-hour fallback keeps the core
+  workflow usable and testable when external services fail. The fallback is
+  less accurate and must not be presented as a live measurement.
+- **Injected clocks:** A single Singapore timezone and injectable `Clock` make
+  departure and expiry rules consistent across the CLI, dashboard, and tests.
+  Production code uses the system clock, while tests use fixed clocks.
+- **Atomic local persistence:** Temporary-file write-and-replace reduces the
+  risk of leaving a partially written store. Filesystems without atomic-move
+  support use a regular replacement as a compatibility fallback.
+- **Shared CLI/dashboard session:** The dashboard reuses `CommandLineApp` and
+  renders `DashboardState` instead of duplicating command logic. Background
+  tasks and `DashboardCommandExecutionGate` serialize access so overlapping or
+  cancelled requests cannot mix output or state.
+
 ## Reliability behaviour
 
 All application-facing clocks use the fixed `Asia/Singapore` timezone and can
@@ -420,7 +444,27 @@ the destination atomically where the filesystem supports it. Readers discard
 malformed individual records while retaining valid ones. Runtime failures use a
 shared, user-safe recovery message rather than exposing exception details.
 
-## Testing policy
+## Documentation, logging, testing, configuration, dev-ops
+
+Contributor-facing development records are kept in `logs/`, while
+[`Reflections.md`](Reflections.md) records the AI-assisted development process,
+verification, and lessons learned. Runtime failures are surfaced through
+user-safe messages; the application does not expose raw exception details in
+the CLI or dashboard.
+
+`ApplicationConfiguration` is the single source for the fixed
+`Asia/Singapore` timezone, the built-in departure buffer, and the configured
+live-data endpoint. API credentials and user-specific secrets must not be
+committed to the repository. Runtime stores remain relative to the launch
+directory under `data/`.
+
+The HTTP adapters use a bounded request timeout, a single delayed retry for a
+rate-limit response, and bounded exponential retries for transient server
+responses or request failures. Dashboard command work runs in JavaFX `Task`
+instances and is serialized by `DashboardCommandExecutionGate`; stale or
+cancelled results are ignored by the command tracker.
+
+### Testing policy
 
 JUnit tests are kept under `src/test/java` in the same package hierarchy as
 the production classes in `src/main/java`. Test names use the form
