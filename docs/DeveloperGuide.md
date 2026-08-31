@@ -59,9 +59,46 @@ The main project directories are organised as follows:
 
 ## Architecture
 
-Timey is organised into domain, application, ports, infrastructure,
-presentation, command, and configuration packages. The domain and application
-layers should remain independent of JavaFX and external API response formats.
+<puml src="ClassDiagram.puml" width="900" />
+
+The class diagram above shows the main production types and their relationships.
+Timey follows a ports-and-adapters structure: the command and planning flow
+depends on stable interfaces, while HTTP, OneMap, mock, and file-backed
+implementations are composed at the application boundary.
+
+The main packages have the following responsibilities:
+
+- `timey`: application entry points and dependency composition.
+- `timey.command`: commands that operate on the application model and return
+  displayable command results.
+- `timey.parser`: conversion of user input into validated command objects.
+- `timey.model`: mutable session state, pending route alternatives, selected
+  recommendations, and saved-plan coordination.
+- `timey.domain`: provider-independent value objects and business calculations
+  for locations, transit routes, departure recommendations, and saved plans.
+- `timey.planner`: orchestration of route planning and departure calculations
+  through planner services.
+- `timey.ports`: interfaces that isolate the application from replaceable
+  location, transit, and persistence implementations.
+- `timey.infrastructure`: adapters for OneMap, HTTP requests, mock transit,
+  and local file storage.
+- `timey.ui`: console presentation and immutable state snapshots shared with
+  the dashboard.
+- `timey.ui.dashboard`: JavaFX lifecycle, FXML-backed components, and dashboard
+  rendering and command execution.
+- `timey.config`: application-wide configuration such as the live-data base
+  URI and fixed application time zone.
+
+The dependency direction is intentionally inward. Domain types do not depend
+on JavaFX or external response formats. Commands use `TimeyModel`; the model
+uses planner services and port interfaces; infrastructure adapters implement
+those ports. The UI invokes the command session and renders its results without
+making HTTP or storage calls directly.
+
+At runtime, `Timey` or `DashboardLauncher` starts the appropriate presentation
+entry point. The composition layer supplies the concrete dependencies, the
+command session parses and executes user input, and the UI renders the returned
+result and current session state.
 
 ## Presentation architecture
 
