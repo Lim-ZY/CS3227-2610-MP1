@@ -10,3 +10,11 @@ data/*.json
 !data/.gitkeep
 _temp/
 data/
+worker/.dev.vars*
+!worker/.dev.vars.example
+worker/.env*
+!worker/.env.example
+worker/.wrangler/
+worker/node_modules/
+worker/_temp/
+worker/.idea/

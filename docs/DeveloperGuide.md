@@ -56,6 +56,8 @@ The main project directories are organised as follows:
 - `src/main/resources/timey/ui/dashboard`: dashboard FXML views and styles.
 - `src/test/java`: tests matching the production package hierarchy.
 - `data`: local fixed-commute and saved-plan files created at runtime.
+- `worker`: Cloudflare Worker source, tests, and Wrangler configuration for
+  server-side OneMap access; local secrets remain in ignored files.
 
 ## Architecture
 
