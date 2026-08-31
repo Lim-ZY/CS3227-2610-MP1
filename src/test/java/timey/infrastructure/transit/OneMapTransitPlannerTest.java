@@ -12,6 +12,7 @@ import java.util.Optional;
 import org.junit.jupiter.api.Test;
 
 import timey.domain.location.ResolvedLocation;
+import timey.domain.transit.RouteStepMode;
 import timey.infrastructure.http.HttpResult;
 
 class OneMapTransitPlannerTest {
@@ -42,6 +43,7 @@ class OneMapTransitPlannerTest {
         assertEquals(40, routes.getFirst().totalDuration().toMinutes());
         assertEquals(1, routes.getFirst().transferCount());
         assertEquals(3, routes.getFirst().steps().size());
+        assertEquals(RouteStepMode.RAIL, routes.getFirst().steps().get(1).mode());
         assertEquals("Take Circle Line from Kent Ridge MRT to HarbourFront MRT",
                 routes.getFirst().steps().get(1).description());
         assertEquals("Live public transport route 2", routes.get(1).name());
@@ -137,6 +139,36 @@ class OneMapTransitPlannerTest {
         assertTrue(lookup.isAvailable());
         assertEquals("Take Circle Line from Kent Ridge MRT to HarbourFront MRT",
                 lookup.routes().getFirst().steps().getFirst().description());
+    }
+
+    @Test
+    void findRoutes_busLeg_mapsItemisedBusStep() {
+        var planner = new OneMapTransitPlanner(uri -> new HttpResult(200, """
+                {"plan":{"itineraries":[{"walkTime":0,"transitTime":900,"transfers":0,
+                "legs":[{"mode":"BUS","duration":900,"routeShortName":"95",
+                "from":{"name":"NUS Kent Ridge Terminal"},"to":{"name":"Clementi MRT"}}]}]}}"""),
+                Optional.of(URI.create("https://timey.example.workers.dev")));
+
+        var lookup = planner.findRoutes(COM3, VIVOCITY, LocalDate.of(2026, 8, 21), LocalTime.NOON);
+
+        assertTrue(lookup.isAvailable());
+        var step = lookup.routes().getFirst().steps().getFirst();
+        assertEquals(RouteStepMode.BUS, step.mode());
+        assertEquals("Take bus 95 from NUS Kent Ridge Terminal to Clementi MRT", step.description());
+    }
+
+    @Test
+    void findRoutes_unknownLegMode_omitsLegWithoutMislabelingItAsRail() {
+        var planner = new OneMapTransitPlanner(uri -> new HttpResult(200, """
+                {"plan":{"itineraries":[{"walkTime":0,"transitTime":900,"transfers":0,
+                "legs":[{"mode":"FERRY","duration":900,"routeShortName":"Island Service",
+                "from":{"name":"HarbourFront"},"to":{"name":"Pulau Ubin"}}]}]}}"""),
+                Optional.of(URI.create("https://timey.example.workers.dev")));
+
+        var lookup = planner.findRoutes(COM3, VIVOCITY, LocalDate.of(2026, 8, 21), LocalTime.NOON);
+
+        assertTrue(lookup.isAvailable());
+        assertTrue(lookup.routes().getFirst().steps().isEmpty());
     }
 
     @Test

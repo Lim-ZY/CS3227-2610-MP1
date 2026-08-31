@@ -2,7 +2,7 @@ package timey.domain.transit;
 
 import java.time.Duration;
 
-/** A human-readable walking or rail segment within a route alternative. */
+/** A human-readable walking, bus, or rail segment within a route alternative. */
 public record RouteStep(RouteStepMode mode, String from, String to, String service, Duration duration) {
     /** Performs this operation. */
     public RouteStep {
@@ -22,7 +22,12 @@ public record RouteStep(RouteStepMode mode, String from, String to, String servi
 
     /** Formats this step for a concise command-line route breakdown. */
     public String description() {
-        return mode == RouteStepMode.WALK ? "Walk from " + from + " to " + to
-                : "Take " + service + " from " + from + " to " + to;
+        if (mode == RouteStepMode.WALK) {
+            return "Walk from " + from + " to " + to;
+        }
+        if (mode == RouteStepMode.BUS) {
+            return "Take bus " + service + " from " + from + " to " + to;
+        }
+        return "Take " + service + " from " + from + " to " + to;
     }
 }

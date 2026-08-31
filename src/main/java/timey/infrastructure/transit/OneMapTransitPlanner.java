@@ -116,7 +116,7 @@ public final class OneMapTransitPlanner implements LiveTransitPlanner {
         }
     }
 
-    /** Extracts displayable walking and transit legs while tolerating missing optional leg data. */
+    /** Extracts displayable walking, bus, and rail legs while ignoring unsupported leg modes. */
     private List<RouteStep> routeSteps(JsonNode legs) {
         if (!legs.isArray()) {
             return List.of();
@@ -136,15 +136,32 @@ public final class OneMapTransitPlanner implements LiveTransitPlanner {
         if (duration.isEmpty() || from.isBlank() || to.isBlank()) {
             return Optional.empty();
         }
-        if ("WALK".equalsIgnoreCase(mode)) {
+        Optional<RouteStepMode> routeStepMode = routeStepMode(mode);
+        if (routeStepMode.isEmpty()) {
+            return Optional.empty();
+        }
+        if (routeStepMode.orElseThrow() == RouteStepMode.WALK) {
             return Optional.of(new RouteStep(RouteStepMode.WALK, from, to, "walking",
                     Duration.ofSeconds(duration.orElseThrow())));
         }
         String service = firstNonBlank(leg.path("routeShortName").asText(""), leg.path("route").asText(""),
                 leg.path("routeLongName").asText(""));
         return service.isBlank() ? Optional.empty()
-                : Optional.of(new RouteStep(RouteStepMode.RAIL, from, to, service,
+                : Optional.of(new RouteStep(routeStepMode.orElseThrow(), from, to, service,
                         Duration.ofSeconds(duration.orElseThrow())));
+    }
+
+    private Optional<RouteStepMode> routeStepMode(String oneMapMode) {
+        if ("WALK".equalsIgnoreCase(oneMapMode)) {
+            return Optional.of(RouteStepMode.WALK);
+        }
+        if ("BUS".equalsIgnoreCase(oneMapMode)) {
+            return Optional.of(RouteStepMode.BUS);
+        }
+        if ("RAIL".equalsIgnoreCase(oneMapMode) || "SUBWAY".equalsIgnoreCase(oneMapMode)) {
+            return Optional.of(RouteStepMode.RAIL);
+        }
+        return Optional.empty();
     }
 
     private String firstNonBlank(String... values) {

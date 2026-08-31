@@ -30,6 +30,14 @@ class RouteAlternativeTest {
     }
 
     @Test
+    void routeStep_busMode_describesBusService() {
+        var step = new RouteStep(RouteStepMode.BUS, "NUS Kent Ridge Terminal", "Clementi MRT", "95",
+                Duration.ofMinutes(15));
+
+        assertEquals("Take bus 95 from NUS Kent Ridge Terminal to Clementi MRT", step.description());
+    }
+
+    @Test
     void constructor_negativeDuration_validationErrorThrown() {
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
                 new RouteAlternative("Invalid", Duration.ofMinutes(-1), Duration.ZERO, 0));
