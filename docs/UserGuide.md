@@ -34,7 +34,7 @@ Use the following sequence to plan a commute:
    and optional personal buffer:
 
    ```text
-   plan /from "COM3" /to "VivoCity" /by 1830 /buf 10m
+   plan /from "Kent Ridge MRT" /to "Harbourfront MRT" /by 1830
    ```
 
 2. Review the numbered route alternatives. Each live alternative includes its
@@ -87,7 +87,7 @@ Timey commands use the following conventions:
 Enter a plan and choose a route:
 
 ```
-plan /from "COM3" /to "VivoCity" /by 1830 /buf 10m
+plan /from "Kent Ridge MRT" /to "Harbourfront MRT" /by 1830
 choose 1
 ```
 
