@@ -12,7 +12,7 @@ import timey.domain.transit.RouteAlternative;
 import timey.ui.DashboardState;
 
 class DashboardCommuteStatusTest {
-    private static final RouteAlternative ROUTE = new RouteAlternative("Rail", Duration.ofMinutes(5),
+    private static final RouteAlternative ROUTE = new RouteAlternative("Public transport", Duration.ofMinutes(5),
             Duration.ofMinutes(25), 0);
 
     @Test
@@ -38,5 +38,7 @@ class DashboardCommuteStatusTest {
                 Optional.empty());
 
         assertEquals("Waiting for a plan...", DashboardCommuteStatus.from(state).title());
+        assertEquals("Live public transport alternatives will be requested once you execute `plan`.",
+                DashboardCommuteStatus.from(state).message());
     }
 }

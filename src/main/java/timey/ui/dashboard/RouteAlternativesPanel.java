@@ -58,7 +58,7 @@ public final class RouteAlternativesPanel extends UiPart<VBox> {
         Label name = new Label(routeNumber + ". " + route.name() + " · " + route.totalDuration().toMinutes() + " min"
                 + (selected ? "  SELECTED" : ""));
         name.getStyleClass().add(selected ? "route-name-selected" : "route-name");
-        Label details = new Label("Walk " + route.walkingDuration().toMinutes() + " min · Rail "
+        Label details = new Label("Walk " + route.walkingDuration().toMinutes() + " min · Public transport "
                 + route.transitDuration().toMinutes() + " min · " + route.transferCount()
                 + (route.transferCount() == 1 ? " transfer" : " transfers"));
         details.getStyleClass().add("muted");

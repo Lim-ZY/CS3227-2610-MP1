@@ -8,7 +8,7 @@
   <children>
     <Label styleClass="card-label" text="COMMUTE STATUS" />
     <Label fx:id="title" styleClass="card-title" text="Waiting for a plan" />
-    <Label fx:id="message" styleClass="muted" text="Live rail alternatives are requested only after you plan a commute."
+    <Label fx:id="message" styleClass="muted" text="Live public transport alternatives are requested only after you plan a commute."
            wrapText="true" />
   </children>
 </VBox>
