@@ -1,8 +1,19 @@
 # Timey
 
-Timey is a Java desktop commute planner for in-person events. It provides a
-command-line interface and JavaFX dashboard for planning a journey, comparing
-route alternatives, calculating a leave-by time, and managing saved timings.
+Timey is a Java desktop commute planner for commuters, workers, and students
+travelling to in-person events. It combines a fast command-line interface (CLI)
+with a JavaFX dashboard: use the CLI for entering commands quickly, or use the
+dashboard to review plans, route alternatives, and departure recommendations at
+a glance.
+
+Timey helps you:
+
+- Plan a journey to reach a destination by a target arrival time.
+- Compare live rail route alternatives and their walking, transit, and transfer
+  details.
+- Calculate a recommended leave-by time with a personal buffer.
+- Save fixed commute timings for frequently used routes.
+- Review upcoming saved plans and the next departure recommendation.
 
 Live OneMap route and location lookups are used when available. When live data
 cannot be retrieved, Timey retains valid prior state and offers a deterministic
