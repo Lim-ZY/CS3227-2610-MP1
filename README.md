@@ -22,6 +22,30 @@ offline estimate using a one-hour travel buffer.
 See `docs/UserGuide.md` for commands and setup, and `docs/DeveloperGuide.md`
 for architecture and test guidance.
 
+## Quick start
+
+1. Install Java 25 or a compatible JDK.
+2. From the project root, build the executable fat JAR:
+
+   ```bash
+   ./gradlew shadowJar
+   ```
+
+3. Launch the JavaFX dashboard:
+
+   ```bash
+   java -jar ./release/Timey-0.1.0-all.jar
+   ```
+
+4. To use the terminal CLI instead, run:
+
+   ```bash
+   ./gradlew run
+   ```
+
+   Type `help` to see the available commands. See the
+   [User Guide](docs/UserGuide.md) for the complete command reference.
+
 ## Build and run the fat JAR
 
 Build the executable fat JAR with the Gradle wrapper:
