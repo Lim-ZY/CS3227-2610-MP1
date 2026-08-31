@@ -37,6 +37,6 @@ class DashboardCommuteStatusTest {
         DashboardState state = new DashboardState(Optional.empty(), List.of(), List.of(), Optional.empty(),
                 Optional.empty());
 
-        assertEquals("Waiting for a plan", DashboardCommuteStatus.from(state).title());
+        assertEquals("Waiting for a plan...", DashboardCommuteStatus.from(state).title());
     }
 }

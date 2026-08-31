@@ -109,6 +109,7 @@
 .journey-line {
     -fx-background-color: #69bdf3;
     -fx-pref-height: 2;
+    -fx-max-height: 2;
     -fx-min-width: 52;
 }
 
@@ -127,7 +128,8 @@
 .event-time-line {
     -fx-background-color: #42759a;
     -fx-pref-width: 2;
-    -fx-pref-height: 15;
+    -fx-max-width: 2;
+    -fx-pref-height: 32;
     -fx-translate-x: 8;
 }
 

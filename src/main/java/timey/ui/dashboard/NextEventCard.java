@@ -72,7 +72,7 @@ public final class NextEventCard extends UiPart<VBox> {
                     departure.setText("—");
                     arrival.setText("—");
                     countdown.setText("Plan a commute");
-        });
+                });
     }
 
     private Optional<EventDetails> nextEvent(DashboardState state) {
