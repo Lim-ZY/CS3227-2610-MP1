@@ -42,4 +42,20 @@ class AddCommandParserTest {
 
         assertEquals("Duration must be greater than zero.", exception.getMessage());
     }
+
+    @Test
+    void parse_unterminatedFromQuote_validationErrorThrown() {
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
+                parser.parse("add /from \"COM3 /to \"Home\" /dur 1h45m"));
+
+        assertEquals("Quoted option values must have a closing quote in the add command.", exception.getMessage());
+    }
+
+    @Test
+    void parse_unterminatedToQuote_validationErrorThrown() {
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
+                parser.parse("add /from \"COM3\" /to \"Home /dur 1h45m"));
+
+        assertEquals("Quoted option values must have a closing quote in the add command.", exception.getMessage());
+    }
 }

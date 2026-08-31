@@ -14,10 +14,18 @@ public final class AddCommandParser {
 
     /** Performs this operation. */
     public AddCommand parse(String input) {
+        rejectUnterminatedQuote(input);
         Map<String, String> options = CommandOptionParser.parse(input, "add", OPTION);
         return new AddCommand(CommandOptionParser.requiredOption(options, "from"),
                 CommandOptionParser.requiredOption(options, "to"),
                 parseDuration(CommandOptionParser.requiredOption(options, "dur")));
+    }
+
+    private void rejectUnterminatedQuote(String input) {
+        long quoteCount = input.chars().filter(character -> character == '"').count();
+        if (quoteCount % 2 != 0) {
+            throw new IllegalArgumentException("Quoted option values must have a closing quote in the add command.");
+        }
     }
 
     private Duration parseDuration(String value) {
