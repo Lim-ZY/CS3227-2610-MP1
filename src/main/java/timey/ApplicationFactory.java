@@ -34,7 +34,7 @@ public final class ApplicationFactory {
         return new CommandLineApp(ui, new PlanCommandParser(),
                 new CommutePlanningService(new MockTransitPlanner()), locationResolver, railTransitPlanner,
                 Clock.system(ApplicationConfiguration.TIME_ZONE),
-                new FileFixedCommuteStore(Path.of("data", "fixed-commutes.properties")),
+                new FileFixedCommuteStore(Path.of("data", "fixed-commutes.txt")),
                 new FilePlanStore(Path.of("data", "plans.txt")));
     }
 

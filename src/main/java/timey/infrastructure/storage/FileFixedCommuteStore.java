@@ -1,128 +1,120 @@
 package timey.infrastructure.storage;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
-import java.util.Base64;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
-import java.util.Properties;
+import java.util.stream.Collectors;
 
 import timey.domain.transit.FixedCommute;
 import timey.ports.FixedCommuteStore;
 
-/** Properties-file implementation of locally persisted fixed commute timings. */
+/** Text-file implementation of locally persisted fixed commute timings. */
 public final class FileFixedCommuteStore implements FixedCommuteStore {
     private final Path path;
 
     public FileFixedCommuteStore(Path path) {
-        this.path = path;
+        this.path = Objects.requireNonNull(path);
     }
 
     @Override
     public synchronized void save(FixedCommute commute) {
-        Properties timings = load();
-        timings.setProperty(key(commute.origin(), commute.destination()), value(commute));
-        save(timings);
+        List<FixedCommute> commutes = findAll().stream()
+                .filter(saved -> !sameJourney(saved, commute))
+                .collect(Collectors.toCollection(ArrayList::new));
+        commutes.add(commute);
+        write(commutes);
     }
 
-    private void save(Properties timings) {
+    @Override
+    public synchronized Optional<FixedCommute> find(String origin, String destination) {
+        return findAll().stream()
+                .filter(commute -> sameJourney(commute, origin, destination))
+                .findFirst();
+    }
+
+    @Override
+    public synchronized List<FixedCommute> findAll() {
+        if (!Files.isRegularFile(path)) {
+            return List.of();
+        }
         try {
-            AtomicFileWriter.write(path, "fixed-commutes-", temporaryFile -> {
-                try (OutputStream output = Files.newOutputStream(temporaryFile)) {
-                    timings.store(output, "Timey fixed commute timings");
-                }
-            });
+            return Files.readAllLines(path, StandardCharsets.UTF_8).stream()
+                    .filter(line -> !line.isBlank())
+                    .map(this::parseSafely)
+                    .flatMap(Optional::stream)
+                    .sorted(Comparator.comparing(FixedCommute::origin, String.CASE_INSENSITIVE_ORDER)
+                            .thenComparing(FixedCommute::destination, String.CASE_INSENSITIVE_ORDER))
+                    .toList();
+        } catch (IOException exception) {
+            throw new IllegalStateException("Could not load fixed commute timings.", exception);
+        }
+    }
+
+    @Override
+    public synchronized boolean remove(String origin, String destination) {
+        List<FixedCommute> commutes = findAll();
+        List<FixedCommute> remaining = commutes.stream()
+                .filter(commute -> !sameJourney(commute, origin, destination))
+                .toList();
+        if (remaining.size() == commutes.size()) {
+            return false;
+        }
+        write(remaining);
+        return true;
+    }
+
+    private void write(List<FixedCommute> commutes) {
+        String content = commutes.stream()
+                .sorted(Comparator.comparing(FixedCommute::origin, String.CASE_INSENSITIVE_ORDER)
+                        .thenComparing(FixedCommute::destination, String.CASE_INSENSITIVE_ORDER))
+                .map(this::format)
+                .collect(Collectors.joining(System.lineSeparator(), "", System.lineSeparator()));
+        try {
+            AtomicFileWriter.write(path, "fixed-commutes-", temporaryFile ->
+                    Files.writeString(temporaryFile, content, StandardCharsets.UTF_8));
         } catch (IOException exception) {
             throw new IllegalStateException("Could not save fixed commute timings.", exception);
         }
     }
 
-    @Override
-    public synchronized Optional<FixedCommute> find(String origin, String destination) {
-        String value = load().getProperty(key(origin, destination));
-        if (value == null) {
-            return Optional.empty();
-        }
+    private Optional<FixedCommute> parseSafely(String line) {
         try {
-            long duration = duration(value);
-            return Optional.of(new FixedCommute(origin, destination, Duration.ofMinutes(duration)));
+            return Optional.of(parse(line));
         } catch (IllegalArgumentException | ArithmeticException exception) {
             return Optional.empty();
         }
     }
 
-    @Override
-    public synchronized List<FixedCommute> findAll() {
-        Properties timings = load();
-        return timings.stringPropertyNames().stream()
-                .map(key -> fixedCommute(key, timings.getProperty(key)))
-                .flatMap(Optional::stream)
-                .sorted(Comparator.comparing(FixedCommute::origin, String.CASE_INSENSITIVE_ORDER)
-                        .thenComparing(FixedCommute::destination, String.CASE_INSENSITIVE_ORDER))
-                .toList();
-    }
-
-    @Override
-    public synchronized boolean remove(String origin, String destination) {
-        Properties timings = load();
-        if (timings.remove(key(origin, destination)) == null) {
-            return false;
+    private FixedCommute parse(String line) {
+        String[] journeyAndDuration = line.split(" = ", -1);
+        if (journeyAndDuration.length != 2 || !journeyAndDuration[1].endsWith("m")) {
+            throw new IllegalArgumentException("Fixed commute line is not in the expected format.");
         }
-        save(timings);
-        return true;
-    }
-
-    private Properties load() {
-        Properties timings = new Properties();
-        if (!Files.isRegularFile(path)) {
-            return timings;
-        }
-        try (InputStream input = Files.newInputStream(path)) {
-            timings.load(input);
-            return timings;
-        } catch (IOException | IllegalArgumentException exception) {
-            return timings;
-        }
-    }
-
-    private Optional<FixedCommute> fixedCommute(String key, String value) {
-        String[] locations = key.split("\\.", -1);
+        String[] locations = journeyAndDuration[0].split(" -> ", -1);
         if (locations.length != 2) {
-            return Optional.empty();
+            throw new IllegalArgumentException("Fixed commute line does not contain a valid journey.");
         }
-        try {
-            String[] parts = value.split("\\|", -1);
-            String origin = parts.length == 3 ? decode(parts[1]) : decode(locations[0]);
-            String destination = parts.length == 3 ? decode(parts[2]) : decode(locations[1]);
-            return Optional.of(new FixedCommute(origin, destination, Duration.ofMinutes(duration(value))));
-        } catch (IllegalArgumentException | ArithmeticException exception) {
-            return Optional.empty();
-        }
+        long minutes = Long.parseLong(journeyAndDuration[1].substring(0, journeyAndDuration[1].length() - 1));
+        return new FixedCommute(locations[0], locations[1], Duration.ofMinutes(minutes));
     }
 
-    private String key(String origin, String destination) {
-        return encode(origin.trim().toLowerCase()) + "." + encode(destination.trim().toLowerCase());
+    private String format(FixedCommute commute) {
+        return commute.origin() + " -> " + commute.destination() + " = " + commute.duration().toMinutes() + "m";
     }
 
-    private String encode(String value) {
-        return Base64.getUrlEncoder().withoutPadding().encodeToString(value.getBytes(StandardCharsets.UTF_8));
+    private boolean sameJourney(FixedCommute first, FixedCommute second) {
+        return sameJourney(first, second.origin(), second.destination());
     }
 
-    private String value(FixedCommute commute) {
-        return commute.duration().toMinutes() + "|" + encode(commute.origin()) + "|" + encode(commute.destination());
-    }
-
-    private long duration(String value) {
-        return Long.parseLong(value.split("\\|", 2)[0]);
-    }
-
-    private String decode(String value) {
-        return new String(Base64.getUrlDecoder().decode(value), StandardCharsets.UTF_8);
+    private boolean sameJourney(FixedCommute commute, String origin, String destination) {
+        return commute.origin().equalsIgnoreCase(origin.strip())
+                && commute.destination().equalsIgnoreCase(destination.strip());
     }
 }

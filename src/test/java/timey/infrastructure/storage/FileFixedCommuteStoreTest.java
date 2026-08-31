@@ -15,10 +15,13 @@ class FileFixedCommuteStoreTest {
     void save_newStoreReadsSameLocationPair_fixedTimingReturned() throws Exception {
         var directory = Files.createTempDirectory("timey-fixed-commute");
         try {
-            var path = directory.resolve("fixed-commutes.properties");
+            var path = directory.resolve("fixed-commutes.txt");
             var store = new FileFixedCommuteStore(path);
             store.save(new FixedCommute("COM3", "VivoCity", Duration.ofMinutes(90)));
             store.save(new FixedCommute("Home", "COM3", Duration.ofMinutes(25)));
+
+            assertEquals("COM3 -> VivoCity = 90m" + System.lineSeparator()
+                    + "Home -> COM3 = 25m" + System.lineSeparator(), Files.readString(path));
 
             var result = new FileFixedCommuteStore(path).find("com3", "vivocity");
 
@@ -42,7 +45,7 @@ class FileFixedCommuteStoreTest {
     void save_caseOrWhitespaceVariant_replacesExistingTiming() throws Exception {
         var directory = Files.createTempDirectory("timey-fixed-commute");
         try {
-            var path = directory.resolve("fixed-commutes.properties");
+            var path = directory.resolve("fixed-commutes.txt");
             var store = new FileFixedCommuteStore(path);
             store.save(new FixedCommute("COM3", "VivoCity", Duration.ofMinutes(90)));
             store.save(new FixedCommute("  com3  ", "  vivocity  ", Duration.ofMinutes(75)));
@@ -55,11 +58,11 @@ class FileFixedCommuteStoreTest {
     }
 
     @Test
-    void findAll_malformedPropertiesFile_returnsEmptyList() throws Exception {
+    void findAll_malformedTextFile_returnsEmptyList() throws Exception {
         var directory = Files.createTempDirectory("timey-fixed-commute");
         try {
-            var path = directory.resolve("fixed-commutes.properties");
-            Files.writeString(path, "malformed=\\u12G4");
+            var path = directory.resolve("fixed-commutes.txt");
+            Files.writeString(path, "malformed line\nCOM3 -> VivoCity = nope\n");
 
             assertEquals(java.util.List.of(), new FileFixedCommuteStore(path).findAll());
         } finally {
@@ -71,8 +74,8 @@ class FileFixedCommuteStoreTest {
     void save_malformedExistingFile_recoversWithReplacementFile() throws Exception {
         var directory = Files.createTempDirectory("timey-fixed-commute");
         try {
-            var path = directory.resolve("fixed-commutes.properties");
-            Files.writeString(path, "malformed=\\u12G4");
+            var path = directory.resolve("fixed-commutes.txt");
+            Files.writeString(path, "malformed line\n");
             var expected = new FixedCommute("COM3", "VivoCity", Duration.ofMinutes(75));
 
             new FileFixedCommuteStore(path).save(expected);
