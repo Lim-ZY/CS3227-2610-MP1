@@ -10,8 +10,8 @@ import timey.model.TimeyModel;
 import timey.planner.CommutePlanningService;
 import timey.planner.Planner;
 import timey.ports.FixedCommuteStore;
+import timey.ports.LiveTransitPlanner;
 import timey.ports.PlanStore;
-import timey.ports.RailTransitPlanner;
 
 /** Creates a fully wired model for tests that do not need a live route source. */
 public final class TestTimeyModelFactory {
@@ -27,9 +27,10 @@ public final class TestTimeyModelFactory {
     }
 
     public static TimeyModel create(FixedCommuteStore fixedCommuteStore, Clock clock, PlanStore planStore) {
-        RailTransitPlanner railPlanner = (origin, destination, date, time) -> LiveRouteLookup.available(List.of());
+        LiveTransitPlanner liveTransitPlanner = (origin, destination, date, time) ->
+                LiveRouteLookup.available(List.of());
         var planner = new Planner(new CommutePlanningService(new MockTransitPlanner()),
-                query -> LocationResolution.unavailable("Offline"), railPlanner, clock);
+                query -> LocationResolution.unavailable("Offline"), liveTransitPlanner, clock);
         return new TimeyModel(planner, fixedCommuteStore, planStore, clock);
     }
 }

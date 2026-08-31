@@ -21,10 +21,10 @@ import timey.domain.transit.RouteStepMode;
 import timey.infrastructure.http.HttpRequester;
 import timey.infrastructure.http.HttpResult;
 import timey.infrastructure.http.WorkerErrorMessageParser;
-import timey.ports.RailTransitPlanner;
+import timey.ports.LiveTransitPlanner;
 
-/** Live-data adapter for server-authenticated OneMap rail itineraries. */
-public final class OneMapRailTransitPlanner implements RailTransitPlanner {
+/** Live-data adapter for server-authenticated OneMap public-transport itineraries. */
+public final class OneMapTransitPlanner implements LiveTransitPlanner {
     private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("MM-dd-uuuu");
     private static final DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern("HH:mm:ss");
     private static final long MAX_TRANSFER_COUNT = 10;
@@ -33,8 +33,8 @@ public final class OneMapRailTransitPlanner implements RailTransitPlanner {
     private final HttpRequester httpRequester;
     private final Optional<URI> liveDataBaseUri;
 
-    /** Creates a new OneMapRailTransitPlanner. */
-    public OneMapRailTransitPlanner(HttpRequester httpRequester, Optional<URI> liveDataBaseUri) {
+    /** Creates a new OneMapTransitPlanner. */
+    public OneMapTransitPlanner(HttpRequester httpRequester, Optional<URI> liveDataBaseUri) {
         this.httpRequester = httpRequester;
         this.liveDataBaseUri = liveDataBaseUri;
     }
@@ -43,7 +43,7 @@ public final class OneMapRailTransitPlanner implements RailTransitPlanner {
     public LiveRouteLookup findRoutes(ResolvedLocation origin, ResolvedLocation destination,
             LocalDate departureDate, LocalTime departureTime) {
         if (liveDataBaseUri.isEmpty()) {
-            return LiveRouteLookup.unavailable("Live rail routing is not configured.");
+            return LiveRouteLookup.unavailable("Live public transport routing is not configured.");
         }
         HttpResult response;
         try {
@@ -63,7 +63,7 @@ public final class OneMapRailTransitPlanner implements RailTransitPlanner {
         String start = origin.latitude() + "," + origin.longitude();
         String end = destination.latitude() + "," + destination.longitude();
         return URI.create(liveDataBaseUri.orElseThrow().toString().replaceAll("/$", "")
-                + "/v1/rail-route?start=" + start + "&end=" + end
+                + "/v1/transit-route?start=" + start + "&end=" + end
                 + "&date=" + DATE_FORMAT.format(departureDate) + "&time=" + TIME_FORMAT.format(departureTime));
     }
 
@@ -108,7 +108,7 @@ public final class OneMapRailTransitPlanner implements RailTransitPlanner {
             return Optional.empty();
         }
         try {
-            return Optional.of(new RouteAlternative("Live rail route " + routeNumber,
+            return Optional.of(new RouteAlternative("Live public transport route " + routeNumber,
                     Duration.ofSeconds(walkSeconds), Duration.ofSeconds(transitSeconds),
                     Math.toIntExact(transferCount), routeSteps(itinerary.path("legs"))));
         } catch (ArithmeticException | IllegalArgumentException exception) {
@@ -116,7 +116,7 @@ public final class OneMapRailTransitPlanner implements RailTransitPlanner {
         }
     }
 
-    /** Extracts displayable walk and rail legs while tolerating missing optional leg data. */
+    /** Extracts displayable walking and transit legs while tolerating missing optional leg data. */
     private List<RouteStep> routeSteps(JsonNode legs) {
         if (!legs.isArray()) {
             return List.of();

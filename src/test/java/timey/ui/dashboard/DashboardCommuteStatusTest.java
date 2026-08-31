@@ -16,12 +16,12 @@ class DashboardCommuteStatusTest {
             Duration.ofMinutes(25), 0);
 
     @Test
-    void from_liveRailResult_showsLiveStatus() {
+    void from_liveTransitResult_showsLiveStatus() {
         DashboardState state = new DashboardState(Optional.empty(), List.of(ROUTE),
-                List.of("Live rail routes were aligned with your target arrival time."), Optional.empty(),
+                List.of("Live public transport routes were aligned with your target arrival time."), Optional.empty(),
                 Optional.empty());
 
-        assertEquals("Live rail routes ready", DashboardCommuteStatus.from(state).title());
+        assertEquals("Live public transport routes ready", DashboardCommuteStatus.from(state).title());
     }
 
     @Test

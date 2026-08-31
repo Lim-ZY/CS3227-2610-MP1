@@ -11,7 +11,7 @@ import timey.infrastructure.location.OneMapLocationResolver;
 import timey.infrastructure.storage.FileFixedCommuteStore;
 import timey.infrastructure.storage.FilePlanStore;
 import timey.infrastructure.transit.MockTransitPlanner;
-import timey.infrastructure.transit.OneMapRailTransitPlanner;
+import timey.infrastructure.transit.OneMapTransitPlanner;
 import timey.parser.PlanCommandParser;
 import timey.planner.CommutePlanningService;
 import timey.ui.CommandLineApp;
@@ -28,11 +28,11 @@ public final class ApplicationFactory {
     public static CommandLineApp createCommandLineApp(ConsoleUi ui) {
         var locationResolver = new OneMapLocationResolver(new RateLimitedHttpRequester(new JdkHttpRequester()),
                 ApplicationConfiguration.getLiveDataBaseUri());
-        var railTransitPlanner = new OneMapRailTransitPlanner(
+        var liveTransitPlanner = new OneMapTransitPlanner(
                 new RateLimitedHttpRequester(new JdkHttpRequester(ROUTING_REQUEST_TIMEOUT)),
                 ApplicationConfiguration.getLiveDataBaseUri());
         return new CommandLineApp(ui, new PlanCommandParser(),
-                new CommutePlanningService(new MockTransitPlanner()), locationResolver, railTransitPlanner,
+                new CommutePlanningService(new MockTransitPlanner()), locationResolver, liveTransitPlanner,
                 Clock.system(ApplicationConfiguration.TIME_ZONE),
                 new FileFixedCommuteStore(Path.of("data", "fixed-commutes.txt")),
                 new FilePlanStore(Path.of("data", "plans.txt")));

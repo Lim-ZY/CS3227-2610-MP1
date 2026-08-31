@@ -21,7 +21,8 @@ class RouteAlternativeTest {
     void steps_sourceListMutated_returnsImmutableRouteBreakdown() {
         var steps = new java.util.ArrayList<>(List.of(
                 new RouteStep(RouteStepMode.WALK, "COM3", "Kent Ridge MRT", "walking", Duration.ofMinutes(6))));
-        var route = new RouteAlternative("Rail route", Duration.ofMinutes(6), Duration.ofMinutes(30), 0, steps);
+        var route = new RouteAlternative("Public transport route", Duration.ofMinutes(6), Duration.ofMinutes(30),
+                0, steps);
         steps.clear();
 
         assertEquals("Walk from COM3 to Kent Ridge MRT", route.steps().getFirst().description());

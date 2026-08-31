@@ -38,7 +38,7 @@ public final class CommuteStatusCard extends UiPart<VBox> {
     /** Displays the current command's loading state. */
     public void showLoading() {
         title.setText("Updating commute…");
-        message.setText("Looking up locations and live rail alternatives. Please wait.");
+        message.setText("Looking up locations and live public transport alternatives. Please wait.");
     }
 
     /** Displays a command execution failure without altering the prior plan. */

@@ -31,8 +31,8 @@ import timey.infrastructure.transit.InMemoryFixedCommuteStore;
 import timey.infrastructure.transit.MockTransitPlanner;
 import timey.parser.PlanCommandParser;
 import timey.planner.CommutePlanningService;
+import timey.ports.LiveTransitPlanner;
 import timey.ports.PlanStore;
-import timey.ports.RailTransitPlanner;
 
 class CommandLineAppTest {
     private static final ZoneId TEST_ZONE = ZoneId.of("Asia/Singapore");
@@ -45,7 +45,7 @@ class CommandLineAppTest {
         var app = new CommandLineApp(
                 new ConsoleUi(new BufferedReader(new StringReader("")), new PrintWriter(outputText, true)),
                 new PlanCommandParser(), new CommutePlanningService(new MockTransitPlanner()),
-                query -> LocationResolution.unavailable("Offline"), availableRailPlanner(),
+                query -> LocationResolution.unavailable("Offline"), availableLiveTransitPlanner(),
                 Clock.fixed(Instant.parse("2026-08-21T01:30:00Z"), ZoneId.of("Asia/Singapore")),
                 new InMemoryFixedCommuteStore(),
                 plans -> savedPlanLists.add(List.copyOf(plans)));
@@ -75,7 +75,7 @@ class CommandLineAppTest {
         var app = new CommandLineApp(
                 new ConsoleUi(new BufferedReader(new StringReader("")), new PrintWriter(new StringWriter(), true)),
                 new PlanCommandParser(), new CommutePlanningService(new MockTransitPlanner()),
-                query -> LocationResolution.unavailable("Offline"), availableRailPlanner(),
+                query -> LocationResolution.unavailable("Offline"), availableLiveTransitPlanner(),
                 TEST_CLOCK,
                 new InMemoryFixedCommuteStore(), planStore);
 
@@ -88,7 +88,7 @@ class CommandLineAppTest {
         var fixedCommutes = new InMemoryFixedCommuteStore();
         var app = new CommandLineApp(new BufferedReader(new StringReader("")), new PrintWriter(outputText, true),
                 new PlanCommandParser(), new CommutePlanningService(new MockTransitPlanner()),
-                query -> LocationResolution.unavailable("Offline"), availableRailPlanner(),
+                query -> LocationResolution.unavailable("Offline"), availableLiveTransitPlanner(),
                 Clock.fixed(Instant.parse("2026-08-21T01:30:00Z"), ZoneId.of("Asia/Singapore")),
                 fixedCommutes);
 
@@ -193,7 +193,7 @@ class CommandLineAppTest {
         var app = new CommandLineApp(new BufferedReader(new StringReader(
                 "plan /from \"COM3\" /to \"VivoCity\" /by 1830\nthx\n")), new PrintWriter(outputText, true),
                 new PlanCommandParser(), new CommutePlanningService(new MockTransitPlanner()), resolver,
-                availableRailPlanner(), TEST_CLOCK);
+                availableLiveTransitPlanner(), TEST_CLOCK);
 
         app.run();
 
@@ -211,7 +211,7 @@ class CommandLineAppTest {
         var app = new CommandLineApp(new BufferedReader(new StringReader(
                 "plan /from \"COM3\" /to \"VivoCity\" /by 1830\nthx\n")), new PrintWriter(outputText, true),
                 new PlanCommandParser(), new CommutePlanningService(new MockTransitPlanner()), resolver,
-                availableRailPlanner(), TEST_CLOCK);
+                availableLiveTransitPlanner(), TEST_CLOCK);
 
         app.run();
 
@@ -229,7 +229,8 @@ class CommandLineAppTest {
         var app = new CommandLineApp(new BufferedReader(new StringReader(
                 "plan /from \"Blk 127 Rivervale Street\" /to \"Compass One\" /by 1800\nthx\n")),
                 new PrintWriter(outputText, true), new PlanCommandParser(),
-                new CommutePlanningService(new MockTransitPlanner()), resolver, availableRailPlanner(), TEST_CLOCK);
+                new CommutePlanningService(new MockTransitPlanner()), resolver,
+                availableLiveTransitPlanner(), TEST_CLOCK);
 
         app.run();
 
@@ -248,7 +249,8 @@ class CommandLineAppTest {
         var app = new CommandLineApp(new BufferedReader(new StringReader(
                 "plan /from \"Blk 127 Rivervale Street\" /to \"Compass One\" /by 1800\nthx\n")),
                 new PrintWriter(outputText, true), new PlanCommandParser(),
-                new CommutePlanningService(new MockTransitPlanner()), resolver, availableRailPlanner(), TEST_CLOCK);
+                new CommutePlanningService(new MockTransitPlanner()), resolver,
+                availableLiveTransitPlanner(), TEST_CLOCK);
 
         app.run();
 
@@ -280,12 +282,12 @@ class CommandLineAppTest {
         var outputText = new StringWriter();
         var resolver = (timey.ports.LocationResolver) query -> LocationResolution.found(
                 new ResolvedLocation(query, query + " address", 1.3, 103.8));
-        RailTransitPlanner railPlanner = (origin, destination, date, time) ->
+        LiveTransitPlanner liveTransitPlanner = (origin, destination, date, time) ->
                 LiveRouteLookup.unavailable(404, "Unable to get MRT route");
         var app = new CommandLineApp(new BufferedReader(new StringReader(
                 "plan /from \"COM3\" /to \"VivoCity\" /by 1830\nthx\n")), new PrintWriter(outputText, true),
                 new PlanCommandParser(), new CommutePlanningService(new MockTransitPlanner()), resolver,
-                railPlanner, Clock.fixed(Instant.parse("2026-08-21T01:30:00Z"), ZoneId.of("Asia/Singapore")));
+                liveTransitPlanner, Clock.fixed(Instant.parse("2026-08-21T01:30:00Z"), ZoneId.of("Asia/Singapore")));
 
         app.run();
 
@@ -323,7 +325,7 @@ class CommandLineAppTest {
         };
         var app = new CommandLineApp(new BufferedReader(new StringReader("")), new PrintWriter(outputText, true),
                 new PlanCommandParser(), new CommutePlanningService(new MockTransitPlanner()), resolver,
-                availableRailPlanner(), TEST_CLOCK);
+                availableLiveTransitPlanner(), TEST_CLOCK);
 
         var result = app.executeCommand("plan /from \"COM3\" /to \"VivoCity\" /by 1830");
 
@@ -340,24 +342,28 @@ class CommandLineAppTest {
         var outputText = new StringWriter();
         var resolver = (timey.ports.LocationResolver) query -> LocationResolution.found(
                 new ResolvedLocation(query, query + " address", 1.3, 103.8));
-        RailTransitPlanner railPlanner = (origin, destination, date, time) -> LiveRouteLookup.available(
-                List.of(new RouteAlternative("Live rail route 1", Duration.ofMinutes(6), Duration.ofMinutes(30), 1,
+        LiveTransitPlanner liveTransitPlanner = (origin, destination, date, time) ->
+                LiveRouteLookup.available(List.of(
+                        new RouteAlternative("Live public transport route 1", Duration.ofMinutes(6),
+                                Duration.ofMinutes(30), 1,
                                 List.of(new RouteStep(RouteStepMode.WALK, "COM3", "Kent Ridge MRT", "walking",
                                                 Duration.ofMinutes(6)),
                                         new RouteStep(RouteStepMode.RAIL, "Kent Ridge MRT", "HarbourFront MRT",
                                                 "Circle Line", Duration.ofMinutes(30)))),
-                        new RouteAlternative("Live rail route 2", Duration.ofMinutes(4), Duration.ofMinutes(35), 0)));
+                        new RouteAlternative("Live public transport route 2", Duration.ofMinutes(4),
+                                Duration.ofMinutes(35), 0)));
         var clock = Clock.fixed(Instant.parse("2026-08-21T01:30:00Z"), ZoneId.of("Asia/Singapore"));
         var app = new CommandLineApp(new BufferedReader(new StringReader(
                 "plan /from \"COM3\" /to \"VivoCity\" /by 1830\nthx\n")), new PrintWriter(outputText, true),
                 new PlanCommandParser(), new CommutePlanningService(new MockTransitPlanner()), resolver,
-                railPlanner, clock);
+                liveTransitPlanner, clock);
 
         app.run();
 
-        assertTrue(outputText.toString().contains("Live rail routes were aligned with your target arrival time."));
-        assertTrue(outputText.toString().contains("1. Live rail route 1 — 36 minutes total"));
-        assertTrue(outputText.toString().contains("2. Live rail route 2 — 39 minutes total"));
+        assertTrue(outputText.toString().contains(
+                "Live public transport routes were aligned with your target arrival time."));
+        assertTrue(outputText.toString().contains("1. Live public transport route 1 — 36 minutes total"));
+        assertTrue(outputText.toString().contains("2. Live public transport route 2 — 39 minutes total"));
         assertTrue(outputText.toString().contains("- Walk from COM3 to Kent Ridge MRT (6 minutes)"));
         assertTrue(outputText.toString()
                 .contains("- Take Circle Line from Kent Ridge MRT to HarbourFront MRT (30 minutes)"));
@@ -382,21 +388,21 @@ class CommandLineAppTest {
         var app = new CommandLineApp(new BufferedReader(new StringReader(
                 "plan /from \"COM3\" /to \"VivoCity\" /by 1830\nchoose 1\nthx\n")),
                 new PrintWriter(outputText, true), new PlanCommandParser(),
-                new CommutePlanningService(new MockTransitPlanner()), resolver, availableRailPlanner(), clock);
+                new CommutePlanningService(new MockTransitPlanner()), resolver, availableLiveTransitPlanner(), clock);
 
         app.run();
 
         assertTrue(outputText.toString().contains("You have to leave now to stay on time! Good luck!"));
     }
 
-    private static RailTransitPlanner availableRailPlanner() {
+    private static LiveTransitPlanner availableLiveTransitPlanner() {
         return (origin, destination, date, time) -> LiveRouteLookup.available(List.of());
     }
 
     private static CommandLineApp offlineApp(BufferedReader input, PrintWriter output) {
         return new CommandLineApp(input, output, new PlanCommandParser(),
                 new CommutePlanningService(new MockTransitPlanner()),
-                query -> LocationResolution.unavailable("Offline"), availableRailPlanner(), TEST_CLOCK);
+                query -> LocationResolution.unavailable("Offline"), availableLiveTransitPlanner(), TEST_CLOCK);
     }
 
 }

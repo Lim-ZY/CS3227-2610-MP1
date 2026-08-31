@@ -13,8 +13,8 @@ import timey.domain.alert.DepartureRecommendation;
 import timey.domain.location.LocationResolution;
 import timey.domain.location.ResolvedLocation;
 import timey.domain.transit.RouteAlternative;
+import timey.ports.LiveTransitPlanner;
 import timey.ports.LocationResolver;
-import timey.ports.RailTransitPlanner;
 
 /** Coordinates live and deterministic route planning for a commute request. */
 public final class Planner {
@@ -33,20 +33,20 @@ public final class Planner {
 
     private final CommutePlanningService commutePlanningService;
     private final LocationResolver locationResolver;
-    private final LiveRailPlanningService liveRailPlanningService;
+    private final LiveTransitPlanningService liveTransitPlanningService;
     private final Clock clock;
 
     /** Creates a new Planner. */
     public Planner(CommutePlanningService commutePlanningService, LocationResolver locationResolver,
-            RailTransitPlanner railTransitPlanner, Clock clock) {
+            LiveTransitPlanner liveTransitPlanner, Clock clock) {
         this.commutePlanningService = Objects.requireNonNull(commutePlanningService);
         this.locationResolver = Objects.requireNonNull(locationResolver);
         this.clock = Objects.requireNonNull(clock);
-        this.liveRailPlanningService = new LiveRailPlanningService(Objects.requireNonNull(railTransitPlanner),
+        this.liveTransitPlanningService = new LiveTransitPlanningService(Objects.requireNonNull(liveTransitPlanner),
                 this.clock);
     }
 
-    /** Finds live rail alternatives when available, otherwise deterministic alternatives. */
+    /** Finds live public transport alternatives when available, otherwise deterministic alternatives. */
     public PlanningResult findAlternatives(PlanCommand plan) {
         LocationResolution origin = locationResolver.resolve(plan.getOrigin());
         if (!origin.isFound()) {
@@ -85,14 +85,14 @@ public final class Planner {
         messages.add("OneMap resolved your locations:");
         messages.add("- From: " + origin.address());
         messages.add("- To: " + destination.address());
-        var liveRoutes = liveRailPlanningService.findAlignedRoutes(plan, origin, destination);
+        var liveRoutes = liveTransitPlanningService.findAlignedRoutes(plan, origin, destination);
         if (liveRoutes.isAvailable() && !liveRoutes.routes().isEmpty()) {
-            messages.add("Live rail routes were aligned with your target arrival time.");
+            messages.add("Live public transport routes were aligned with your target arrival time.");
             return new PlanningResult(liveRoutes.routes(), messages, false, List.of(), true);
         }
 
         if (liveRoutes.isAvailable()) {
-            messages.add("OneMap returned no live rail routes; using offline estimate.");
+            messages.add("OneMap returned no live public transport routes; using offline estimate.");
         } else {
             if (liveRoutes.isLiveDataServiceUnreachable()) {
                 return workerUnreachableResult(plan, messages);

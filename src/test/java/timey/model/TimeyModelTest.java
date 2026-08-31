@@ -31,9 +31,9 @@ import timey.infrastructure.transit.MockTransitPlanner;
 import timey.planner.CommutePlanningService;
 import timey.planner.Planner;
 import timey.ports.FixedCommuteStore;
+import timey.ports.LiveTransitPlanner;
 import timey.ports.LocationResolver;
 import timey.ports.PlanStore;
-import timey.ports.RailTransitPlanner;
 
 class TimeyModelTest {
     @Test
@@ -56,10 +56,11 @@ class TimeyModelTest {
         var previousPlan = new PlanCommand("COM3", "VivoCity", LocalTime.of(18, 30), Duration.ZERO);
         var previousRoute = new RouteAlternative("Previous route", Duration.ofMinutes(5), Duration.ofMinutes(30), 0);
         Clock clock = Clock.fixed(Instant.parse("2026-08-21T01:30:00Z"), ZoneId.of("Asia/Singapore"));
-        RailTransitPlanner railPlanner = (origin, destination, date, time) -> LiveRouteLookup.available(List.of());
+        LiveTransitPlanner liveTransitPlanner = (origin, destination, date, time) ->
+                LiveRouteLookup.available(List.of());
         var planner = new Planner(new CommutePlanningService(new MockTransitPlanner()),
                 query -> LocationResolution.unavailable(400, "OneMap could not find \"" + query + "\"."),
-                railPlanner, clock);
+                liveTransitPlanner, clock);
         var model = new TimeyModel(planner, new InMemoryFixedCommuteStore(), plans -> { }, clock);
         model.replacePlan(previousPlan, List.of(previousRoute), List.of("Previous route is available."));
 
@@ -207,11 +208,12 @@ class TimeyModelTest {
         RouteAlternative previousRoute = new RouteAlternative("Previous live route", Duration.ofMinutes(8),
                 Duration.ofMinutes(35), 1);
         AtomicInteger liveLookupCalls = new AtomicInteger();
-        RailTransitPlanner railPlanner = (origin, destination, date, time) -> liveLookupCalls.getAndIncrement() == 0
-                ? LiveRouteLookup.available(List.of(previousRoute))
-                : LiveRouteLookup.unavailable("Live routing is unavailable.");
+        LiveTransitPlanner liveTransitPlanner = (origin, destination, date, time) ->
+                liveLookupCalls.getAndIncrement() == 0
+                        ? LiveRouteLookup.available(List.of(previousRoute))
+                        : LiveRouteLookup.unavailable("Live routing is unavailable.");
         var planner = new Planner(new CommutePlanningService(new MockTransitPlanner()), foundLocationResolver(),
-                railPlanner, clock);
+                liveTransitPlanner, clock);
         var model = new TimeyModel(planner, new InMemoryFixedCommuteStore(), plans -> { }, clock);
         model.replacePlan(previousPlan, List.of(previousRoute), List.of("Live route available."));
         model.selectRoute(1);

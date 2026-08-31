@@ -18,9 +18,9 @@ import timey.command.PlanCommand;
 import timey.domain.location.ResolvedLocation;
 import timey.domain.transit.LiveRouteLookup;
 import timey.domain.transit.RouteAlternative;
-import timey.ports.RailTransitPlanner;
+import timey.ports.LiveTransitPlanner;
 
-class LiveRailPlanningServiceTest {
+class LiveTransitPlanningServiceTest {
     private static final ResolvedLocation ORIGIN = new ResolvedLocation("COM3", "COM3", 1.294, 103.773);
     private static final ResolvedLocation DESTINATION = new ResolvedLocation("VivoCity", "VivoCity", 1.264, 103.822);
     private static final Clock SINGAPORE_MORNING = Clock.fixed(Instant.parse("2026-08-21T02:00:00Z"),
@@ -29,12 +29,12 @@ class LiveRailPlanningServiceTest {
     @Test
     void findAlignedRoutes_availableProbe_refreshesAtCalculatedLeaveByTime() {
         List<String> requestedTimes = new ArrayList<>();
-        RailTransitPlanner planner = (origin, destination, date, time) -> {
+        LiveTransitPlanner planner = (origin, destination, date, time) -> {
             requestedTimes.add(date + " " + time);
             return LiveRouteLookup.available(List.of(new RouteAlternative("Rail", Duration.ofMinutes(8),
                     Duration.ofMinutes(35), 1)));
         };
-        var service = new LiveRailPlanningService(planner, SINGAPORE_MORNING);
+        var service = new LiveTransitPlanningService(planner, SINGAPORE_MORNING);
         var plan = new PlanCommand("COM3", "VivoCity", LocalTime.of(18, 30), Duration.ofMinutes(10));
 
         var result = service.findAlignedRoutes(plan, ORIGIN, DESTINATION);
@@ -46,11 +46,11 @@ class LiveRailPlanningServiceTest {
     @Test
     void findAlignedRoutes_targetTimePassed_usesTodayWithoutRollover() {
         List<LocalDate> requestedDates = new ArrayList<>();
-        RailTransitPlanner planner = (origin, destination, date, time) -> {
+        LiveTransitPlanner planner = (origin, destination, date, time) -> {
             requestedDates.add(date);
             return LiveRouteLookup.unavailable("No route");
         };
-        var service = new LiveRailPlanningService(planner, SINGAPORE_MORNING);
+        var service = new LiveTransitPlanningService(planner, SINGAPORE_MORNING);
         var plan = new PlanCommand("COM3", "VivoCity", LocalTime.of(9, 0), Duration.ofMinutes(10));
 
         service.findAlignedRoutes(plan, ORIGIN, DESTINATION);
@@ -61,11 +61,11 @@ class LiveRailPlanningServiceTest {
     @Test
     void findAlignedRoutes_targetTimeEqualsNow_usesTodayWithoutRollover() {
         List<LocalDate> requestedDates = new ArrayList<>();
-        RailTransitPlanner planner = (origin, destination, date, time) -> {
+        LiveTransitPlanner planner = (origin, destination, date, time) -> {
             requestedDates.add(date);
             return LiveRouteLookup.unavailable("No route");
         };
-        var service = new LiveRailPlanningService(planner, SINGAPORE_MORNING);
+        var service = new LiveTransitPlanningService(planner, SINGAPORE_MORNING);
         var plan = new PlanCommand("COM3", "VivoCity", LocalTime.of(10, 0), Duration.ofMinutes(10));
 
         service.findAlignedRoutes(plan, ORIGIN, DESTINATION);
@@ -76,11 +76,11 @@ class LiveRailPlanningServiceTest {
     @Test
     void findAlignedRoutes_probeReturnsNoRoutes_stopsAfterProbe() {
         List<LocalTime> requestedTimes = new ArrayList<>();
-        RailTransitPlanner planner = (origin, destination, date, time) -> {
+        LiveTransitPlanner planner = (origin, destination, date, time) -> {
             requestedTimes.add(time);
             return LiveRouteLookup.available(List.of());
         };
-        var service = new LiveRailPlanningService(planner, SINGAPORE_MORNING);
+        var service = new LiveTransitPlanningService(planner, SINGAPORE_MORNING);
         var plan = new PlanCommand("COM3", "VivoCity", LocalTime.of(18, 30), Duration.ofMinutes(10));
 
         var result = service.findAlignedRoutes(plan, ORIGIN, DESTINATION);
@@ -93,13 +93,13 @@ class LiveRailPlanningServiceTest {
     @Test
     void findAlignedRoutes_targetTimePassed_departureRefreshesOnPreviousDate() {
         List<String> requestedTimes = new ArrayList<>();
-        RailTransitPlanner planner = (origin, destination, date, time) -> {
+        LiveTransitPlanner planner = (origin, destination, date, time) -> {
             requestedTimes.add(date + " " + time);
             return LiveRouteLookup.available(List.of(new RouteAlternative("Rail", Duration.ofMinutes(20),
                     Duration.ofMinutes(40), 0)));
         };
         var nearMidnight = Clock.fixed(Instant.parse("2026-08-20T15:00:00Z"), ZoneId.of("Asia/Singapore"));
-        var service = new LiveRailPlanningService(planner, nearMidnight);
+        var service = new LiveTransitPlanningService(planner, nearMidnight);
         var plan = new PlanCommand("COM3", "VivoCity", LocalTime.of(0, 10), Duration.ofMinutes(10));
 
         service.findAlignedRoutes(plan, ORIGIN, DESTINATION);

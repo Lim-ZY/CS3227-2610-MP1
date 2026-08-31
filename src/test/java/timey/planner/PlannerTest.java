@@ -21,7 +21,7 @@ import timey.domain.location.ResolvedLocation;
 import timey.domain.transit.LiveRouteLookup;
 import timey.domain.transit.RouteAlternative;
 import timey.infrastructure.transit.MockTransitPlanner;
-import timey.ports.RailTransitPlanner;
+import timey.ports.LiveTransitPlanner;
 
 class PlannerTest {
     private static final Clock CLOCK = Clock.fixed(Instant.parse("2026-08-21T01:30:00Z"), ZoneId.of("Asia/Singapore"));
@@ -32,24 +32,27 @@ class PlannerTest {
     void findAlternatives_liveRoutesAvailable_returnsLiveRoutesAndResolutionMessages() {
         var resolver = (timey.ports.LocationResolver) query -> LocationResolution.found(
                 new ResolvedLocation(query, query + " address", 1.3, 103.8));
-        RouteAlternative liveRoute = new RouteAlternative("Live rail", Duration.ofMinutes(5),
+        RouteAlternative liveRoute = new RouteAlternative("Live public transport", Duration.ofMinutes(5),
                 Duration.ofMinutes(30), 0);
-        RailTransitPlanner railPlanner = (origin, destination, date, time) -> LiveRouteLookup.available(
+        LiveTransitPlanner liveTransitPlanner = (origin, destination, date, time) -> LiveRouteLookup.available(
                 List.of(liveRoute));
-        var planner = new Planner(new CommutePlanningService(new MockTransitPlanner()), resolver, railPlanner, CLOCK);
+        var planner = new Planner(new CommutePlanningService(new MockTransitPlanner()), resolver,
+                liveTransitPlanner, CLOCK);
 
         var result = planner.findAlternatives(PLAN);
 
         assertEquals(List.of(liveRoute), result.alternatives());
         assertEquals(List.of("OneMap resolved your locations:", "- From: COM3 address", "- To: VivoCity address",
-                "Live rail routes were aligned with your target arrival time."), result.messages());
+                "Live public transport routes were aligned with your target arrival time."), result.messages());
     }
 
     @Test
     void findAlternatives_locationUnavailable_returnsDeterministicRoutesAndReason() {
         var resolver = (timey.ports.LocationResolver) query -> LocationResolution.unavailable("Offline");
-        RailTransitPlanner railPlanner = (origin, destination, date, time) -> LiveRouteLookup.available(List.of());
-        var planner = new Planner(new CommutePlanningService(new MockTransitPlanner()), resolver, railPlanner, CLOCK);
+        LiveTransitPlanner liveTransitPlanner = (origin, destination, date, time) ->
+                LiveRouteLookup.available(List.of());
+        var planner = new Planner(new CommutePlanningService(new MockTransitPlanner()), resolver,
+                liveTransitPlanner, CLOCK);
 
         var result = planner.findAlternatives(PLAN);
 
@@ -62,8 +65,10 @@ class PlannerTest {
     @Test
     void findAlternatives_liveDataServiceUnreachableDuringLocationLookup_explainsConnectivityRequirement() {
         var resolver = (timey.ports.LocationResolver) query -> LocationResolution.unreachable("Lookup timed out.");
-        RailTransitPlanner railPlanner = (origin, destination, date, time) -> LiveRouteLookup.available(List.of());
-        var planner = new Planner(new CommutePlanningService(new MockTransitPlanner()), resolver, railPlanner, CLOCK);
+        LiveTransitPlanner liveTransitPlanner = (origin, destination, date, time) ->
+                LiveRouteLookup.available(List.of());
+        var planner = new Planner(new CommutePlanningService(new MockTransitPlanner()), resolver,
+                liveTransitPlanner, CLOCK);
 
         var result = planner.findAlternatives(PLAN);
 
@@ -77,10 +82,11 @@ class PlannerTest {
     void findAlternatives_locationBadRequest_endsPlanningWithPostalCodeSuggestion() {
         var resolver = (timey.ports.LocationResolver) query ->
                 LocationResolution.unavailable(400, "OneMap could not find \"" + query + "\".");
-        RailTransitPlanner railPlanner = (origin, destination, date, time) -> {
+        LiveTransitPlanner liveTransitPlanner = (origin, destination, date, time) -> {
             throw new AssertionError("Routing should not run after a failed location lookup.");
         };
-        var planner = new Planner(new CommutePlanningService(new MockTransitPlanner()), resolver, railPlanner, CLOCK);
+        var planner = new Planner(new CommutePlanningService(new MockTransitPlanner()), resolver,
+                liveTransitPlanner, CLOCK);
 
         var result = planner.findAlternatives(PLAN);
 
@@ -94,10 +100,11 @@ class PlannerTest {
     void findAlternatives_locationRateLimited_endsPlanningWithBusyServerMessage() {
         var resolver = (timey.ports.LocationResolver) query ->
                 LocationResolution.unavailable(429, "Rate limit exceeded");
-        RailTransitPlanner railPlanner = (origin, destination, date, time) -> {
+        LiveTransitPlanner liveTransitPlanner = (origin, destination, date, time) -> {
             throw new AssertionError("Routing should not run after a rate-limited location lookup.");
         };
-        var planner = new Planner(new CommutePlanningService(new MockTransitPlanner()), resolver, railPlanner, CLOCK);
+        var planner = new Planner(new CommutePlanningService(new MockTransitPlanner()), resolver,
+                liveTransitPlanner, CLOCK);
 
         var result = planner.findAlternatives(PLAN);
 
@@ -116,10 +123,11 @@ class PlannerTest {
             }
             throw new AssertionError("Destination should not be resolved after an unavailable origin.");
         };
-        RailTransitPlanner railPlanner = (origin, destination, date, time) -> {
+        LiveTransitPlanner liveTransitPlanner = (origin, destination, date, time) -> {
             throw new AssertionError("Live routing should not run without both locations.");
         };
-        var planner = new Planner(new CommutePlanningService(new MockTransitPlanner()), resolver, railPlanner, CLOCK);
+        var planner = new Planner(new CommutePlanningService(new MockTransitPlanner()), resolver,
+                liveTransitPlanner, CLOCK);
 
         var result = planner.findAlternatives(PLAN);
 
@@ -133,9 +141,10 @@ class PlannerTest {
     void findAlternatives_liveLookupUnavailable_returnsDeterministicRoutesAndReason() {
         var resolver = (timey.ports.LocationResolver) query -> LocationResolution.found(
                 new ResolvedLocation(query, query + " address", 1.3, 103.8));
-        RailTransitPlanner railPlanner = (origin, destination, date, time) ->
+        LiveTransitPlanner liveTransitPlanner = (origin, destination, date, time) ->
                 LiveRouteLookup.unavailable("OneMap routing failed (HTTP 503).");
-        var planner = new Planner(new CommutePlanningService(new MockTransitPlanner()), resolver, railPlanner, CLOCK);
+        var planner = new Planner(new CommutePlanningService(new MockTransitPlanner()), resolver,
+                liveTransitPlanner, CLOCK);
 
         var result = planner.findAlternatives(PLAN);
 
@@ -151,10 +160,10 @@ class PlannerTest {
         for (int statusCode : List.of(400, 401, 403, 500, 503)) {
             var resolver = (timey.ports.LocationResolver) query -> LocationResolution.found(
                     new ResolvedLocation(query, query + " address", 1.3, 103.8));
-            RailTransitPlanner railPlanner = (origin, destination, date, time) ->
+            LiveTransitPlanner liveTransitPlanner = (origin, destination, date, time) ->
                     LiveRouteLookup.unavailable(statusCode, "OneMap routing is temporarily unavailable.");
-            var planner = new Planner(new CommutePlanningService(new MockTransitPlanner()), resolver, railPlanner,
-                    CLOCK);
+            var planner = new Planner(new CommutePlanningService(new MockTransitPlanner()), resolver,
+                    liveTransitPlanner, CLOCK);
 
             var result = planner.findAlternatives(PLAN);
 
@@ -166,9 +175,10 @@ class PlannerTest {
     void findAlternatives_malformedRouteResponse_usesOfflineEstimate() {
         var resolver = (timey.ports.LocationResolver) query -> LocationResolution.found(
                 new ResolvedLocation(query, query + " address", 1.3, 103.8));
-        RailTransitPlanner railPlanner = (origin, destination, date, time) ->
+        LiveTransitPlanner liveTransitPlanner = (origin, destination, date, time) ->
                 LiveRouteLookup.unavailable("OneMap routing returned an unreadable response.");
-        var planner = new Planner(new CommutePlanningService(new MockTransitPlanner()), resolver, railPlanner, CLOCK);
+        var planner = new Planner(new CommutePlanningService(new MockTransitPlanner()), resolver,
+                liveTransitPlanner, CLOCK);
 
         var result = planner.findAlternatives(PLAN);
 
@@ -179,14 +189,16 @@ class PlannerTest {
     void findAlternatives_noLiveItineraries_usesOfflineEstimate() {
         var resolver = (timey.ports.LocationResolver) query -> LocationResolution.found(
                 new ResolvedLocation(query, query + " address", 1.3, 103.8));
-        RailTransitPlanner railPlanner = (origin, destination, date, time) -> LiveRouteLookup.available(List.of());
-        var planner = new Planner(new CommutePlanningService(new MockTransitPlanner()), resolver, railPlanner, CLOCK);
+        LiveTransitPlanner liveTransitPlanner = (origin, destination, date, time) ->
+                LiveRouteLookup.available(List.of());
+        var planner = new Planner(new CommutePlanningService(new MockTransitPlanner()), resolver,
+                liveTransitPlanner, CLOCK);
 
         var result = planner.findAlternatives(PLAN);
 
         assertEquals("Offline estimate", result.alternatives().getFirst().name());
         assertEquals(List.of("OneMap resolved your locations:", "- From: COM3 address", "- To: VivoCity address",
-                "OneMap returned no live rail routes; using offline estimate.",
+                "OneMap returned no live public transport routes; using offline estimate.",
                 "Using a default 1-hour buffer before your target arrival time instead of live estimates."),
                 result.messages());
         assertTrue(result.routeSelectionMessages().isEmpty());
@@ -197,9 +209,10 @@ class PlannerTest {
     void findAlternatives_liveDataServiceUnreachable_explainsConnectivityRequirement() {
         var resolver = (timey.ports.LocationResolver) query -> LocationResolution.found(
                 new ResolvedLocation(query, query + " address", 1.3, 103.8));
-        RailTransitPlanner railPlanner = (origin, destination, date, time) ->
+        LiveTransitPlanner liveTransitPlanner = (origin, destination, date, time) ->
                 LiveRouteLookup.unreachable("OneMap routing timed out.");
-        var planner = new Planner(new CommutePlanningService(new MockTransitPlanner()), resolver, railPlanner, CLOCK);
+        var planner = new Planner(new CommutePlanningService(new MockTransitPlanner()), resolver,
+                liveTransitPlanner, CLOCK);
 
         var result = planner.findAlternatives(PLAN);
 
@@ -214,9 +227,10 @@ class PlannerTest {
     void findAlternatives_routeNotFound_usesOfflineEstimateAndFixedTimingSuggestion() {
         var resolver = (timey.ports.LocationResolver) query -> LocationResolution.found(
                 new ResolvedLocation(query, query + " address", 1.3, 103.8));
-        RailTransitPlanner railPlanner = (origin, destination, date, time) ->
+        LiveTransitPlanner liveTransitPlanner = (origin, destination, date, time) ->
                 LiveRouteLookup.unavailable(404, "Unable to get MRT route");
-        var planner = new Planner(new CommutePlanningService(new MockTransitPlanner()), resolver, railPlanner, CLOCK);
+        var planner = new Planner(new CommutePlanningService(new MockTransitPlanner()), resolver,
+                liveTransitPlanner, CLOCK);
 
         var result = planner.findAlternatives(PLAN);
 
@@ -233,9 +247,10 @@ class PlannerTest {
     void findAlternatives_routeRateLimited_endsPlanningWithBusyServerMessage() {
         var resolver = (timey.ports.LocationResolver) query -> LocationResolution.found(
                 new ResolvedLocation(query, query + " address", 1.3, 103.8));
-        RailTransitPlanner railPlanner = (origin, destination, date, time) ->
+        LiveTransitPlanner liveTransitPlanner = (origin, destination, date, time) ->
                 LiveRouteLookup.unavailable(429, "Rate limit exceeded");
-        var planner = new Planner(new CommutePlanningService(new MockTransitPlanner()), resolver, railPlanner, CLOCK);
+        var planner = new Planner(new CommutePlanningService(new MockTransitPlanner()), resolver,
+                liveTransitPlanner, CLOCK);
 
         var result = planner.findAlternatives(PLAN);
 
@@ -249,9 +264,10 @@ class PlannerTest {
     void recommendFallbackDeparture_targetAlreadyPassed_doesNotRollOver() {
         Clock afterMidnightInSingapore = Clock.fixed(Instant.parse("2026-08-20T16:30:00Z"),
                 ZoneId.of("Asia/Singapore"));
-        RailTransitPlanner railPlanner = (origin, destination, date, time) -> LiveRouteLookup.available(List.of());
+        LiveTransitPlanner liveTransitPlanner = (origin, destination, date, time) ->
+                LiveRouteLookup.available(List.of());
         var planner = new Planner(new CommutePlanningService(new MockTransitPlanner()),
-                query -> LocationResolution.unavailable("Offline"), railPlanner, afterMidnightInSingapore);
+                query -> LocationResolution.unavailable("Offline"), liveTransitPlanner, afterMidnightInSingapore);
         var plan = new PlanCommand("COM3", "VivoCity", LocalTime.of(0, 15), Duration.ZERO);
         var fallbackRoute = new RouteAlternative("Offline estimate", Duration.ZERO, Duration.ZERO, 0);
 

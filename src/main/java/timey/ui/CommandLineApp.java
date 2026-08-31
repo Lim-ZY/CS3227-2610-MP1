@@ -19,9 +19,9 @@ import timey.parser.Parser;
 import timey.parser.PlanCommandParser;
 import timey.planner.CommutePlanningService;
 import timey.ports.FixedCommuteStore;
+import timey.ports.LiveTransitPlanner;
 import timey.ports.LocationResolver;
 import timey.ports.PlanStore;
-import timey.ports.RailTransitPlanner;
 
 /** Interactive command-line presentation for timey. */
 public final class CommandLineApp {
@@ -45,43 +45,43 @@ public final class CommandLineApp {
     /** Creates a new CommandLineApp. */
     public CommandLineApp(BufferedReader input, PrintWriter output, PlanCommandParser planCommandParser,
             CommutePlanningService commutePlanningService, LocationResolver locationResolver,
-            RailTransitPlanner railTransitPlanner, Clock clock) {
+            LiveTransitPlanner liveTransitPlanner, Clock clock) {
         this(new ConsoleUi(input, output), planCommandParser, commutePlanningService, locationResolver,
-                railTransitPlanner, clock);
+                liveTransitPlanner, clock);
     }
 
     /** Creates a new CommandLineApp. */
     public CommandLineApp(BufferedReader input, PrintWriter output, PlanCommandParser planCommandParser,
             CommutePlanningService commutePlanningService, LocationResolver locationResolver,
-            RailTransitPlanner railTransitPlanner, Clock clock, FixedCommuteStore fixedCommuteStore) {
+            LiveTransitPlanner liveTransitPlanner, Clock clock, FixedCommuteStore fixedCommuteStore) {
         this(new ConsoleUi(input, output), planCommandParser, commutePlanningService, locationResolver,
-                railTransitPlanner, clock, fixedCommuteStore);
+                liveTransitPlanner, clock, fixedCommuteStore);
     }
 
     /** Creates a new CommandLineApp. */
     public CommandLineApp(ConsoleUi ui, PlanCommandParser planCommandParser,
             CommutePlanningService commutePlanningService, LocationResolver locationResolver,
-            RailTransitPlanner railTransitPlanner, Clock clock) {
-        this(ui, planCommandParser, commutePlanningService, locationResolver, railTransitPlanner, clock,
+            LiveTransitPlanner liveTransitPlanner, Clock clock) {
+        this(ui, planCommandParser, commutePlanningService, locationResolver, liveTransitPlanner, clock,
                 new InMemoryFixedCommuteStore());
     }
 
     /** Creates a new CommandLineApp. */
     public CommandLineApp(ConsoleUi ui, PlanCommandParser planCommandParser,
             CommutePlanningService commutePlanningService, LocationResolver locationResolver,
-            RailTransitPlanner railTransitPlanner, Clock clock, FixedCommuteStore fixedCommuteStore) {
-        this(ui, planCommandParser, commutePlanningService, locationResolver, railTransitPlanner, clock,
+            LiveTransitPlanner liveTransitPlanner, Clock clock, FixedCommuteStore fixedCommuteStore) {
+        this(ui, planCommandParser, commutePlanningService, locationResolver, liveTransitPlanner, clock,
                 fixedCommuteStore, plans -> { });
     }
 
     /** Creates a new CommandLineApp. */
     public CommandLineApp(ConsoleUi ui, PlanCommandParser planCommandParser,
             CommutePlanningService commutePlanningService, LocationResolver locationResolver,
-            RailTransitPlanner railTransitPlanner, Clock clock, FixedCommuteStore fixedCommuteStore,
+            LiveTransitPlanner liveTransitPlanner, Clock clock, FixedCommuteStore fixedCommuteStore,
             PlanStore planStore) {
         this.ui = ui;
         this.parser = new Parser(planCommandParser);
-        var planner = new timey.planner.Planner(commutePlanningService, locationResolver, railTransitPlanner, clock);
+        var planner = new timey.planner.Planner(commutePlanningService, locationResolver, liveTransitPlanner, clock);
         this.model = new TimeyModel(planner, fixedCommuteStore, planStore, clock);
     }
 
@@ -134,7 +134,7 @@ public final class CommandLineApp {
         return result;
     }
 
-    private static RailTransitPlanner noLiveRoutes() {
+    private static LiveTransitPlanner noLiveRoutes() {
         return (origin, destination, date, time) -> LiveRouteLookup.available(List.of());
     }
 

@@ -8,11 +8,11 @@ public record DashboardCommuteStatus(String title, String message) {
     public static DashboardCommuteStatus from(DashboardState state) {
         if (state.alternatives().isEmpty()) {
             return new DashboardCommuteStatus("Waiting for a plan...",
-                    "Live rail alternatives will be requested once you execute `plan`.");
+                    "Live public transport alternatives will be requested once you execute `plan`.");
         }
         String messages = String.join(" ", state.planningMessages());
-        if (messages.contains("Live rail routes were aligned")) {
-            return new DashboardCommuteStatus("Live rail routes ready", messages);
+        if (messages.contains("Live public transport routes were aligned")) {
+            return new DashboardCommuteStatus("Live public transport routes ready", messages);
         }
         if (messages.contains("offline estimate")) {
             return new DashboardCommuteStatus("Using deterministic fallback", messages);
