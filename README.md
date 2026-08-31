@@ -21,6 +21,11 @@ Live OneMap route and location lookups are used when available. When live data
 cannot be retrieved, Timey retains valid prior state and offers a deterministic
 offline estimate using a one-hour travel buffer.
 
+Saved fixed commute timings and selected future plans are stored locally in the
+`data/` directory as `fixed-commutes.txt` and `plans.txt`. The files are
+created relative to the directory from which Timey is run; detailed storage
+and recovery behavior is documented in the [User Guide](docs/UserGuide.md).
+
 See the [User Guide](docs/UserGuide.md) for commands and setup, and the
 [Developer Guide](docs/DeveloperGuide.md) for architecture and test guidance.
 
