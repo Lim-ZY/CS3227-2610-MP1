@@ -84,16 +84,16 @@ Timey commands use the following conventions:
 
 ### 2. Command overview
 
-| Command | Purpose |
+| Command | Format and Examples |
 | --- | --- |
-| `plan` | Plans a commute and displays route alternatives. |
-| `choose` | Selects a route and calculates its recommended departure time. |
-| `add` | Saves a fixed duration for a frequently used journey. |
-| `ls saved` | Lists saved fixed commute timings. |
-| `ls plans` | Lists saved plans whose departure time is still in the future. |
-| `rm` | Removes a saved fixed commute timing by its list number. |
-| `help` | Displays the built-in list of supported commands. |
-| `thx` | Ends the current terminal session. |
+| `plan` | `plan /from "<origin>" /to "<destination>" /by <HHmm> [/buf <duration>]`<br>e.g. `plan /from "Kent Ridge MRT" /to "Harbourfront MRT" /by 2000` |
+| `choose` | `choose <route-number>`<br>e.g. `choose 1` |
+| `add` | `add /from "<origin>" /to "<destination>" /dur <duration>`<br>e.g. `add /from "COM3" /to "VivoCity" /dur 1h30m` |
+| `ls saved` | `ls saved`<br>e.g. `ls saved` |
+| `ls plans` | `ls plans`<br>e.g. `ls plans` |
+| `rm` | `rm <timing-number>`<br>e.g. `rm 1` |
+| `help` | `help`<br>e.g. `help` |
+| `thx` | `thx`<br>e.g. `thx` |
 
 ## Planning a commute
 
