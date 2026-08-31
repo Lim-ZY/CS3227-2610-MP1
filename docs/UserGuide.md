@@ -95,24 +95,38 @@ Timey commands use the following conventions:
 | Help                        | `help` |
 | Exit the Program            | `thx` |
 
-## Planning a commute
+### 3. Planning a commute: `plan`
 
-Enter a plan and choose a route:
+Plans a commute and displays numbered route alternatives.
+
+Format: `plan /from "<origin>" /to "<destination>" /by <HHmm> [/buf <duration>]`
+
+Example:
 
 ```
-plan /from "Kent Ridge MRT" /to "Harbourfront MRT" /by 1830
-choose 1
+plan /from "Kent Ridge MRT" /to "Harbourfront MRT" /by 1830 /buf 10m
 ```
 
-Timey uses live OneMap location and rail-route data when it is available. If a
-live lookup cannot be completed, it presents an `Offline estimate` that uses a
-one-hour travel buffer before your requested arrival time. This estimate is a
-safe fallback rather than a measured route duration. A failed update leaves
-your current plan unchanged.
+- `/from`, `/to`, and `/by` are required. Quote locations containing spaces.
+- `/by` uses 24-hour `HHmm` format, such as `1830` for 6:30 pm. The requested
+  arrival time must not have passed today.
+- `/buf` is optional and accepts a whole number of minutes with the `m` suffix.
+  It defaults to 10 minutes when omitted and cannot be negative.
+- A new `plan` replaces the currently pending plan and clears any previous
+  route selection.
 
-Choosing a route displays its recommended leave-by time. If that time has
-already passed today, Timey tells you to leave immediately. Automatic
-departure reminders are reserved for a future enhancement.
+When live data is available, Timey resolves the locations and shows rail-route
+alternatives with total, walking, and transit durations, transfer counts, and
+individual route steps. If a location cannot be found, correct the location or
+try a postal code. If the live service is unavailable or returns no suitable
+route, Timey may show an `Offline estimate` using a fixed one-hour travel
+buffer. This fallback is not a measured route duration, and a failed update
+leaves the current plan unchanged.
+
+Use `choose <route-number>` after reviewing the alternatives. Timey displays
+the selected route’s recommended leave-by time. If that time has already
+arrived, Timey tells you to leave immediately; automatic departure reminders
+are not available.
 
 ## If a command cannot complete
 
