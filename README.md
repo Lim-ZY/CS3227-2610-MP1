@@ -52,27 +52,3 @@ See the [User Guide](docs/UserGuide.md) for commands and setup, and the
 
    Type `help` to see the available commands. See the
    [User Guide](docs/UserGuide.md) for the complete command reference.
-
-## Build and run the fat JAR
-
-Build the executable fat JAR with the Gradle wrapper:
-
-```bash
-./gradlew shadowJar
-```
-
-The generated file is placed at:
-
-```text
-./release/Timey-0.1.0-all.jar
-```
-
-Run the JavaFX dashboard with:
-
-```bash
-java -jar ./release/Timey-0.1.0-all.jar
-```
-
-The JAR includes the project’s runtime dependencies, so no separate dependency
-JARs are needed. The machine running it must still have a compatible Java
-runtime installed.
