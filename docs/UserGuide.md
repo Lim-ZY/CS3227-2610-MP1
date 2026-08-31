@@ -175,6 +175,8 @@ Timey stores data relative to the directory from which it is run:
 Fixed timings are saved when `add` succeeds. A selected route is saved as a
 plan when its leave-by time is still in the future. Expired plans are pruned
 when Timey starts, when `ls plans` is run, and when the session closes.
+Saved plans cannot be removed manually for now; manual saved-plan removal is a
+future enhancement.
 
 Timey writes these files through temporary replacement files to reduce the
 risk of losing an existing file if a write fails. When loading data, malformed
@@ -235,7 +237,8 @@ ls plans
 Each result shows a one-based number, date (`dd-MM-yyyy`), target arrival time
 (`HHmm`), origin, destination, and recommended leave-by time (`HHmm`). Plans
 whose leave-by time has passed are removed automatically and do not appear in
-the list.
+the list. Saved plans cannot be removed manually for now; manual saved-plan
+removal is a future enhancement.
 
 ### 8. Removing a saved timing: `rm`
 
@@ -332,6 +335,10 @@ before copying or editing them.
 **Q: Why does `ls plans` not show an older plan?**<br>
 **A:** `ls plans` lists only plans whose recommended leave-by time is still in
 the future. Expired plans are pruned automatically.
+
+**Q: Can I remove a saved plan?**<br>
+**A:** Not for now. A saved plan is removed automatically when its leave-by
+time passes. Manual saved-plan removal is a future enhancement.
 
 **Q: Can I choose a different route after selecting one?**<br>
 **A:** No. A route can be selected only once for the current plan. Create a new

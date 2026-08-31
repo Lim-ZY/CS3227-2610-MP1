@@ -371,6 +371,8 @@ prunes expired or duplicate records. `getNextSavedPlan()` selects the upcoming
 plan with the earliest leave-by datetime, including the previous calendar date
 when an overnight journey’s leave-by time is later than its arrival time. The
 same pruning runs when `ls plans` is executed and when the session closes.
+Saved plans have no manual removal command for now; they expire when their
+leave-by time passes. Manual saved-plan removal is a future enhancement.
 
 `FileFixedCommuteStore` sorts timings by origin and destination for stable
 numbering. `FilePlanStore` preserves the order of valid stored plans and
@@ -501,7 +503,7 @@ they do not require live internet access.
 
 The current implementation provides an interactive CLI and JavaFX dashboard,
 route selection and departure calculation, saved timings and plans, OneMap
-location and rail lookup, deterministic offline fallback, preferences, and
+location and public-transport lookup, deterministic offline fallback, preferences, and
 bounded HTTP retries. Calendar import, virtual events, weather and LTA data,
 native notifications, cached routes, walking-speed preferences, and full saved
 location management remain planned enhancements.
@@ -765,3 +767,5 @@ dependencies.
    labels such as Home, Office, or Campus for frequent locations.
 9. **Persistent preferences:** Store default origins, walking speed, custom
    buffers, and other user preferences locally.
+10. **Manual saved-plan removal:** Allow users to remove a saved plan before
+    its leave-by time passes.

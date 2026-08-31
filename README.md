@@ -30,6 +30,8 @@ Saved fixed commute timings and selected future plans are stored locally in the
 `data/` directory as `fixed-commutes.txt` and `plans.txt`. The files are
 created relative to the directory from which Timey is run; detailed storage
 and recovery behavior is documented in the [User Guide](docs/UserGuide.md).
+Saved plans cannot be removed manually for now; they expire automatically when
+their leave-by time passes. Manual saved-plan removal is a future enhancement.
 
 See the [User Guide](docs/UserGuide.md) for commands and setup, and the
 [Developer Guide](docs/DeveloperGuide.md) for architecture and test guidance.
