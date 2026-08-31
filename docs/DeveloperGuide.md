@@ -652,3 +652,82 @@ For the use cases below, the actor is the user and the system is Timey.
   `TimeyModel` remain active.
 - **OneMap:** The live-data service used by Timey’s adapters for Singapore
   location resolution and rail-route lookup.
+
+## Appendix: Instructions for manual testing
+
+These checks supplement the automated suite. Run them from a clean temporary
+working directory when testing persistence so that existing `data/` files do
+not affect the expected results. Build the application first with
+`./gradlew shadowJar`. The detailed command syntax is maintained in the
+[User Guide](UserGuide.md).
+
+### Launch and shutdown
+
+1. Run `java -jar ./release/Timey-0.1.0-all.jar`.
+   Expected: the JavaFX dashboard opens with its header, commute cards, route
+   panel, and command bar.
+2. Run `./gradlew run` in a terminal.
+   Expected: the CLI prints its welcome message and accepts `help`.
+3. Enter `thx` in the CLI, or close the dashboard window.
+   Expected: the session ends cleanly and no error details are printed.
+
+### Commute planning and route selection
+
+1. Start the CLI and enter:
+   `plan /from "Kent Ridge MRT" /to "Harbourfront MRT" /by 1830 /buf 10m`.
+   Expected: Timey displays resolved locations and live route alternatives, or
+   an explicitly labelled `Offline estimate` when live data is unavailable.
+2. Enter `choose 1`.
+   Expected: the selected route, travel duration, buffer, and recommended
+   departure time are displayed.
+3. Try `choose`, `choose 0`, `choose 999`, and `choose 1` again.
+   Expected: Timey reports missing, invalid, or already-selected route state
+   without replacing the current selection.
+4. Try `plan /from "unknown place" /to "Harbourfront MRT" /by 1830`.
+   Expected: Timey gives a location correction message and does not replace a
+   valid existing plan.
+
+### Fixed timings and saved plans
+
+1. Enter `add /from "COM3" /to "VivoCity" /dur 1h30m`, then `ls saved`.
+   Expected: one fixed timing appears in stable order.
+2. Repeat the same `add` command.
+   Expected: no duplicate timing is created. Repeat with `/dur 2h` and verify
+   the existing journey is updated.
+3. Enter `rm 1`, then `ls saved`.
+   Expected: the displayed timing is removed.
+4. Plan and select a future route, then enter `ls plans`.
+   Expected: the selected plan appears with its date, arrival time, journey,
+   and leave-by time. Restart Timey and verify it is loaded again.
+5. Create a plan whose leave-by time is in the past, then enter `ls plans`.
+   Expected: the expired plan is pruned and does not appear.
+
+### Error, fallback, and storage recovery
+
+1. Try malformed inputs such as `plan /from A /to B`,
+   `plan /from A /to B /by 18:30`, `add /from A /to B /dur 0m`, and
+   `choose abc`.
+   Expected: each command returns actionable feedback without crashing or
+   changing valid state.
+2. Disconnect the network or use an environment where the live service cannot
+   be reached, then repeat a valid `plan` command.
+   Expected: a labelled deterministic offline estimate is shown and the CLI or
+   dashboard remains usable.
+3. With Timey closed, add one valid and one malformed line to each file under
+   `data/`, then restart and run `ls saved` or `ls plans`.
+   Expected: valid records load, malformed individual records are ignored, and
+   the application starts without exposing a stack trace.
+4. Back up a data file, make its parent directory unwritable, and attempt an
+   `add` or route selection that writes data. Restore permissions afterwards.
+   Expected: Timey reports a safe persistence failure and retains the previous
+   valid in-memory state.
+
+### Dashboard loading and concurrency
+
+1. Launch the dashboard and submit a valid `plan` command.
+   Expected: the commute and route panels show a loading state, then update on
+   completion or show a safe failure message.
+2. While a slow command is running, submit another command. Close the window
+   while a command is running as a separate check.
+   Expected: the active work is cancelled or superseded, stale output does not
+   overwrite the latest dashboard state, and the window closes cleanly.
