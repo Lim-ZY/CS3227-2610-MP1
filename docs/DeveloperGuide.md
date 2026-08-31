@@ -626,3 +626,29 @@ For the use cases below, the actor is the user and the system is Timey.
 8. **Privacy and security:** Local plan data remains under the launch
    directory’s `data/` folder, and credentials or user-specific secrets must not
    be committed to the repository.
+
+### Glossary
+
+- **Commute:** A journey from an origin to a destination that must be completed
+  by a requested target arrival time.
+- **Fixed timing:** A user-recorded duration for an exact origin/destination
+  pair. It is reusable as a labelled route option during planning.
+- **Saved plan:** A selected future commute containing its date, target arrival,
+  journey, and calculated leave-by time.
+- **Route alternative:** One candidate way to travel between two resolved
+  locations, including walking time, transit time, transfer count, and steps.
+- **Route step:** One human-readable leg of a route, such as walking between
+  locations or taking a named rail service.
+- **Transfer:** A change between transit services within a route alternative.
+- **Personal buffer:** Extra time requested by the user and subtracted from the
+  target arrival time when calculating departure.
+- **Leave-by time:** The latest calculated time at which the user should begin
+  the journey to arrive on time, including travel duration and buffer.
+- **Pending plan:** The current plan and route alternatives awaiting a
+  `choose` command. A new `plan` replaces it.
+- **Offline estimate:** A deterministic, explicitly labelled one-hour fallback
+  used when live route data is unavailable; it is not a live measurement.
+- **Session:** The period during which one `CommandLineApp` and its
+  `TimeyModel` remain active.
+- **OneMap:** The live-data service used by Timey’s adapters for Singapore
+  location resolution and rail-route lookup.
