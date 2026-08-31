@@ -33,9 +33,11 @@ public final class RouteAlternativesPanel extends UiPart<VBox> {
                     .orElse(false);
             alternatives.getChildren().add(routeAlternative(index + 1, route, selected));
         }
-        Label guidance = new Label("Select a route from the command bar, for example: choose 1");
-        guidance.getStyleClass().add("route-guidance");
-        alternatives.getChildren().add(guidance);
+        if (state.recommendation().isEmpty()) {
+            Label guidance = new Label("Select a route from the command bar, for example: choose 1");
+            guidance.getStyleClass().add("route-guidance");
+            alternatives.getChildren().add(guidance);
+        }
     }
 
     /** Displays the loading state while route alternatives are being requested. */
