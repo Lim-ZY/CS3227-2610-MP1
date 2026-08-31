@@ -316,6 +316,37 @@ cleaned up and the in-memory model updates its state only after the store call
 succeeds, preserving the previous valid destination and model state as far as
 the filesystem allows.
 
+## Implementation
+
+### Commute planning
+
+`Planner.findAlternatives()` first resolves the origin and destination through
+`LocationResolver`. A successful resolution produces coordinates and a display
+address without exposing the provider response to the rest of the application.
+If either location is not found, the planner returns an explanatory result. A
+service failure, rate limit, or unavailable live endpoint is mapped to a safe
+message and the deterministic fallback path.
+
+For resolved locations, `LiveRailPlanningService` performs a bounded two-step
+lookup through `RailTransitPlanner`:
+
+1. It probes for routes at the requested target-arrival time.
+2. If routes are returned, it calculates the leave-by time for the first route
+   using the requested personal buffer, then refreshes the lookup at that
+   departure time so the alternatives are aligned with the arrival target.
+
+`OneMapRailTransitPlanner` maps each returned itinerary into a
+`RouteAlternative`, preserving walking duration, transit duration, transfer
+count, and displayable `RouteStep` values. The planner reports live routes and
+their source messages to the command layer. The model then prepends a matching
+saved fixed timing as `Saved timing` route 1 when one exists.
+
+When live data is unavailable or returns no usable routes, `Planner` creates a
+single `Offline estimate` route. This route is explicitly labelled and uses a
+deterministic one-hour travel estimate during route selection. The application
+does not present that fallback as a live measurement, allowing users and tests
+to distinguish degraded service from a successful live lookup.
+
 ## Reliability behaviour
 
 All application-facing clocks use the fixed `Asia/Singapore` timezone and can
