@@ -34,6 +34,8 @@ public final class NextEventCard extends UiPart<VBox> {
     private Label arrival;
     @FXML
     private Label countdown;
+    @FXML
+    private Label cardLabel;
 
     /** Creates a new NextEventCard. */
     public NextEventCard() {
@@ -48,10 +50,9 @@ public final class NextEventCard extends UiPart<VBox> {
 
     /** Renders the next event from the latest command-session state. */
     public void render(DashboardState state) {
-        state.plan().map(plan -> new EventDetails(plan.getOrigin(), plan.getDestination(), plan.getArrivalTime(),
-                state.recommendation().map(recommendation -> recommendation.departureTime()),
-                state.recommendation().map(recommendation -> recommendation.departureAt())))
-                .or(() -> state.nextSavedPlan().map(this::eventDetails))
+        cardLabel.setText(state.plan().isPresent() && state.recommendation().isEmpty()
+                ? "PLANNING EVENT..." : "UPCOMING EVENT");
+        nextEvent(state)
                 .ifPresentOrElse(event -> {
                     title.setText("Commute to " + event.destination());
                     origin.setText(event.origin());
@@ -71,7 +72,22 @@ public final class NextEventCard extends UiPart<VBox> {
                     departure.setText("—");
                     arrival.setText("—");
                     countdown.setText("Plan a commute");
-                });
+        });
+    }
+
+    private Optional<EventDetails> nextEvent(DashboardState state) {
+        Optional<EventDetails> plannedEvent = state.plan().map(plan -> new EventDetails(plan.getOrigin(),
+                plan.getDestination(), plan.getArrivalTime(),
+                state.recommendation().map(recommendation -> recommendation.departureTime()),
+                state.recommendation().map(recommendation -> recommendation.departureAt())));
+        Optional<EventDetails> savedEvent = state.nextSavedPlan().map(this::eventDetails);
+
+        if (plannedEvent.isEmpty() || state.recommendation().isEmpty()) {
+            return plannedEvent.or(() -> savedEvent);
+        }
+        EventDetails planned = plannedEvent.orElseThrow();
+        return savedEvent.map(saved -> planned.departureAt().orElseThrow().isBefore(saved.departureAt()
+                .orElseThrow()) ? planned : saved);
     }
 
     private EventDetails eventDetails(SavedPlan plan) {
@@ -84,4 +100,5 @@ public final class NextEventCard extends UiPart<VBox> {
     private record EventDetails(String origin, String destination, LocalTime arrivalTime,
             Optional<LocalTime> departureTime, Optional<LocalDateTime> departureAt) {
     }
+
 }

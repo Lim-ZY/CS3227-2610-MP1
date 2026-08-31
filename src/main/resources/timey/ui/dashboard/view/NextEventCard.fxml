@@ -7,7 +7,13 @@
 
 <VBox spacing="12.0" styleClass="card" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1">
   <children>
-    <Label styleClass="event-type" text="Physical" />
+    <HBox alignment="CENTER_LEFT">
+      <children>
+        <Label fx:id="cardLabel" styleClass="card-label" text="UPCOMING EVENT" />
+        <Region HBox.hgrow="ALWAYS" />
+        <Label styleClass="event-type" text="Physical" />
+      </children>
+    </HBox>
     <HBox alignment="CENTER_LEFT" spacing="28.0">
       <children>
         <VBox spacing="10.0" HBox.hgrow="ALWAYS">

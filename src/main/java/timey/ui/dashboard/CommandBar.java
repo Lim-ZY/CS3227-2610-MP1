@@ -12,7 +12,7 @@ public final class CommandBar extends UiPart<HBox> {
     private static final String FXML = "CommandBar.fxml";
     private static final String DEFAULT_PROMPT = "Enter a Timey command, for example: plan /from \"COM3\" "
             + "/to \"VivoCity\" /by 1830";
-    private static final String READY_PROMPT = "Enter a Timey command, for example: choose 1";
+    private static final String READY_PROMPT = "You can call me for `help` if you need!";
 
     private CommandExecutor commandExecutor;
 
