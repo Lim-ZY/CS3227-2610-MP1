@@ -29,9 +29,16 @@ public final class AddCommand extends Command {
 
     @Override
     public CommandResult execute(TimeyModel model) {
+        java.util.Optional<FixedCommute> previous = model.findFixedCommute(origin, destination);
+        if (previous.isPresent() && previous.orElseThrow().duration().equals(duration)) {
+            return new CommandResult(java.util.List.of(
+                    "This route has already been saved for you! Do check it out",
+                    "using `ls saved`."));
+        }
         FixedCommute commute = model.saveFixedCommute(origin, destination, duration);
+        String action = previous.isPresent() ? "Changed" : "Saved";
         return new CommandResult(java.util.List.of(
-                "Saved fixed timing from " + commute.origin() + " to " + commute.destination() + ": "
+                action + " fixed timing from " + commute.origin() + " to " + commute.destination() + ": "
                         + commute.duration().toMinutes() + " minutes.",
                 "It will appear as a route option in your next matching plan."));
     }

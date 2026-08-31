@@ -29,7 +29,12 @@ public final class FileFixedCommuteStore implements FixedCommuteStore {
 
     @Override
     public synchronized void save(FixedCommute commute) {
-        List<FixedCommute> commutes = findAll().stream()
+        List<FixedCommute> savedCommutes = findAll();
+        if (savedCommutes.stream()
+                .anyMatch(saved -> sameJourney(saved, commute) && saved.duration().equals(commute.duration()))) {
+            return;
+        }
+        List<FixedCommute> commutes = savedCommutes.stream()
                 .filter(saved -> !sameJourney(saved, commute))
                 .collect(Collectors.toCollection(ArrayList::new));
         commutes.add(commute);
