@@ -84,16 +84,16 @@ Timey commands use the following conventions:
 
 ### 2. Command overview
 
-| Command | Format and Examples |
-| --- | --- |
-| `plan` | `plan /from "<origin>" /to "<destination>" /by <HHmm> [/buf <duration>]`<br>e.g. `plan /from "Kent Ridge MRT" /to "Harbourfront MRT" /by 2000` |
-| `choose` | `choose <route-number>`<br>e.g. `choose 1` |
-| `add` | `add /from "<origin>" /to "<destination>" /dur <duration>`<br>e.g. `add /from "COM3" /to "VivoCity" /dur 1h30m` |
-| `ls saved` | `ls saved`<br>e.g. `ls saved` |
-| `ls plans` | `ls plans`<br>e.g. `ls plans` |
-| `rm` | `rm <timing-number>`<br>e.g. `rm 1` |
-| `help` | `help`<br>e.g. `help` |
-| `thx` | `thx`<br>e.g. `thx` |
+| Action                      | Format and Examples |
+|-----------------------------| --- |
+| Plan                        | `plan /from "<origin>" /to "<destination>" /by <HHmm> [/buf <duration>]`<br>e.g. `plan /from "Kent Ridge MRT" /to "Harbourfront MRT" /by 2000` |
+| Choose                      | `choose <route-number>`<br>e.g. `choose 1` |
+| Add                         | `add /from "<origin>" /to "<destination>" /dur <duration>`<br>e.g. `add /from "COM3" /to "VivoCity" /dur 1h30m` |
+| List Saved Commute Timings  | `ls saved` |
+| List Current Plans          | `ls plans` |
+| Remove Saved Commute Timing | `rm <timing-number>`<br>e.g. `rm 1` |
+| Help                        | `help` |
+| Exit the Program            | `thx` |
 
 ## Planning a commute
 
