@@ -140,7 +140,7 @@ class TimeyModelTest {
     }
 
     @Test
-    void selectRoute_departureCrossesMidnight_afterTargetHasPassed_doesNotRollOverOrSavePlan() {
+    void selectRoute_departureCrossesMidnight_doesNotRollOverOrSavePlan() {
         var savedPlanLists = new ArrayList<List<SavedPlan>>();
         Clock clock = Clock.fixed(Instant.parse("2026-08-29T14:00:00Z"), ZoneId.of("Asia/Singapore"));
         var model = TestTimeyModelFactory.create(new InMemoryFixedCommuteStore(), clock,

@@ -53,25 +53,25 @@ public final class NextEventCard extends UiPart<VBox> {
                 state.recommendation().map(recommendation -> recommendation.departureAt())))
                 .or(() -> state.nextSavedPlan().map(this::eventDetails))
                 .ifPresentOrElse(event -> {
-            title.setText("Commute to " + event.destination());
-            origin.setText(event.origin());
-            destination.setText(event.destination());
-            arrival.setText(TIME_FORMAT.format(event.arrivalTime()));
-            event.departureTime().ifPresentOrElse(departureTime -> {
-                departure.setText(TIME_FORMAT.format(departureTime));
-                countdown.setText(DashboardDepartureText.until(event.departureAt().orElseThrow(), clock));
-            }, () -> {
-                departure.setText("—");
-                countdown.setText("Choose a route");
-            });
-        }, () -> {
-            title.setText("No commute planned");
-            origin.setText("—");
-            destination.setText("—");
-            departure.setText("—");
-            arrival.setText("—");
-            countdown.setText("Plan a commute");
-        });
+                    title.setText("Commute to " + event.destination());
+                    origin.setText(event.origin());
+                    destination.setText(event.destination());
+                    arrival.setText(TIME_FORMAT.format(event.arrivalTime()));
+                    event.departureTime().ifPresentOrElse(departureTime -> {
+                        departure.setText(TIME_FORMAT.format(departureTime));
+                        countdown.setText(DashboardDepartureText.until(event.departureAt().orElseThrow(), clock));
+                    }, () -> {
+                        departure.setText("—");
+                        countdown.setText("Choose a route");
+                    });
+                }, () -> {
+                    title.setText("No commute planned");
+                    origin.setText("—");
+                    destination.setText("—");
+                    departure.setText("—");
+                    arrival.setText("—");
+                    countdown.setText("Plan a commute");
+                });
     }
 
     private EventDetails eventDetails(SavedPlan plan) {
