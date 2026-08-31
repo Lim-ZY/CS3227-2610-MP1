@@ -9,6 +9,54 @@ pageNav: 3
 <!-- * Table of Contents -->
 <page-nav-print />
 
+## Setting up, getting started
+
+Timey requires Java 25. The Gradle toolchain also targets Java 25, and the
+JavaFX modules used by the dashboard are downloaded by Gradle as part of the
+build. From the repository root, run:
+
+```bash
+./gradlew clean test checkstyleMain checkstyleTest
+```
+
+This compiles the application, runs the JUnit test suite, and checks the main
+and test source sets with Checkstyle. To build the executable fat JAR, run:
+
+```bash
+./gradlew shadowJar
+```
+
+The JAR is written to `release/Timey-0.1.0-all.jar`. Launch the JavaFX
+dashboard with:
+
+```bash
+java -jar ./release/Timey-0.1.0-all.jar
+```
+
+To use the terminal CLI during development, run:
+
+```bash
+./gradlew run
+```
+
+The dashboard and CLI share the same command workflow and local data files.
+See the [User Guide](UserGuide.md) for the complete command reference and a
+first-use planning example.
+
+The main project directories are organised as follows:
+
+- `src/main/java/timey/domain`: domain objects and business rules.
+- `src/main/java/timey/command`: command objects and command results.
+- `src/main/java/timey/parser`: command parsing and option validation.
+- `src/main/java/timey/planner`: commute planning services.
+- `src/main/java/timey/ports`: interfaces for replaceable integrations.
+- `src/main/java/timey/infrastructure`: HTTP, storage, location, and transit
+  adapters.
+- `src/main/java/timey/ui`: console and JavaFX presentation code.
+- `src/main/resources/timey/ui/dashboard`: dashboard FXML views and styles.
+- `src/test/java`: tests matching the production package hierarchy.
+- `data`: local fixed-commute and saved-plan files created at runtime.
+
 ## Architecture
 
 Timey is organised into domain, application, ports, infrastructure,
