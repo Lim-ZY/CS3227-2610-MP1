@@ -62,6 +62,26 @@ Use the following sequence to plan a commute:
    The exact route and departure time depend on the requested journey, current
    time, live service availability, and selected buffer.
 
+## Features
+
+### 1. Command format
+
+Timey commands use the following conventions:
+
+- Words in angle brackets, such as `<origin>` and `<duration>`, are
+  placeholders that must be replaced with your own values.
+- Items in square brackets are optional. For example, `/buf Nm` can be omitted
+  from a `plan` command to use the default buffer.
+- Options may be entered in any order after the command name. Do not provide
+  the same option more than once.
+- Quote values that contain spaces, such as `/from "Kent Ridge MRT"`. Quotes
+  are optional for single-word values.
+- Command names are case-insensitive: `PLAN` and `plan` are equivalent.
+- Route and saved-timing numbers are one-based positive integers, such as
+  `choose 1` or `rm 1`.
+- Extra text that does not match the command format is rejected and reported
+  as an input error.
+
 ## Planning a commute
 
 Enter a plan and choose a route:
