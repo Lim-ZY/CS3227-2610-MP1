@@ -168,11 +168,28 @@ For live-data or storage failures, check the internet connection or saved data
 and retry. Timey does not show internal exception details in the CLI or
 dashboard, and a failed operational update does not replace the current plan.
 
-## Application defaults
+### Persistence and application defaults
 
 The application uses a built-in 10-minute default buffer whenever a `plan` command omits `/buf`. An explicit `/buf`
 always takes precedence for that command. The application includes the deployed Cloudflare Worker endpoint, and the
 Worker holds the OneMap credentials, so users do not need to configure a URL, token, or OneMap account.
+
+Timey stores data relative to the directory from which it is run:
+
+- `data/fixed-commutes.txt` stores saved fixed commute timings created by
+  `add`.
+- `data/plans.txt` stores selected plans whose recommended departure time is
+  still in the future.
+
+Fixed timings are saved when `add` succeeds. A selected route is saved as a
+plan when its leave-by time is still in the future. Expired plans are pruned
+when Timey starts, when `ls plans` is run, and when the session closes.
+
+Timey writes these files through temporary replacement files to reduce the
+risk of losing an existing file if a write fails. When loading data, malformed
+individual records are ignored where valid records can still be recovered.
+Back up the relevant file before editing it manually, and close Timey first so
+the application does not overwrite your changes.
 
 ### 5. Saving fixed commute timings: `add`
 
