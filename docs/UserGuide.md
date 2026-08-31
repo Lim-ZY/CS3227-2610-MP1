@@ -82,6 +82,19 @@ Timey commands use the following conventions:
 - Extra text that does not match the command format is rejected and reported
   as an input error.
 
+### 2. Command overview
+
+| Command | Purpose |
+| --- | --- |
+| `plan` | Plans a commute and displays route alternatives. |
+| `choose` | Selects a route and calculates its recommended departure time. |
+| `add` | Saves a fixed duration for a frequently used journey. |
+| `ls saved` | Lists saved fixed commute timings. |
+| `ls plans` | Lists saved plans whose departure time is still in the future. |
+| `rm` | Removes a saved fixed commute timing by its list number. |
+| `help` | Displays the built-in list of supported commands. |
+| `thx` | Ends the current terminal session. |
+
 ## Planning a commute
 
 Enter a plan and choose a route:
